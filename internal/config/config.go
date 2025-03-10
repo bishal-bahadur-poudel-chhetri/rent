@@ -139,6 +139,7 @@ func initDB(db *sql.DB) error {
 	}
 	salesQuery := `
 CREATE TABLE IF NOT EXISTS sales (
+    sale_id SERIAL PRIMARY KEY,  -- Add sale_id as the primary key
     vehicle_id INT,
     customer_name VARCHAR(255),
     total_amount DECIMAL(10, 2),
@@ -164,7 +165,8 @@ CREATE TABLE IF NOT EXISTS sales (
     wash_cost DECIMAL(10, 2) DEFAULT 0.00,   
     delay_cost DECIMAL(10, 2) DEFAULT 0.00,  
     discount_amount DECIMAL(10, 2) DEFAULT 0.00
-	);`
+);
+`
 	_, err = db.Exec(salesQuery)
 	if err != nil {
 		return err

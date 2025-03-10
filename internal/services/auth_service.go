@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"renting/internal/models"
 	"renting/internal/repositories"
 	"renting/internal/utils"
@@ -10,10 +11,9 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, mobileNumber, password, companyCode string) (string, error)
+	Login(ctx context.Context, mobileNumber, password, companyCode string) (string, *models.User, error)
 	Register(ctx context.Context, user *models.User, companyCode string) error
 }
-
 type authService struct {
 	userRepo    repositories.UserRepository
 	jwtSecret   string
@@ -28,31 +28,40 @@ func NewAuthService(userRepo repositories.UserRepository, jwtSecret string, toke
 	}
 }
 
-func (s *authService) Login(ctx context.Context, mobileNumber, password, companyCode string) (string, error) {
+func (s *authService) Login(ctx context.Context, mobileNumber, password, companyCode string) (string, *models.User, error) {
 	// Find the user by mobile number and company code
 	user, err := s.userRepo.FindByMobileAndCompanyCode(ctx, mobileNumber, companyCode)
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", nil, errors.New("invalid credentials")
 	}
 	if user == nil {
-		return "", errors.New("invalid credentials")
+		return "", nil, errors.New("invalid credentials")
 	}
 
 	// Verify the password
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return "", errors.New("invalid credentials")
+		return "", nil, errors.New("invalid credentials")
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateJWT(user.ID, user.CompanyID, user.MobileNumber, s.jwtSecret, s.tokenExpiry)
+	token, err := utils.GenerateJWT(user.ID, user.CompanyID, user.Username, s.jwtSecret, s.tokenExpiry)
 	if err != nil {
-		return "", errors.New("failed to generate token")
+		return "", nil, errors.New("failed to generate token")
 	}
 
-	return token, nil
+	return token, user, nil
 }
 
 func (s *authService) Register(ctx context.Context, user *models.User, companyCode string) error {
+	// Fetch the company ID using the company code
+	companyID, err := s.userRepo.GetCompanyIDByCode(ctx, companyCode)
+	if err != nil {
+		return fmt.Errorf("failed to fetch company ID: %v", err)
+	}
+
+	// Set the company ID in the user model
+	user.CompanyID = companyID
+
 	// Check if the mobile number already exists
 	existingUser, err := s.userRepo.FindByMobileAndCompanyCode(ctx, user.MobileNumber, companyCode)
 	if err != nil {

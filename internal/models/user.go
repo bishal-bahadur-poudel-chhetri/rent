@@ -7,8 +7,23 @@ type User struct {
 	Username     string    `json:"username"`
 	Password     string    `json:"password"`
 	IsAdmin      bool      `json:"is_admin"`
-	CompanyID    int       `json:"company_id"`
+	CompanyID    int       `json:"company_id"` // Ensure this field exists
 	MobileNumber string    `json:"mobile_number"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+type Company struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	CompanyCode string    `json:"company_code"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type RegisterRequest struct {
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	IsAdmin      bool   `json:"is_admin"`
+	CompanyID    int    `json:"company_id"` // Use company_id instead of company_code
+	MobileNumber string `json:"mobile_number"`
 }

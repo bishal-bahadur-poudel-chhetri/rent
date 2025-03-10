@@ -16,7 +16,6 @@ type AuthHandler struct {
 func NewAuthHandler(authService services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
-
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		MobileNumber string `json:"mobile_number"`
@@ -31,24 +30,28 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Call the AuthService to handle login
-	token, err := h.authService.Login(c.Request.Context(), req.MobileNumber, req.Password, req.CompanyCode)
+	token, user, err := h.authService.Login(c.Request.Context(), req.MobileNumber, req.Password, req.CompanyCode)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, err.Error(), nil))
 		return
 	}
 
-	// Return success response with token
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Login successful", map[string]string{
+	// Return success response with token and user data
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Login successful", map[string]interface{}{
 		"token": token,
+		"user": map[string]interface{}{
+			"username":      user.Username,
+			"is_admin":      user.IsAdmin,
+			"mobile_number": user.MobileNumber,
+		},
 	}))
 }
-
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
 		Username     string `json:"username"`
 		Password     string `json:"password"`
 		IsAdmin      bool   `json:"is_admin"`
-		CompanyCode  string `json:"company_code"`
+		CompanyCode  string `json:"company_code"` // Ensure this is a string
 		MobileNumber string `json:"mobile_number"`
 	}
 
