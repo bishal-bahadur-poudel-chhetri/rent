@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"renting/internal/models"
+	"strings"
 )
 
 type VehicleRepository struct {
@@ -34,53 +35,81 @@ func (r *VehicleRepository) RegisterVehicle(vehicle models.VehicleRequest) (int,
 func (r *VehicleRepository) ListVehicles(filter models.VehicleFilter) ([]models.VehicleResponse, error) {
 	var vehicles []models.VehicleResponse
 	var args []interface{}
-	query := `
-		SELECT vehicle_id, vehicle_type_id, vehicle_name, vehicle_model, vehicle_registration_number, is_available
-		FROM vehicles 
+	var queryBuilder strings.Builder
+
+	queryBuilder.WriteString(`
+		SELECT vehicle_id, vehicle_type_id, vehicle_name, vehicle_model, vehicle_registration_number, is_available, status
+		FROM vehicles
 		WHERE 1=1
-	`
+	`)
+
+	fmt.Printf("Filter Used: %+v\n", filter)
 
 	argIndex := 1
+
+	// Add filters dynamically
 	if filter.VehicleTypeID != "" {
-		query += fmt.Sprintf(" AND vehicle_type_id = $%d", argIndex)
+		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_type_id = $%d", argIndex))
 		args = append(args, filter.VehicleTypeID)
 		argIndex++
 	}
 	if filter.IsAvailable != "" {
-		query += fmt.Sprintf(" AND is_available = $%d", argIndex)
+		queryBuilder.WriteString(fmt.Sprintf(" AND is_available = $%d", argIndex))
 		args = append(args, filter.IsAvailable)
 		argIndex++
 	}
 	if filter.VehicleName != "" {
-		query += fmt.Sprintf(" AND vehicle_name ILIKE $%d", argIndex)
+		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_name ILIKE $%d", argIndex))
 		args = append(args, "%"+filter.VehicleName+"%")
 		argIndex++
 	}
+	if filter.VehicleModel != "" {
+		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_model ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.VehicleModel+"%")
+		argIndex++
+	}
+	if filter.VehicleRegistrationNumber != "" {
+		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_registration_number ILIKE $%d", argIndex))
+		args = append(args, "%"+filter.VehicleRegistrationNumber+"%")
+		argIndex++
+	}
+	if filter.Status != "" {
+		queryBuilder.WriteString(fmt.Sprintf(" AND status = $%d", argIndex))
+		args = append(args, filter.Status)
+		argIndex++
+	}
 
-	// Apply pagination
-	query += fmt.Sprintf(" ORDER BY vehicle_id LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	// Apply ordering and pagination
+	queryBuilder.WriteString(fmt.Sprintf(" ORDER BY vehicle_id LIMIT $%d OFFSET $%d", argIndex, argIndex+1))
 	args = append(args, filter.Limit, filter.Offset)
 
-	// Debugging: Log the query and arguments
+	query := queryBuilder.String()
 	fmt.Printf("Executing Query: %s\n", query)
 	fmt.Printf("With Args: %+v\n", args)
 
+	// Execute Query
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %v", err)
+		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
+	// Parse results
 	for rows.Next() {
 		var vehicle models.VehicleResponse
-		if err := rows.Scan(&vehicle.VehicleID, &vehicle.VehicleTypeID, &vehicle.VehicleName, &vehicle.VehicleModel, &vehicle.VehicleRegistrationNumber, &vehicle.IsAvailable); err != nil {
-			return nil, fmt.Errorf("failed to scan rows: %v", err)
+		if err := rows.Scan(
+			&vehicle.VehicleID, &vehicle.VehicleTypeID, &vehicle.VehicleName,
+			&vehicle.VehicleModel, &vehicle.VehicleRegistrationNumber,
+			&vehicle.IsAvailable, &vehicle.Status,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan rows: %w", err)
 		}
 		vehicles = append(vehicles, vehicle)
 	}
 
+	// Check for iteration errors
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %v", err)
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
 	}
 
 	return vehicles, nil

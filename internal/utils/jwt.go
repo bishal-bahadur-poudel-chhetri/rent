@@ -3,21 +3,32 @@ package utils
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/dgrijalva/jwt-go"
 )
 
-// GenerateJWT creates a JWT token for a user
-func GenerateJWT(userID int, jwtSecret string, expiry time.Duration) (string, error) {
-	// Create claims
-	claims := jwt.MapClaims{
-		"sub": userID,
-		"exp": time.Now().Add(expiry).Unix(),
-		"iat": time.Now().Unix(),
+type Claims struct {
+	UserID    int    `json:"user_id"`
+	CompanyID int    `json:"company_id"`
+	Username  string `json:"username"`
+	jwt.StandardClaims
+}
+
+func GenerateJWT(userID, companyID int, username, jwtSecret string, tokenExpiry time.Duration) (string, error) {
+	expirationTime := time.Now().Add(tokenExpiry)
+	claims := &Claims{
+		UserID:    userID,
+		CompanyID: companyID,
+		Username:  username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
 	}
 
-	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return "", err
+	}
 
-	// Sign and return token
-	return token.SignedString([]byte(jwtSecret))
+	return tokenString, nil
 }

@@ -122,7 +122,6 @@ func initDB(db *sql.DB) error {
 	paymentsQuery := `
 	CREATE TABLE IF NOT EXISTS payments (
 		payment_id SERIAL PRIMARY KEY,
-		sale_id INT NOT NULL,
 		payment_type VARCHAR(50) NOT NULL,
 		amount_paid DECIMAL(10,2) NOT NULL,
 		payment_date TIMESTAMP NOT NULL,
@@ -139,37 +138,33 @@ func initDB(db *sql.DB) error {
 		return err
 	}
 	salesQuery := `
-	CREATE TABLE IF NOT EXISTS sales (
-		sale_id SERIAL PRIMARY KEY,
-		vehicle_id INT NOT NULL,
-		customer_name VARCHAR(255) NOT NULL,
-		total_amount DECIMAL(10,2) NOT NULL,
-		charge_per_day DECIMAL(10,2) NOT NULL,
-		booking_date TIMESTAMP NOT NULL,
-		date_of_delivery TIMESTAMP NOT NULL,
-		return_date TIMESTAMP,
-		is_damaged BOOLEAN DEFAULT FALSE,
-		is_washed BOOLEAN DEFAULT FALSE,
-		is_delayed BOOLEAN DEFAULT FALSE,
-		number_of_days INT NOT NULL,
-		payment_id INT NOT NULL,
-		remark TEXT,
-		photo_1 BYTEA,
-		photo_2 BYTEA, 
-		photo_3 BYTEA,
-		photo_4 BYTEA, 
-		user_id INT NOT NULL,
-		fuel_range_received DECIMAL(10,2),  -- Fuel range on receipt (in liters or km range)
-    	fuel_range_delivered DECIMAL(10,2),  -- Fuel range on delivery (in liters or km range)
-		km_received INT,  -- Kilometers at the time of receiving
-    	km_delivered INT,  -- Kilometers at the time of delivery
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
-		FOREIGN KEY (payment_id) REFERENCES payments(payment_id) ON DELETE SET NULL
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-	);
-	`
+CREATE TABLE IF NOT EXISTS sales (
+    vehicle_id INT,
+    customer_name VARCHAR(255),
+    total_amount DECIMAL(10, 2),
+    charge_per_day DECIMAL(10, 2),
+    booking_date DATE,
+    date_of_delivery DATE,
+    return_date DATE,
+    is_damaged BOOLEAN,
+    is_washed BOOLEAN,
+    is_delayed BOOLEAN,
+    number_of_days INT,
+    payment_id INT,
+    remark TEXT,
+    fuel_range_received DECIMAL(10, 2),
+    fuel_range_delivered DECIMAL(10, 2),
+    km_received DECIMAL(10, 2),
+    km_delivered DECIMAL(10, 2),
+    photo_1 VARCHAR(255),
+    photo_2 VARCHAR(255),
+    photo_3 VARCHAR(255),
+    photo_4 VARCHAR(255),
+    damage_cost DECIMAL(10, 2) DEFAULT 0.00, 
+    wash_cost DECIMAL(10, 2) DEFAULT 0.00,   
+    delay_cost DECIMAL(10, 2) DEFAULT 0.00,  
+    discount_amount DECIMAL(10, 2) DEFAULT 0.00
+	);`
 	_, err = db.Exec(salesQuery)
 	if err != nil {
 		return err
