@@ -11,7 +11,7 @@ type VehicleResponse struct {
 	Status                    string `json:"status"`
 }
 type VehicleRequest struct {
-	VehicleTypeID             string `json:"vehicle_type_id"`
+	VehicleTypeID             int    `json:"vehicle_type_id"`
 	VehicleName               string `json:"vehicle_name"`
 	VehicleModel              string `json:"vehicle_model"`
 	VehicleRegistrationNumber string `json:"vehicle_registration_number"`

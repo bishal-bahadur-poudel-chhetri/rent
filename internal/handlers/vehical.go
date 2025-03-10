@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
 	"renting/internal/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,19 +56,17 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 	if filter.Limit <= 0 {
 		filter.Limit = 10 // Default limit
 	}
-	if filter.Offset < 0 {
-		filter.Offset = 0 // Default offset
+	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err != nil {
+		offset = 0
 	}
+	filter.Offset = offset
 	filter.IsAvailable = c.DefaultQuery("is_available", "true") // Default value 'true'
 	filter.VehicleName = c.DefaultQuery("vehicle_name", "")
 	filter.VehicleModel = c.DefaultQuery("vehicle_model", "")
 	filter.VehicleRegistrationNumber = c.DefaultQuery("vehicle_registration_number", "")
 	filter.Status = c.DefaultQuery("status", "")
 
-	// Debugging logs
-	log.Printf("Filter Used: %+v\n", filter)
-
-	// Call the service to fetch vehicles
 	vehicles, err := h.vehicleService.ListVehicles(filter)
 	if err != nil {
 		// Use ErrorResponse from utils package
