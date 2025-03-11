@@ -19,16 +19,14 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 	var saleID int
 	err := r.db.QueryRow(`
 		INSERT INTO sales (
-			vehicle_id, customer_name, total_amount, charge_per_day, booking_date, 
+			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 			date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
-			number_of_days, payment_id, remark, fuel_range_received, fuel_range_delivered, 
-			km_received, km_delivered
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+			number_of_days, payment_id, remark, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		RETURNING sale_id
-	`, sale.VehicleID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
+	`, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
-		sale.NumberOfDays, sale.PaymentID, sale.Remark, sale.FuelRangeReceived, sale.FuelRangeDelivered,
-		sale.KmReceived, sale.KmDelivered).Scan(&saleID)
+		sale.NumberOfDays, sale.PaymentID, sale.Remark, sale.Status).Scan(&saleID)
 	if err != nil {
 		return 0, err
 	}
@@ -66,39 +64,48 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		}
 	}
 
+	// Insert vehicle usage records
+	for _, usage := range sale.VehicleUsage {
+		_, err := r.db.Exec(`
+			INSERT INTO vehicle_usage (vehicle_id, record_type, fuel_range, km_reading, recorded_by)
+			VALUES ($1, $2, $3, $4, $5)
+		`, sale.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedBy)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	return saleID, nil
 }
 
-// GetSaleByID retrieves a sale by its ID along with related data
 func (r *SaleRepository) GetSaleByID(saleID int) (*models.Sale, error) {
 	var sale models.Sale
 	err := r.db.QueryRow(`
-		SELECT sale_id, vehicle_id, customer_name, total_amount, charge_per_day, booking_date, 
+		SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
-		payment_id, remark, fuel_range_received, fuel_range_delivered, km_received, km_delivered, 
-		created_at, updated_at
+		payment_id, remark, status, created_at, updated_at
 		FROM sales WHERE sale_id = $1
 	`, saleID).Scan(
-		&sale.SaleID, &sale.VehicleID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
+		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
 		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
-		&sale.IsDelayed, &sale.NumberOfDays, &sale.PaymentID, &sale.Remark, &sale.FuelRangeReceived,
-		&sale.FuelRangeDelivered, &sale.KmReceived, &sale.KmDelivered, &sale.CreatedAt, &sale.UpdatedAt,
+		&sale.IsDelayed, &sale.NumberOfDays, &sale.PaymentID, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch related data (charges, images, videos)
+	// Fetch related data
 	sale.SalesCharges, _ = r.getSalesCharges(saleID)
 	sale.SalesImages, _ = r.getSalesImages(saleID)
 	sale.SalesVideos, _ = r.getSalesVideos(saleID)
+	sale.VehicleUsage, _ = r.getVehicleUsage(sale.VehicleID)
 
 	return &sale, nil
 }
 
 // Helper functions to fetch related data
 func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, error) {
-	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount FROM sales_charges WHERE sale_id = $1", saleID)
+	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount, created_at, updated_at FROM sales_charges WHERE sale_id = $1", saleID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +114,7 @@ func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, erro
 	var charges []models.SalesCharge
 	for rows.Next() {
 		var charge models.SalesCharge
-		rows.Scan(&charge.ChargeID, &charge.SaleID, &charge.ChargeType, &charge.Amount)
+		rows.Scan(&charge.ChargeID, &charge.SaleID, &charge.ChargeType, &charge.Amount, &charge.CreatedAt, &charge.UpdatedAt)
 		charges = append(charges, charge)
 	}
 	return charges, nil
@@ -143,4 +150,20 @@ func (r *SaleRepository) getSalesVideos(saleID int) ([]models.SalesVideo, error)
 		videos = append(videos, video)
 	}
 	return videos, nil
+}
+
+func (r *SaleRepository) getVehicleUsage(vehicleID int) ([]models.VehicleUsage, error) {
+	rows, err := r.db.Query("SELECT usage_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by FROM vehicle_usage WHERE vehicle_id = $1", vehicleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var usageRecords []models.VehicleUsage
+	for rows.Next() {
+		var usage models.VehicleUsage
+		rows.Scan(&usage.UsageID, &usage.VehicleID, &usage.RecordType, &usage.FuelRange, &usage.KmReading, &usage.RecordedAt, &usage.RecordedBy)
+		usageRecords = append(usageRecords, usage)
+	}
+	return usageRecords, nil
 }

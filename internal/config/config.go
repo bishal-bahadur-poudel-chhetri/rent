@@ -154,15 +154,11 @@ func initDB(db *sql.DB) error {
 		number_of_days INT,
 		payment_id INT,
 		remark TEXT,
-		fuel_range_received DECIMAL(10, 2),
-		fuel_range_delivered DECIMAL(10, 2),
-		km_received DECIMAL(10, 2),
-		km_delivered DECIMAL(10, 2),
 		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- This will now work
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE 
 	);
 `
 	_, err = db.Exec(salesQuery)
@@ -171,17 +167,15 @@ func initDB(db *sql.DB) error {
 	}
 
 	vehicle_usage := `
-	CREATE TABLE IF NOT EXISTS vehicle_usage (
+CREATE TABLE IF NOT EXISTS vehicle_usage (
     usage_id SERIAL PRIMARY KEY,
     vehicle_id INT NOT NULL,
-    sale_id INT NOT NULL, -- Link to the specific sale
     record_type VARCHAR(50) NOT NULL CHECK (record_type IN ('delivery', 'return')),
     fuel_range DECIMAL(10, 2) NOT NULL, -- Fuel level at delivery or return
     km_reading DECIMAL(10, 2) NOT NULL, -- KM reading at delivery or return
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the data was recorded
-    recorded_by INT, -- Optional: User who recorded the data
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
-    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+    recorded_by INT, 
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE
 );
 `
 	_, err = db.Exec(vehicle_usage)
