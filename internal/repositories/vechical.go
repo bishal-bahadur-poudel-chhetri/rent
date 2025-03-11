@@ -2,10 +2,10 @@ package repositories
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
+	"log"
 	"renting/internal/models"
-	"strings"
+	"strconv"
+	"time"
 )
 
 type VehicleRepository struct {
@@ -13,189 +13,119 @@ type VehicleRepository struct {
 }
 
 func NewVehicleRepository(db *sql.DB) *VehicleRepository {
-	return &VehicleRepository{
-		db: db,
-	}
+	return &VehicleRepository{db: db}
 }
 
-func (r *VehicleRepository) RegisterVehicle(vehicle models.VehicleRequest) (int, error) {
-	// Debug: Print the input vehicle data
-	fmt.Printf("RegisterVehicle - Input: %+v\n", vehicle)
+func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBookingDetails bool) ([]models.VehicleResponse, error) {
+	// Log filters and includeBookingDetails for debugging
+	log.Printf("Fetching vehicles with filters: %+v, includeBookingDetails: %v", filters, includeBookingDetails)
 
-	// Step 1: Check for duplicate vehicle (e.g., based on vehicle_registration_number)
-	exists, err := r.checkDuplicateVehicle(vehicle.VehicleRegistrationNumber)
-	if err != nil {
-		fmt.Printf("RegisterVehicle - Error checking duplicate vehicle: %v\n", err)
-		return 0, errors.New("failed to check for duplicate vehicle")
-	}
-	if exists {
-		fmt.Printf("RegisterVehicle - Duplicate vehicle found for registration number: %s\n", vehicle.VehicleRegistrationNumber)
-		return 0, errors.New("vehicle with this registration number already exists")
-	}
-
-	// Step 2: Validate other conditions (e.g., status, vehicle_type_id, etc.)
-	if err := r.validateVehicle(vehicle); err != nil {
-		fmt.Printf("RegisterVehicle - Validation error: %v\n", err)
-		return 0, err
-	}
-
-	// Step 3: Insert the vehicle
-	query := `
-        INSERT INTO vehicles (vehicle_type_id, vehicle_name, vehicle_model, vehicle_registration_number, is_available, status)
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING vehicle_id;
-    `
-
-	// Debug: Print the SQL query and parameters
-	fmt.Printf("RegisterVehicle - Query: %s\n", query)
-	fmt.Printf("RegisterVehicle - Params: %d, %s, %s, %s, %t, %s\n",
-		vehicle.VehicleTypeID, vehicle.VehicleName, vehicle.VehicleModel,
-		vehicle.VehicleRegistrationNumber, vehicle.IsAvailable, vehicle.Status)
-
-	var vehicleID int
-	err = r.db.QueryRow(query, vehicle.VehicleTypeID, vehicle.VehicleName, vehicle.VehicleModel,
-		vehicle.VehicleRegistrationNumber, vehicle.IsAvailable, vehicle.Status).Scan(&vehicleID)
-
-	if err != nil {
-		// Debug: Print the error
-		fmt.Printf("RegisterVehicle - Error: %v\n", err)
-		return 0, errors.New("failed to insert vehicle")
-	}
-
-	// Debug: Print the generated vehicle ID
-	fmt.Printf("RegisterVehicle - Inserted Vehicle ID: %d\n", vehicleID)
-
-	return vehicleID, nil
-}
-
-func (r *VehicleRepository) checkDuplicateVehicle(registrationNumber string) (bool, error) {
-	query := `
-        SELECT COUNT(*) FROM vehicles WHERE vehicle_registration_number = $1;
-    `
-
-	var count int
-	err := r.db.QueryRow(query, registrationNumber).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
-}
-func (r *VehicleRepository) checkVehicleTypeExists(vehicleTypeID int) (bool, error) {
-	query := `
-        SELECT COUNT(*) FROM vehicle_types WHERE vehicle_type_id = $1;
-    `
-
-	var count int
-	err := r.db.QueryRow(query, vehicleTypeID).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
-}
-
-func (r *VehicleRepository) validateVehicle(vehicle models.VehicleRequest) error {
-	// Example: Validate status
-	validStatuses := map[string]bool{
-		"available":         true,
-		"rented":            true,
-		"under_maintenance": true,
-	}
-	if !validStatuses[vehicle.Status] {
-		return errors.New("invalid status")
-	}
-
-	// Example: Validate vehicle_type_id exists in the vehicle_types table
-	exists, err := r.checkVehicleTypeExists(vehicle.VehicleTypeID)
-	if err != nil {
-		return fmt.Errorf("failed to validate vehicle type: %v", err)
-	}
-	if !exists {
-		return errors.New("invalid vehicle type ID")
-	}
-
-	return nil
-}
-
-func (r *VehicleRepository) ListVehicles(filter models.VehicleFilter) ([]models.VehicleResponse, error) {
-	var vehicles []models.VehicleResponse
-	var args []interface{}
-	var queryBuilder strings.Builder
-
-	queryBuilder.WriteString(`
-		SELECT vehicle_id, vehicle_type_id, vehicle_name, vehicle_model, vehicle_registration_number, is_available, status
-		FROM vehicles
+	// Base query to fetch vehicles
+	baseQuery := `
+		SELECT 
+			v.vehicle_id, 
+			v.vehicle_type_id, 
+			v.vehicle_name, 
+			v.vehicle_model, 
+			v.vehicle_registration_number, 
+			v.is_available, 
+			v.status
+		FROM vehicles v
 		WHERE 1=1
-	`)
-
-	fmt.Printf("Filter Used: %+v\n", filter)
-
-	argIndex := 1
+	`
 
 	// Add filters dynamically
-	if filter.VehicleTypeID != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_type_id = $%d", argIndex))
-		args = append(args, filter.VehicleTypeID)
-		argIndex++
+	if filters.VehicleTypeID != "" {
+		baseQuery += " AND v.vehicle_type_id = " + filters.VehicleTypeID
 	}
-	if filter.IsAvailable != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND is_available = $%d", argIndex))
-		args = append(args, filter.IsAvailable)
-		argIndex++
+	if filters.VehicleName != "" {
+		baseQuery += " AND v.vehicle_name = '" + filters.VehicleName + "'"
 	}
-	if filter.VehicleName != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_name ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.VehicleName+"%")
-		argIndex++
+	if filters.VehicleModel != "" {
+		baseQuery += " AND v.vehicle_model = '" + filters.VehicleModel + "'"
 	}
-	if filter.VehicleModel != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_model ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.VehicleModel+"%")
-		argIndex++
+	if filters.VehicleRegistrationNumber != "" {
+		baseQuery += " AND v.vehicle_registration_number = '" + filters.VehicleRegistrationNumber + "'"
 	}
-	if filter.VehicleRegistrationNumber != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND vehicle_registration_number ILIKE $%d", argIndex))
-		args = append(args, "%"+filter.VehicleRegistrationNumber+"%")
-		argIndex++
+	if filters.IsAvailable != "" {
+		baseQuery += " AND v.is_available = " + filters.IsAvailable
 	}
-	if filter.Status != "" {
-		queryBuilder.WriteString(fmt.Sprintf(" AND status = $%d", argIndex))
-		args = append(args, filter.Status)
-		argIndex++
+	if filters.Status != "" {
+		baseQuery += " AND v.status = '" + filters.Status + "'"
 	}
 
-	// Apply ordering and pagination
-	queryBuilder.WriteString(fmt.Sprintf(" ORDER BY vehicle_id LIMIT $%d OFFSET $%d", argIndex+1, argIndex))
-	args = append(args, filter.Offset, filter.Limit) // Swap the order of LIMIT and OFFSET
+	// Add pagination
+	if filters.Limit > 0 {
+		baseQuery += " LIMIT " + strconv.Itoa(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		baseQuery += " OFFSET " + strconv.Itoa(filters.Offset)
+	}
 
-	query := queryBuilder.String()
-	fmt.Printf("Executing Query: %s\n", query)
-	fmt.Printf("With Args: %+v\n", args)
-
-	// Execute Query
-	rows, err := r.db.Query(query, args...)
+	// Execute the query
+	rows, err := r.db.Query(baseQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	// Parse results
+	var vehicles []models.VehicleResponse
 	for rows.Next() {
-		var vehicle models.VehicleResponse
-		if err := rows.Scan(
-			&vehicle.VehicleID, &vehicle.VehicleTypeID, &vehicle.VehicleName,
-			&vehicle.VehicleModel, &vehicle.VehicleRegistrationNumber,
-			&vehicle.IsAvailable, &vehicle.Status,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan rows: %w", err)
+		var v models.VehicleResponse
+		err := rows.Scan(
+			&v.VehicleID,
+			&v.VehicleTypeID,
+			&v.VehicleName,
+			&v.VehicleModel,
+			&v.VehicleRegistrationNumber,
+			&v.IsAvailable,
+			&v.Status,
+		)
+		if err != nil {
+			return nil, err
 		}
-		vehicles = append(vehicles, vehicle)
-	}
 
-	// Check for iteration errors
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
+		// Fetch future booking details if requested
+		if includeBookingDetails {
+			log.Printf("Fetching future booking details for vehicle ID: %d", v.VehicleID)
+			futureBookings, err := r.getFutureBookingDetails(v.VehicleID)
+			if err != nil {
+				return nil, err
+			}
+			v.FutureBookingDetails = futureBookings
+		}
+
+		vehicles = append(vehicles, v)
 	}
 
 	return vehicles, nil
+}
+
+// getFutureBookingDetails fetches future booking details for a vehicle
+func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.FutureBookingDetail, error) {
+	rows, err := r.db.Query(`
+		SELECT booking_date, number_of_days
+		FROM bookings
+		WHERE vehicle_id = $1 AND booking_date > NOW()
+		ORDER BY booking_date ASC
+	`, vehicleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var futureBookings []models.FutureBookingDetail
+	for rows.Next() {
+		var booking models.FutureBookingDetail
+		var bookingDate time.Time
+		err := rows.Scan(&bookingDate, &booking.NumberOfDays)
+		if err != nil {
+			return nil, err
+		}
+		booking.BookingDate = bookingDate.Format("2006-01-02") // Format date as YYYY-MM-DD
+		futureBookings = append(futureBookings, booking)
+	}
+
+	log.Printf("Fetched %d future bookings for vehicle ID: %d", len(futureBookings), vehicleID)
+	return futureBookings, nil
 }

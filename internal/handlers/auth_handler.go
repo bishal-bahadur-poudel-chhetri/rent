@@ -51,7 +51,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Username     string `json:"username"`
 		Password     string `json:"password"`
 		IsAdmin      bool   `json:"is_admin"`
-		CompanyCode  string `json:"company_code"` // Ensure this is a string
+		CompanyCode  string `json:"company_code"`
 		MobileNumber string `json:"mobile_number"`
 	}
 

@@ -138,54 +138,96 @@ func initDB(db *sql.DB) error {
 		return err
 	}
 	salesQuery := `
-CREATE TABLE IF NOT EXISTS sales (
-    sale_id SERIAL PRIMARY KEY,  -- Add sale_id as the primary key
-    vehicle_id INT,
-    customer_name VARCHAR(255),
-    total_amount DECIMAL(10, 2),
-    charge_per_day DECIMAL(10, 2),
-    booking_date DATE,
-    date_of_delivery DATE,
-    return_date DATE,
-    is_damaged BOOLEAN,
-    is_washed BOOLEAN,
-    is_delayed BOOLEAN,
-    number_of_days INT,
-    payment_id INT,
-    remark TEXT,
-    fuel_range_received DECIMAL(10, 2),
-    fuel_range_delivered DECIMAL(10, 2),
-    km_received DECIMAL(10, 2),
-    km_delivered DECIMAL(10, 2),
-    photo_1 VARCHAR(255),
-    photo_2 VARCHAR(255),
-    photo_3 VARCHAR(255),
-    photo_4 VARCHAR(255),
-    damage_cost DECIMAL(10, 2) DEFAULT 0.00, 
-    wash_cost DECIMAL(10, 2) DEFAULT 0.00,   
-    delay_cost DECIMAL(10, 2) DEFAULT 0.00,  
-    discount_amount DECIMAL(10, 2) DEFAULT 0.00
-);
+	CREATE TABLE IF NOT EXISTS sales (
+		sale_id SERIAL PRIMARY KEY,  
+		vehicle_id INT,
+		user_id INT NOT NULL, -- Add this line
+		customer_name VARCHAR(255),
+		total_amount DECIMAL(10, 2),
+		charge_per_day DECIMAL(10, 2),
+		booking_date DATE,
+		date_of_delivery DATE,
+		return_date DATE,
+		is_damaged BOOLEAN,
+		is_washed BOOLEAN,
+		is_delayed BOOLEAN,
+		number_of_days INT,
+		payment_id INT,
+		remark TEXT,
+		fuel_range_received DECIMAL(10, 2),
+		fuel_range_delivered DECIMAL(10, 2),
+		km_received DECIMAL(10, 2),
+		km_delivered DECIMAL(10, 2),
+		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- This will now work
+	);
 `
 	_, err = db.Exec(salesQuery)
 	if err != nil {
 		return err
 	}
 
+	vehicle_usage := `
+	CREATE TABLE IF NOT EXISTS vehicle_usage (
+    usage_id SERIAL PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    sale_id INT NOT NULL, -- Link to the specific sale
+    record_type VARCHAR(50) NOT NULL CHECK (record_type IN ('delivery', 'return')),
+    fuel_range DECIMAL(10, 2) NOT NULL, -- Fuel level at delivery or return
+    km_reading DECIMAL(10, 2) NOT NULL, -- KM reading at delivery or return
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the data was recorded
+    recorded_by INT, -- Optional: User who recorded the data
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+);
+`
+	_, err = db.Exec(vehicle_usage)
+	if err != nil {
+		return err
+	}
+
 	sale_charge := `
 	CREATE TABLE IF NOT EXISTS sales_charges (
-    charge_id SERIAL PRIMARY KEY,
-    sale_id INT NOT NULL,
-    charge_type VARCHAR(50) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+		charge_id SERIAL PRIMARY KEY,
+		sale_id INT NOT NULL,
+		charge_type VARCHAR(50) NOT NULL CHECK (charge_type IN ('damage', 'wash', 'delay', 'discount')),
+		amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
 	);
+
 	`
 	_, err = db.Exec(sale_charge)
 	if err != nil {
 		return err
 	}
 	// Create sales table
+	saleImageQuery := `
+		CREATE TABLE IF NOT EXISTS sales_videos (
+		video_id SERIAL PRIMARY KEY,
+		sale_id INT NOT NULL,
+		video_url VARCHAR(255) NOT NULL,
+		uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+	);`
+	_, err = db.Exec(saleImageQuery)
+	if err != nil {
+		return err
+	}
+	saleVideoQuery := `
+	CREATE TABLE IF NOT EXISTS sales_images (
+		image_id SERIAL PRIMARY KEY,
+		sale_id INT NOT NULL,
+		image_url VARCHAR(255) NOT NULL,
+		uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+	);`
+	_, err = db.Exec(saleVideoQuery)
+	if err != nil {
+		return err
+	}
 
 	// Create reminders table
 	remindersQuery := `

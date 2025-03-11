@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
-	"renting/internal/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -15,65 +15,90 @@ type VehicleHandler struct {
 }
 
 func NewVehicleHandler(vehicleService *services.VehicleService) *VehicleHandler {
-	return &VehicleHandler{
-		vehicleService: vehicleService,
+	return &VehicleHandler{vehicleService: vehicleService}
+}
+
+// StandardResponse defines the structure of the API response
+type StandardResponse struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"` // Optional field to send extra data with error response
+}
+
+// SuccessResponse creates a dynamic success response
+func SuccessResponse(status int, message string, data interface{}) StandardResponse {
+	// If no data is passed, set Data to nil
+	if data == nil {
+		data = struct{}{}
+	}
+	return StandardResponse{
+		Status:  status,
+		Message: message,
+		Data:    data,
 	}
 }
 
-// RegisterVehicleHandler handles vehicle registration requests
-func (h *VehicleHandler) RegisterVehicleHandler(c *gin.Context) {
-	var vehicle models.VehicleRequest
-	if err := c.ShouldBindJSON(&vehicle); err != nil {
-		// Use ErrorResponse from utils package
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
-		return
+// ErrorResponse creates a dynamic error response
+func ErrorResponse(status int, message string, data interface{}) StandardResponse {
+	return StandardResponse{
+		Status:  status,
+		Message: message,
+		Data:    data, // Send extra data if provided
 	}
-
-	vehicleID, err := h.vehicleService.RegisterVehicle(vehicle)
-	if err != nil {
-		// Use ErrorResponse from utils package
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
-		return
-	}
-
-	// Use SuccessResponse from utils package
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Vehicle registered successfully", gin.H{"vehicle_id": vehicleID}))
 }
 
-// ListVehiclesHandler lists vehicles with filters and pagination
 func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 	// Parse query parameters
-	var filter models.VehicleFilter
+	queryParams := c.Request.URL.Query()
 
-	// Bind query parameters to the filter struct
-	if err := c.ShouldBindQuery(&filter); err != nil {
-		// Use ErrorResponse from utils package
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid query parameters", nil))
+	// Log query parameters for debugging
+	log.Printf("Query Parameters: %+v", queryParams)
+
+	filters := models.VehicleFilter{
+		VehicleTypeID:             queryParams.Get("vehicle_type_id"),
+		VehicleName:               queryParams.Get("vehicle_name"),
+		VehicleModel:              queryParams.Get("vehicle_model"),
+		VehicleRegistrationNumber: queryParams.Get("vehicle_registration_number"),
+		IsAvailable:               queryParams.Get("is_available"),
+		Status:                    queryParams.Get("status"),
+	}
+
+	// Parse pagination parameters
+	if limit := queryParams.Get("limit"); limit != "" {
+		limitValue, err := strconv.Atoi(limit)
+		if err != nil {
+			response := ErrorResponse(http.StatusBadRequest, "Invalid limit value", nil)
+			c.JSON(http.StatusBadRequest, response)
+			return
+		}
+		filters.Limit = limitValue
+	}
+	if offset := queryParams.Get("offset"); offset != "" {
+		offsetValue, err := strconv.Atoi(offset)
+		if err != nil {
+			response := ErrorResponse(http.StatusBadRequest, "Invalid offset value", nil)
+			c.JSON(http.StatusBadRequest, response)
+			return
+		}
+		filters.Offset = offsetValue
+	}
+
+	// Check if booking details should be included
+	includeBookingDetails := queryParams.Get("data") == "true"
+	log.Printf("Include Booking Details: %v", includeBookingDetails)
+
+	// Fetch vehicles from the service
+	vehicles, err := h.vehicleService.GetVehicles(filters, includeBookingDetails)
+	if err != nil {
+		response := ErrorResponse(http.StatusInternalServerError, err.Error(), nil)
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
-	// Set default pagination values if not provided
-	if filter.Limit <= 0 {
-		filter.Limit = 10 // Default limit
-	}
-	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	if err != nil {
-		offset = 0
-	}
-	filter.Offset = offset
-	filter.IsAvailable = c.DefaultQuery("is_available", "true") // Default value 'true'
-	filter.VehicleName = c.DefaultQuery("vehicle_name", "")
-	filter.VehicleModel = c.DefaultQuery("vehicle_model", "")
-	filter.VehicleRegistrationNumber = c.DefaultQuery("vehicle_registration_number", "")
-	filter.Status = c.DefaultQuery("status", "")
+	// Prepare success response
+	response := SuccessResponse(http.StatusOK, "Vehicles fetched successfully", gin.H{
+		"vehicles": vehicles,
+	})
 
-	vehicles, err := h.vehicleService.ListVehicles(filter)
-	if err != nil {
-		// Use ErrorResponse from utils package
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
-		return
-	}
-
-	// Use SuccessResponse from utils package
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Vehicles fetched successfully", gin.H{"vehicles": vehicles}))
+	c.JSON(http.StatusOK, response)
 }

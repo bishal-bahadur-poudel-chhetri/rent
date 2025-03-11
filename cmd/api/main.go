@@ -28,32 +28,43 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
+	vehicleRepo := repositories.NewVehicleRepository(db)
+	saleRepo := repositories.NewSaleRepository(db)
 
 	// Initialize services
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret, cfg.TokenExpiry)
+	vehicleService := services.NewVehicleService(vehicleRepo)
+	saleService := services.NewSaleService(saleRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
-
-	vehicleRepo := repositories.NewVehicleRepository(db)
-	vehicleService := services.NewVehicleService(vehicleRepo)
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
+	saleHandler := handlers.NewSaleHandler(saleService)
 
 	// Set up router
 	router := gin.Default()
+
+	// Trust all proxies (if your app is behind a reverse proxy)
+	router.SetTrustedProxies([]string{"0.0.0.0"}) // Replace with your proxy IP(s)
 	router.Use(cors.Default())
 
 	v1 := router.Group("/api/v1")
 	{
-		v1.POST("/register", authHandler.Register) // Add the register route
+		// Public routes
+		v1.POST("/register", authHandler.Register)
 		v1.POST("/login", authHandler.Login)
+
+		// Protected routes (require JWT authentication)
 		protected := v1.Group("")
 		protected.Use(middleware.JWTAuth(cfg.JWTSecret))
 		{
+			// Vehicle routes
+			// protected.POST("/vehicle", vehicleHandler.RegisterVehicleHandler)
+			protected.GET("/vehicle", vehicleHandler.ListVehicles) // Updated to handle future booking details
 
-			protected.POST("/vehical", vehicleHandler.RegisterVehicleHandler)
-			protected.GET("/vehical", vehicleHandler.ListVehicles)
-
+			// Sale routes
+			protected.POST("/sales", saleHandler.CreateSale)
+			protected.GET("/sales/:id", saleHandler.GetSaleByID)
 		}
 	}
 
