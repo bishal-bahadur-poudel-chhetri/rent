@@ -39,7 +39,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
-	saleHandler := handlers.NewSaleHandler(saleService)
+	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 
 	// Set up router
 	router := gin.Default()

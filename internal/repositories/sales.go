@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"renting/internal/models"
 )
 
@@ -17,6 +18,8 @@ func NewSaleRepository(db *sql.DB) *SaleRepository {
 func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 	// Insert sale
 	var saleID int
+	fmt.Println("Attempting to create sale for UserID:", sale.UserID)
+
 	err := r.db.QueryRow(`
 		INSERT INTO sales (
 			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 

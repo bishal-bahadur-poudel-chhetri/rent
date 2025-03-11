@@ -158,7 +158,8 @@ func initDB(db *sql.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE 
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		 
 	);
 `
 	_, err = db.Exec(salesQuery)
