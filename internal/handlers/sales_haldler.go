@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
 	"renting/internal/utils"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +28,11 @@ func NewSaleHandler(saleService *services.SaleService, jwtSecret string) *SaleHa
 	}
 }
 
-// CreateSale handles the creation of a new sale
+// parseBool is a helper function to parse boolean values from strings
+func parseBool(value string) bool {
+	return strings.ToLower(value) == "true"
+}
+
 func (h *SaleHandler) CreateSale(c *gin.Context) {
 	// Extract user ID from the token
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
@@ -33,17 +41,197 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Parse request body
-	var sale models.Sale
-	if err := c.ShouldBindJSON(&sale); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
+	// Parse and validate vehicle_id
+	vehicleIDStr := c.PostForm("vehicle_id")
+	if vehicleIDStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Vehicle ID is required", nil))
 		return
 	}
 
-	// Assign extracted user ID
-	sale.UserID = userID
+	vehicleID, err := strconv.Atoi(vehicleIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid vehicle ID", err.Error()))
+		return
+	}
 
-	// Create sale
+	// Parse and validate other fields
+	totalAmountStr := c.PostForm("total_amount")
+	if totalAmountStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Total amount is required", nil))
+		return
+	}
+
+	totalAmount, err := strconv.ParseFloat(totalAmountStr, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid total amount", err.Error()))
+		return
+	}
+
+	chargePerDayStr := c.PostForm("charge_per_day")
+	if chargePerDayStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Charge per day is required", nil))
+		return
+	}
+
+	chargePerDay, err := strconv.ParseFloat(chargePerDayStr, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid charge per day", err.Error()))
+		return
+	}
+
+	numberOfDaysStr := c.PostForm("number_of_days")
+	if numberOfDaysStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Number of days is required", nil))
+		return
+	}
+
+	numberOfDays, err := strconv.Atoi(numberOfDaysStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid number of days", err.Error()))
+		return
+	}
+
+	paymentIDStr := c.PostForm("payment_id")
+	if paymentIDStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment ID is required", nil))
+		return
+	}
+
+	paymentID, err := strconv.Atoi(paymentIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", err.Error()))
+		return
+	}
+
+	// Validate required fields
+	if c.PostForm("customer_name") == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer name is required", nil))
+		return
+	}
+
+	// Parse dates with error handling
+	bookingDate, err := time.Parse(time.RFC3339, c.PostForm("booking_date"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid booking date", err.Error()))
+		return
+	}
+
+	dateOfDelivery, err := time.Parse(time.RFC3339, c.PostForm("date_of_delivery"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery date", err.Error()))
+		return
+	}
+
+	returnDate, err := time.Parse(time.RFC3339, c.PostForm("return_date"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return date", err.Error()))
+		return
+	}
+
+	// Parse boolean values
+	isDamaged := parseBool(c.PostForm("is_damaged"))
+	isWashed := parseBool(c.PostForm("is_washed"))
+	isDelayed := parseBool(c.PostForm("is_delayed"))
+
+	// Set default values for optional fields
+	remark := c.PostForm("remark") // Optional field
+	status := c.PostForm("status")
+	if status == "" {
+		status = "pending" // Default status
+	}
+
+	// Parse sales charges (JSON array)
+	salesChargesJSON := c.PostForm("sales_charges")
+	var salesCharges []models.SalesCharge
+	if salesChargesJSON != "" {
+		if err := json.Unmarshal([]byte(salesChargesJSON), &salesCharges); err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sales_charges format", err.Error()))
+			return
+		}
+	}
+
+	// Parse vehicle usage (JSON array)
+	vehicleUsageJSON := c.PostForm("vehicle_usage")
+	var vehicleUsage []models.VehicleUsage
+	if vehicleUsageJSON != "" {
+		if err := json.Unmarshal([]byte(vehicleUsageJSON), &vehicleUsage); err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid vehicle_usage format", err.Error()))
+			return
+		}
+	}
+
+	// Handle file uploads for images
+	var salesImages []models.SalesImage
+	imageFiles := c.Request.MultipartForm.File["sales_images"]
+	for _, fileHeader := range imageFiles {
+		file, err := fileHeader.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to open image file", err.Error()))
+			return
+		}
+		defer file.Close()
+
+		// Save the file to a storage system (e.g., local disk, cloud storage)
+		filePath := fmt.Sprintf("uploads/images/%s", fileHeader.Filename)
+		if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to save image file", err.Error()))
+			return
+		}
+
+		// Add the file path to the sale's images
+		salesImages = append(salesImages, models.SalesImage{
+			ImageURL: filePath,
+		})
+	}
+
+	// Handle file uploads for videos
+	var salesVideos []models.SalesVideo
+	videoFiles := c.Request.MultipartForm.File["sales_videos"]
+	for _, fileHeader := range videoFiles {
+		file, err := fileHeader.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to open video file", err.Error()))
+			return
+		}
+		defer file.Close()
+
+		// Save the file to a storage system (e.g., local disk, cloud storage)
+		filePath := fmt.Sprintf("uploads/videos/%s", fileHeader.Filename)
+		if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to save video file", err.Error()))
+			return
+		}
+
+		// Add the file path to the sale's videos
+		salesVideos = append(salesVideos, models.SalesVideo{
+			VideoURL: filePath,
+		})
+	}
+
+	// Create the Sale struct
+	sale := models.Sale{
+		VehicleID:      vehicleID,
+		UserID:         userID,
+		CustomerName:   c.PostForm("customer_name"),
+		TotalAmount:    totalAmount,
+		ChargePerDay:   chargePerDay,
+		BookingDate:    bookingDate,
+		DateOfDelivery: dateOfDelivery,
+		ReturnDate:     returnDate,
+		IsDamaged:      isDamaged,
+		IsWashed:       isWashed,
+		IsDelayed:      isDelayed,
+		NumberOfDays:   numberOfDays,
+		PaymentID:      paymentID,
+		Remark:         remark,
+		Status:         status,
+		SalesCharges:   salesCharges,
+		SalesImages:    salesImages,
+		SalesVideos:    salesVideos,
+		VehicleUsage:   vehicleUsage,
+	}
+
+	// Create the sale in the database
 	saleID, err := h.saleService.CreateSale(sale)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to create sale", err.Error()))
