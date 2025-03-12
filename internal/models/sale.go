@@ -3,28 +3,34 @@ package models
 import "time"
 
 type Sale struct {
-	SaleID         int            `json:"sale_id"`
-	VehicleID      int            `json:"vehicle_id"`
-	UserID         int            `json:"user_id"`
-	CustomerName   string         `json:"customer_name"`
-	TotalAmount    float64        `json:"total_amount"`
-	ChargePerDay   float64        `json:"charge_per_day"`
-	BookingDate    time.Time      `json:"booking_date"`
-	DateOfDelivery time.Time      `json:"date_of_delivery"`
-	ReturnDate     time.Time      `json:"return_date"`
-	IsDamaged      bool           `json:"is_damaged"`
-	IsWashed       bool           `json:"is_washed"`
-	IsDelayed      bool           `json:"is_delayed"`
-	NumberOfDays   int            `json:"number_of_days"`
-	PaymentID      int            `json:"payment_id"`
-	Remark         string         `json:"remark"`
-	Status         string         `json:"status"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	SalesCharges   []SalesCharge  `json:"sales_charges"` // Related sales charges
-	SalesImages    []SalesImage   `json:"sales_images"`  // Related sales images
-	SalesVideos    []SalesVideo   `json:"sales_videos"`  // Related sales videos
-	VehicleUsage   []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
+	SaleID          int            `json:"sale_id"`
+	VehicleID       int            `json:"vehicle_id"`
+	UserID          int            `json:"user_id"`
+	CustomerName    string         `json:"customer_name"`
+	Destination     string         `json:"customer_destination`
+	TotalAmount     float64        `json:"total_amount"`
+	ChargePerDay    float64        `json:"charge_per_day"`
+	BookingDate     time.Time      `json:"booking_date"`
+	DateOfDelivery  time.Time      `json:"date_of_delivery"`
+	ReturnDate      time.Time      `json:"return_date"`
+	IsDamaged       bool           `json:"is_damaged"`
+	IsWashed        bool           `json:"is_washed"`
+	IsDelayed       bool           `json:"is_delayed"`
+	NumberOfDays    int            `json:"number_of_days"`
+	PaymentID       int            `json:"payment_id"`
+	Remark          string         `json:"remark"`
+	Status          string         `json:"status"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	SalesCharges    []SalesCharge  `json:"sales_charges"` // Related sales charges
+	SalesImages     []SalesImage   `json:"sales_images"`  // Related sales images
+	SalesVideos     []SalesVideo   `json:"sales_videos"`  // Related sales videos
+	VehicleUsage    []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
+	AmountPaid      float64        `json:"amount_paid"`
+	PaymentDate     time.Time      `json:"payment_date"`
+	VerifiedByAdmin bool           `json:"verified_by_admin"`
+	PaymentType     string         `json:"payment_type"`
+	PaymentStatus   string         `json:"payment_status"`
 }
 
 type SalesCharge struct {

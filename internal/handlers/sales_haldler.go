@@ -14,13 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SaleHandler handles sales-related requests
 type SaleHandler struct {
 	saleService *services.SaleService
 	jwtSecret   string
 }
 
-// NewSaleHandler initializes a SaleHandler
 func NewSaleHandler(saleService *services.SaleService, jwtSecret string) *SaleHandler {
 	return &SaleHandler{
 		saleService: saleService,
@@ -28,7 +26,6 @@ func NewSaleHandler(saleService *services.SaleService, jwtSecret string) *SaleHa
 	}
 }
 
-// parseBool is a helper function to parse boolean values from strings
 func parseBool(value string) bool {
 	return strings.ToLower(value) == "true"
 }
@@ -38,6 +35,12 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
+		return
+	}
+
+	// Parse the multipart form
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Failed to parse form", err.Error()))
 		return
 	}
 
@@ -91,15 +94,41 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	paymentIDStr := c.PostForm("payment_id")
-	if paymentIDStr == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment ID is required", nil))
+	// Parse payment-related fields
+	amountPaidStr := c.PostForm("amount_paid")
+	if amountPaidStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Amount paid is required", nil))
 		return
 	}
 
-	paymentID, err := strconv.Atoi(paymentIDStr)
+	amountPaid, err := strconv.ParseFloat(amountPaidStr, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", err.Error()))
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid amount paid", err.Error()))
+		return
+	}
+
+	paymentDateStr := c.PostForm("payment_date")
+	if paymentDateStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment date is required", nil))
+		return
+	}
+
+	paymentDate, err := time.Parse(time.RFC3339, paymentDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment date", err.Error()))
+		return
+	}
+
+	verifiedByAdmin := parseBool(c.PostForm("verified_by_admin"))
+	paymentType := c.PostForm("payment_type")
+	if paymentType == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment type is required", nil))
+		return
+	}
+
+	paymentStatus := c.PostForm("payment_status")
+	if paymentStatus == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment status is required", nil))
 		return
 	}
 
@@ -108,7 +137,10 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer name is required", nil))
 		return
 	}
-
+	if c.PostForm("customer_destination") == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer Destination is required", nil))
+		return
+	}
 	// Parse dates with error handling
 	bookingDate, err := time.Parse(time.RFC3339, c.PostForm("booking_date"))
 	if err != nil {
@@ -171,14 +203,12 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		}
 		defer file.Close()
 
-		// Save the file to a storage system (e.g., local disk, cloud storage)
 		filePath := fmt.Sprintf("uploads/images/%s", fileHeader.Filename)
 		if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
 			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to save image file", err.Error()))
 			return
 		}
 
-		// Add the file path to the sale's images
 		salesImages = append(salesImages, models.SalesImage{
 			ImageURL: filePath,
 		})
@@ -195,14 +225,12 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		}
 		defer file.Close()
 
-		// Save the file to a storage system (e.g., local disk, cloud storage)
 		filePath := fmt.Sprintf("uploads/videos/%s", fileHeader.Filename)
 		if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
 			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to save video file", err.Error()))
 			return
 		}
 
-		// Add the file path to the sale's videos
 		salesVideos = append(salesVideos, models.SalesVideo{
 			VideoURL: filePath,
 		})
@@ -213,6 +241,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		VehicleID:      vehicleID,
 		UserID:         userID,
 		CustomerName:   c.PostForm("customer_name"),
+		Destination:    c.PostForm("customer_destination"),
 		TotalAmount:    totalAmount,
 		ChargePerDay:   chargePerDay,
 		BookingDate:    bookingDate,
@@ -222,13 +251,19 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		IsWashed:       isWashed,
 		IsDelayed:      isDelayed,
 		NumberOfDays:   numberOfDays,
-		PaymentID:      paymentID,
 		Remark:         remark,
 		Status:         status,
 		SalesCharges:   salesCharges,
 		SalesImages:    salesImages,
 		SalesVideos:    salesVideos,
 		VehicleUsage:   vehicleUsage,
+
+		// Payment-related fields
+		AmountPaid:      amountPaid,
+		PaymentDate:     paymentDate,
+		VerifiedByAdmin: verifiedByAdmin,
+		PaymentType:     paymentType,
+		PaymentStatus:   paymentStatus,
 	}
 
 	// Create the sale in the database
@@ -242,7 +277,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", gin.H{"sale_id": saleID}))
 }
 
-// GetSaleByID retrieves a sale by ID
 func (h *SaleHandler) GetSaleByID(c *gin.Context) {
 	// Convert sale ID from string to int
 	saleID, err := strconv.Atoi(c.Param("id"))

@@ -128,7 +128,7 @@ func initDB(db *sql.DB) error {
 		payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
 		verified_by_admin BOOLEAN DEFAULT FALSE,
 		remark TEXT,
-		user_id INT NOT NULL,
+		user_id INT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);

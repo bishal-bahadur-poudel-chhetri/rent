@@ -12,7 +12,7 @@ import (
 type UserRepository interface {
 	FindByMobileAndCompanyCode(ctx context.Context, mobileNumber, companyCode string) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
-	GetCompanyIDByCode(ctx context.Context, companyCode string) (int, error) // New method
+	GetCompanyIDByCode(ctx context.Context, companyCode string) (int, error)
 }
 type userRepository struct {
 	db *sql.DB
@@ -44,7 +44,7 @@ func (r *userRepository) FindByMobileAndCompanyCode(ctx context.Context, mobileN
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // User not found
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *userRepository) GetCompanyIDByCode(ctx context.Context, companyCode str
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) error {
-	// Print query and parameters for debugging
+
 	fmt.Printf("Executing query: INSERT INTO users (username, password, is_admin, company_id, mobile_number) "+
 		"VALUES ('%s', '%s', %v, %d, '%s')\n",
 		user.Username, user.Password, user.IsAdmin, user.CompanyID, user.MobileNumber)
@@ -90,12 +90,11 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 		user.MobileNumber,
 	).Scan(&user.ID)
 	if err != nil {
-		// You can log the error for further investigation
+
 		log.Printf("Error executing query: %v\n", err)
 		return err
 	}
 
-	// Print the generated user ID
 	fmt.Printf("User created with ID: %d\n", user.ID)
 
 	return nil

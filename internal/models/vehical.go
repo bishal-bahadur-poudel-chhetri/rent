@@ -39,3 +39,9 @@ type VehicleFilter struct {
 	Limit                     int    `json:"limit"`
 	Offset                    int    `json:"offset"`
 }
+
+// FileMetadata represents metadata for uploaded files
+type FileMetadata struct {
+	FileName string `json:"file_name"` // Name of the file
+	FilePath string `json:"file_path"` // Path where the file is stored
+}
