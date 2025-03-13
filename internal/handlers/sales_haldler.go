@@ -94,44 +94,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Parse payment-related fields
-	amountPaidStr := c.PostForm("amount_paid")
-	if amountPaidStr == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Amount paid is required", nil))
-		return
-	}
-
-	amountPaid, err := strconv.ParseFloat(amountPaidStr, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid amount paid", err.Error()))
-		return
-	}
-
-	paymentDateStr := c.PostForm("payment_date")
-	if paymentDateStr == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment date is required", nil))
-		return
-	}
-
-	paymentDate, err := time.Parse(time.RFC3339, paymentDateStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment date", err.Error()))
-		return
-	}
-
-	verifiedByAdmin := parseBool(c.PostForm("verified_by_admin"))
-	paymentType := c.PostForm("payment_type")
-	if paymentType == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment type is required", nil))
-		return
-	}
-
-	paymentStatus := c.PostForm("payment_status")
-	if paymentStatus == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment status is required", nil))
-		return
-	}
-
 	// Validate required fields
 	if c.PostForm("customer_name") == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer name is required", nil))
@@ -141,6 +103,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer Destination is required", nil))
 		return
 	}
+
 	// Parse dates with error handling
 	bookingDate, err := time.Parse(time.RFC3339, c.PostForm("booking_date"))
 	if err != nil {
@@ -170,6 +133,16 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	status := c.PostForm("status")
 	if status == "" {
 		status = "pending" // Default status
+	}
+
+	// Parse payments (JSON array)
+	paymentsJSON := c.PostForm("payments")
+	var payments []models.Payment
+	if paymentsJSON != "" {
+		if err := json.Unmarshal([]byte(paymentsJSON), &payments); err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payments format", err.Error()))
+			return
+		}
 	}
 
 	// Parse sales charges (JSON array)
@@ -253,17 +226,11 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		NumberOfDays:   numberOfDays,
 		Remark:         remark,
 		Status:         status,
-		SalesCharges:   salesCharges,
-		SalesImages:    salesImages,
-		SalesVideos:    salesVideos,
-		VehicleUsage:   vehicleUsage,
-
-		// Payment-related fields
-		AmountPaid:      amountPaid,
-		PaymentDate:     paymentDate,
-		VerifiedByAdmin: verifiedByAdmin,
-		PaymentType:     paymentType,
-		PaymentStatus:   paymentStatus,
+		Payments:       payments,     // Include payments
+		SalesCharges:   salesCharges, // Include sales charges
+		SalesImages:    salesImages,  // Include sales images
+		SalesVideos:    salesVideos,  // Include sales videos
+		VehicleUsage:   vehicleUsage, // Include vehicle usage
 	}
 
 	// Create the sale in the database
