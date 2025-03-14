@@ -91,9 +91,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-<<<<<<< HEAD
-	// Validate required fields
-=======
 	amountPaidStr := c.PostForm("amount_paid")
 	if amountPaidStr == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Amount paid is required", nil))
@@ -112,7 +109,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	if c.PostForm("customer_name") == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer name is required", nil))
 		return
@@ -122,10 +118,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-<<<<<<< HEAD
-	// Parse dates with error handling
-=======
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	bookingDate, err := time.Parse(time.RFC3339, c.PostForm("booking_date"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid booking date", err.Error()))
@@ -154,20 +146,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		status = "pending"
 	}
 
-<<<<<<< HEAD
-	// Parse payments (JSON array)
-	paymentsJSON := c.PostForm("payments")
-	var payments []models.Payment
-	if paymentsJSON != "" {
-		if err := json.Unmarshal([]byte(paymentsJSON), &payments); err != nil {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payments format", err.Error()))
-			return
-		}
-	}
-
-	// Parse sales charges (JSON array)
-=======
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	salesChargesJSON := c.PostForm("sales_charges")
 	fmt.Println("Raw sales_charges JSON:", salesChargesJSON)
 
@@ -256,19 +234,11 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		NumberOfDays:   numberOfDays,
 		Remark:         remark,
 		Status:         status,
-<<<<<<< HEAD
-		Payments:       payments,     // Include payments
-		SalesCharges:   salesCharges, // Include sales charges
-		SalesImages:    salesImages,  // Include sales images
-		SalesVideos:    salesVideos,  // Include sales videos
-		VehicleUsage:   vehicleUsage, // Include vehicle usage
-=======
 		SalesCharges:   salesCharges,
 		SalesImages:    salesImages,
 		SalesVideos:    salesVideos,
 		VehicleUsage:   vehicleUsage,
 		Payments:       payments,
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	}
 
 	saleID, err := h.saleService.CreateSale(sale)

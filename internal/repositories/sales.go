@@ -28,11 +28,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		}
 	}()
 
-<<<<<<< HEAD
-	// Step 1: Insert sale details into the sales table
-=======
 	// Insert sale
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	var saleID int
 	err = tx.QueryRow(`
 		INSERT INTO sales (
@@ -48,25 +44,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		return 0, fmt.Errorf("failed to insert sale: %v", err)
 	}
 
-<<<<<<< HEAD
-	// Step 2: Insert payment details into the payments table
-	for _, payment := range sale.Payments {
-		_, err := tx.Exec(`
-			INSERT INTO payments (
-				sale_id, payment_type, amount_paid, payment_date, 
-				payment_status, verified_by_admin, remark
-			) VALUES ($1, $2, $3, $4, $5, $6, $7)
-		`, saleID, payment.PaymentType, payment.AmountPaid, payment.PaymentDate,
-			payment.PaymentStatus, payment.VerifiedByAdmin, payment.Remark)
-		if err != nil {
-			return 0, fmt.Errorf("failed to insert payment: %v", err)
-		}
-	}
-
-	// Step 3: Insert sales charges
-=======
 	// Insert sales charges
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	for _, charge := range sale.SalesCharges {
 		_, err := tx.Exec(`
 			INSERT INTO sales_charges (sale_id, charge_type, amount)
@@ -135,19 +113,8 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 }
 
 func (r *SaleRepository) GetSaleByID(saleID int) (*models.Sale, error) {
-	// Fetch sale details
 	var sale models.Sale
 	err := r.db.QueryRow(`
-<<<<<<< HEAD
-		SELECT sale_id, vehicle_id, user_id, customer_name, customer_destination, total_amount, charge_per_day, 
-		booking_date, date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
-		remark, status, created_at, updated_at
-		FROM sales WHERE sale_id = $1
-	`, saleID).Scan(
-		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.TotalAmount,
-		&sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged,
-		&sale.IsWashed, &sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
-=======
 	SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 	date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
 	remark, status, created_at, updated_at
@@ -156,23 +123,11 @@ func (r *SaleRepository) GetSaleByID(saleID int) (*models.Sale, error) {
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
 		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
 		&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	)
 	if err != nil {
 		return nil, err
 	}
 
-<<<<<<< HEAD
-	// Fetch payments associated with the sale
-	payments, err := r.getPayments(saleID)
-	if err != nil {
-		return nil, err
-	}
-	sale.Payments = payments
-
-	// Fetch related data
-=======
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 	sale.SalesCharges, _ = r.getSalesCharges(saleID)
 	sale.SalesImages, _ = r.getSalesImages(saleID)
 	sale.SalesVideos, _ = r.getSalesVideos(saleID)
@@ -212,36 +167,6 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 	return payments, nil
 }
 
-<<<<<<< HEAD
-// Helper function to fetch payments
-func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
-	rows, err := r.db.Query(`
-		SELECT payment_id, payment_type, amount_paid, payment_date, 
-		payment_status, verified_by_admin, remark, created_at, updated_at
-		FROM payments WHERE sale_id = $1
-	`, saleID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var payments []models.Payment
-	for rows.Next() {
-		var payment models.Payment
-		err := rows.Scan(
-			&payment.PaymentID, &payment.PaymentType, &payment.AmountPaid, &payment.PaymentDate,
-			&payment.PaymentStatus, &payment.VerifiedByAdmin, &payment.Remark, &payment.CreatedAt, &payment.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		payments = append(payments, payment)
-	}
-	return payments, nil
-}
-
-=======
->>>>>>> 6e1f2f9 (update on sales and vehical api)
 func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, error) {
 	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount, created_at, updated_at FROM sales_charges WHERE sale_id = $1", saleID)
 	if err != nil {
