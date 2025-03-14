@@ -118,11 +118,35 @@ func initDB(db *sql.DB) error {
 		return err
 	}
 
+<<<<<<< HEAD
+=======
+	// Create payments table
+	paymentsQuery := `
+	CREATE TABLE IF NOT EXISTS payments (
+		payment_id SERIAL PRIMARY KEY,
+		payment_type VARCHAR(50) NOT NULL,
+		amount_paid DECIMAL(10,2) NOT NULL,
+		payment_date TIMESTAMP NOT NULL,
+		payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
+		verified_by_admin BOOLEAN DEFAULT FALSE,
+		remark TEXT,
+		user_id INT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		sale_id INT NOT NULL,
+		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+	);
+	`
+	_, err = db.Exec(paymentsQuery)
+	if err != nil {
+		return err
+	}
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	salesQuery := `
 	CREATE TABLE IF NOT EXISTS sales (
 		sale_id SERIAL PRIMARY KEY,  
 		vehicle_id INT,
-		user_id INT NOT NULL, -- Add this line
+		user_id INT NOT NULL, 
 		customer_name VARCHAR(255),
 		customer_destination VARCHAR(255),
 		total_amount DECIMAL(10, 2),
@@ -175,12 +199,14 @@ func initDB(db *sql.DB) error {
 CREATE TABLE IF NOT EXISTS vehicle_usage (
     usage_id SERIAL PRIMARY KEY,
     vehicle_id INT NOT NULL,
+	sale_id int,
     record_type VARCHAR(50) NOT NULL CHECK (record_type IN ('delivery', 'return')),
     fuel_range DECIMAL(10, 2) NOT NULL, -- Fuel level at delivery or return
     km_reading DECIMAL(10, 2) NOT NULL, -- KM reading at delivery or return
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the data was recorded
     recorded_by INT, 
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+	FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
 );
 `
 	_, err = db.Exec(vehicle_usage)

@@ -7,7 +7,11 @@ type Sale struct {
 	VehicleID      int            `json:"vehicle_id"`
 	UserID         int            `json:"user_id"`
 	CustomerName   string         `json:"customer_name"`
+<<<<<<< HEAD
 	Destination    string         `json:"customer_destination"` // Fixed typo in the tag
+=======
+	Destination    string         `json:"customer_destination"`
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	TotalAmount    float64        `json:"total_amount"`
 	ChargePerDay   float64        `json:"charge_per_day"`
 	BookingDate    time.Time      `json:"booking_date"`
@@ -21,11 +25,15 @@ type Sale struct {
 	Status         string         `json:"status"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
+<<<<<<< HEAD
 	Payments       []Payment      `json:"payments"`      // List of payments associated with the sale
+=======
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	SalesCharges   []SalesCharge  `json:"sales_charges"` // Related sales charges
 	SalesImages    []SalesImage   `json:"sales_images"`  // Related sales images
 	SalesVideos    []SalesVideo   `json:"sales_videos"`  // Related sales videos
 	VehicleUsage   []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
+<<<<<<< HEAD
 }
 
 type Payment struct {
@@ -39,6 +47,9 @@ type Payment struct {
 	Remark          string    `json:"remark"`            // Additional notes about the payment
 	CreatedAt       time.Time `json:"created_at"`        // Timestamp when the payment was created
 	UpdatedAt       time.Time `json:"updated_at"`        // Timestamp when the payment was last updated
+=======
+	Payments       []Payment      `json:"payments"`      // Related payments
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 }
 
 type SalesCharge struct {
@@ -72,4 +83,18 @@ type VehicleUsage struct {
 	KmReading  float64   `json:"km_reading"`  // Kilometer reading at the time of recording
 	RecordedAt time.Time `json:"recorded_at"` // Timestamp when the usage was recorded
 	RecordedBy int       `json:"recorded_by"` // ID of the user who recorded the usage
+}
+
+type Payment struct {
+	PaymentID       int       `json:"payment_id"`
+	PaymentType     string    `json:"payment_type"`
+	AmountPaid      float64   `json:"amount_paid"`
+	PaymentDate     time.Time `json:"payment_date"`
+	PaymentStatus   string    `json:"payment_status"` // Pending, Completed, Failed
+	VerifiedByAdmin bool      `json:"verified_by_admin"`
+	Remark          string    `json:"remark"`
+	UserID          int       `json:"user_id"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	SaleID          int       `json:"sale_id"` // Foreign key to Sale
 }

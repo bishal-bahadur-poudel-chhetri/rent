@@ -55,6 +55,7 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 	log.Printf("Query Parameters: %+v", queryParams)
 
 	filters := models.VehicleFilter{
+		VehicleID:                 queryParams.Get("vehicle_id"),
 		VehicleTypeID:             queryParams.Get("vehicle_type_id"),
 		VehicleName:               queryParams.Get("vehicle_name"),
 		VehicleModel:              queryParams.Get("vehicle_model"),
@@ -85,10 +86,11 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 
 	// Check if booking details should be included
 	includeBookingDetails := queryParams.Get("data") == "true"
-	log.Printf("Include Booking Details: %v", includeBookingDetails)
+	includeSaleid := queryParams.Get("saleid") == "true"
+	log.Printf("Include Booking Details: %v", includeSaleid)
 
 	// Fetch vehicles from the service
-	vehicles, err := h.vehicleService.GetVehicles(filters, includeBookingDetails)
+	vehicles, err := h.vehicleService.GetVehicles(filters, includeBookingDetails, includeSaleid)
 	if err != nil {
 		response := ErrorResponse(http.StatusInternalServerError, err.Error(), nil)
 		c.JSON(http.StatusInternalServerError, response)

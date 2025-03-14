@@ -31,20 +31,18 @@ func parseBool(value string) bool {
 }
 
 func (h *SaleHandler) CreateSale(c *gin.Context) {
-	// Extract user ID from the token
+
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
 		return
 	}
 
-	// Parse the multipart form
-	if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Failed to parse form", err.Error()))
 		return
 	}
 
-	// Parse and validate vehicle_id
 	vehicleIDStr := c.PostForm("vehicle_id")
 	if vehicleIDStr == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Vehicle ID is required", nil))
@@ -57,7 +55,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Parse and validate other fields
 	totalAmountStr := c.PostForm("total_amount")
 	if totalAmountStr == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Total amount is required", nil))
@@ -94,7 +91,28 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
+<<<<<<< HEAD
 	// Validate required fields
+=======
+	amountPaidStr := c.PostForm("amount_paid")
+	if amountPaidStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Amount paid is required", nil))
+		return
+	}
+
+	paymentDateStr := c.PostForm("payment_date")
+	if paymentDateStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment date is required", nil))
+		return
+	}
+
+	paymentStatus := c.PostForm("payment_status")
+	if paymentStatus == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment status is required", nil))
+		return
+	}
+
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	if c.PostForm("customer_name") == "" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Customer name is required", nil))
 		return
@@ -104,7 +122,10 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
+<<<<<<< HEAD
 	// Parse dates with error handling
+=======
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	bookingDate, err := time.Parse(time.RFC3339, c.PostForm("booking_date"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid booking date", err.Error()))
@@ -123,18 +144,17 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Parse boolean values
 	isDamaged := parseBool(c.PostForm("is_damaged"))
 	isWashed := parseBool(c.PostForm("is_washed"))
 	isDelayed := parseBool(c.PostForm("is_delayed"))
 
-	// Set default values for optional fields
-	remark := c.PostForm("remark") // Optional field
+	remark := c.PostForm("remark")
 	status := c.PostForm("status")
 	if status == "" {
-		status = "pending" // Default status
+		status = "pending"
 	}
 
+<<<<<<< HEAD
 	// Parse payments (JSON array)
 	paymentsJSON := c.PostForm("payments")
 	var payments []models.Payment
@@ -146,16 +166,20 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	}
 
 	// Parse sales charges (JSON array)
+=======
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	salesChargesJSON := c.PostForm("sales_charges")
+	fmt.Println("Raw sales_charges JSON:", salesChargesJSON)
+
 	var salesCharges []models.SalesCharge
 	if salesChargesJSON != "" {
 		if err := json.Unmarshal([]byte(salesChargesJSON), &salesCharges); err != nil {
+			fmt.Println("Error unmarshaling sales_charges:", err)
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sales_charges format", err.Error()))
 			return
 		}
 	}
 
-	// Parse vehicle usage (JSON array)
 	vehicleUsageJSON := c.PostForm("vehicle_usage")
 	var vehicleUsage []models.VehicleUsage
 	if vehicleUsageJSON != "" {
@@ -165,7 +189,15 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		}
 	}
 
-	// Handle file uploads for images
+	paymentJSON := c.PostForm("payments")
+	var payments []models.Payment
+	if paymentJSON != "" {
+		if err := json.Unmarshal([]byte(paymentJSON), &payments); err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payments format", err.Error()))
+			return
+		}
+	}
+
 	var salesImages []models.SalesImage
 	imageFiles := c.Request.MultipartForm.File["sales_images"]
 	for _, fileHeader := range imageFiles {
@@ -187,7 +219,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		})
 	}
 
-	// Handle file uploads for videos
 	var salesVideos []models.SalesVideo
 	videoFiles := c.Request.MultipartForm.File["sales_videos"]
 	for _, fileHeader := range videoFiles {
@@ -209,7 +240,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		})
 	}
 
-	// Create the Sale struct
 	sale := models.Sale{
 		VehicleID:      vehicleID,
 		UserID:         userID,
@@ -226,45 +256,48 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		NumberOfDays:   numberOfDays,
 		Remark:         remark,
 		Status:         status,
+<<<<<<< HEAD
 		Payments:       payments,     // Include payments
 		SalesCharges:   salesCharges, // Include sales charges
 		SalesImages:    salesImages,  // Include sales images
 		SalesVideos:    salesVideos,  // Include sales videos
 		VehicleUsage:   vehicleUsage, // Include vehicle usage
+=======
+		SalesCharges:   salesCharges,
+		SalesImages:    salesImages,
+		SalesVideos:    salesVideos,
+		VehicleUsage:   vehicleUsage,
+		Payments:       payments,
+>>>>>>> 6e1f2f9 (update on sales and vehical api)
 	}
 
-	// Create the sale in the database
 	saleID, err := h.saleService.CreateSale(sale)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to create sale", err.Error()))
 		return
 	}
 
-	// Return success response
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", gin.H{"sale_id": saleID}))
 }
 
 func (h *SaleHandler) GetSaleByID(c *gin.Context) {
-	// Convert sale ID from string to int
+
 	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
 		return
 	}
 
-	// Fetch sale
 	sale, err := h.saleService.GetSaleByID(saleID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to fetch sale", err.Error()))
 		return
 	}
 
-	// Check if sale exists
 	if sale == nil {
 		c.JSON(http.StatusNotFound, utils.ErrorResponse(http.StatusNotFound, "Sale not found", nil))
 		return
 	}
 
-	// Return success response
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale fetched successfully", sale))
 }

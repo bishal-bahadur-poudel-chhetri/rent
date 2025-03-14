@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"renting/internal/models"
 	"strconv"
@@ -16,9 +17,9 @@ func NewVehicleRepository(db *sql.DB) *VehicleRepository {
 	return &VehicleRepository{db: db}
 }
 
-func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBookingDetails bool) ([]models.VehicleResponse, error) {
+func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBookingDetails bool, includeSaleid bool) ([]models.VehicleResponse, error) {
 	// Log filters and includeBookingDetails for debugging
-	log.Printf("Fetching vehicles with filters: %+v, includeBookingDetails: %v", filters, includeBookingDetails)
+	log.Printf("Fetching vehicles with filters: %+v, includeBookingDetails: %v, includeSaleid: %v", filters, includeBookingDetails, includeSaleid)
 
 	// Base query to fetch vehicles
 	baseQuery := `
@@ -35,6 +36,9 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 	`
 
 	// Add filters dynamically
+	if filters.VehicleID != "" {
+		baseQuery += " AND v.vehicle_id = " + filters.VehicleID
+	}
 	if filters.VehicleTypeID != "" {
 		baseQuery += " AND v.vehicle_type_id = " + filters.VehicleTypeID
 	}
@@ -95,6 +99,15 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 			v.FutureBookingDetails = futureBookings
 		}
 
+		if includeSaleid {
+			log.Printf("Fetching sale ID for vehicle ID: %d", v.VehicleID)
+			saleID, err := r.getMostRecentSaleID(v.VehicleID)
+			if err != nil {
+				return nil, err
+			}
+			v.SaleID = saleID
+		}
+
 		vehicles = append(vehicles, v)
 	}
 
@@ -104,10 +117,10 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 // getFutureBookingDetails fetches future booking details for a vehicle
 func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.FutureBookingDetail, error) {
 	rows, err := r.db.Query(`
-		SELECT booking_date, number_of_days
-		FROM bookings
-		WHERE vehicle_id = $1 AND booking_date > NOW()
-		ORDER BY booking_date ASC
+		SELECT date_of_delivery, number_of_days
+		FROM sales
+		WHERE vehicle_id = $1 AND date_of_delivery > NOW()
+		ORDER BY date_of_delivery ASC
 	`, vehicleID)
 	if err != nil {
 		return nil, err
@@ -122,10 +135,29 @@ func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.Fut
 		if err != nil {
 			return nil, err
 		}
-		booking.BookingDate = bookingDate.Format("2006-01-02") // Format date as YYYY-MM-DD
+		booking.DeliveryDate = bookingDate.Format("2006-01-02") // Format date as YYYY-MM-DD
 		futureBookings = append(futureBookings, booking)
 	}
 
 	log.Printf("Fetched %d future bookings for vehicle ID: %d", len(futureBookings), vehicleID)
 	return futureBookings, nil
+}
+
+// getMostRecentSaleID fetches the most recent sale ID for a vehicle
+func (r *VehicleRepository) getMostRecentSaleID(vehicleID int) (int, error) {
+	fmt.Print(vehicleID)
+	var saleID int
+	err := r.db.QueryRow(`
+		SELECT sale_id
+		FROM sales
+		WHERE vehicle_id = $1 and status='active'
+	`, vehicleID).Scan(&saleID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+
+			return 0, nil
+		}
+		return 0, err
+	}
+	return saleID, nil
 }

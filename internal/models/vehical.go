@@ -10,11 +10,12 @@ type VehicleResponse struct {
 	IsAvailable               bool                  `json:"is_available"`
 	Status                    string                `json:"status"`
 	FutureBookingDetails      []FutureBookingDetail `json:"future_booking_details,omitempty"` // List of future bookings
+	SaleID                    int                   `json:"sale_id"`
 }
 
 // FutureBookingDetail represents future booking details
 type FutureBookingDetail struct {
-	BookingDate  string `json:"booking_date"`
+	DeliveryDate string `json:"date_of_delivery"`
 	NumberOfDays int    `json:"number_of_days"` // Number of days until the booking date
 }
 
@@ -30,6 +31,7 @@ type VehicleRequest struct {
 
 // VehicleFilter is the filter model for listing vehicles
 type VehicleFilter struct {
+	VehicleID                 string `json:vehicle_id`
 	VehicleTypeID             string `json:"vehicle_type_id"`
 	VehicleName               string `json:"vehicle_name"`
 	VehicleModel              string `json:"vehicle_model"`
