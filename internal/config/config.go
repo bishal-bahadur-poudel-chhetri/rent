@@ -118,27 +118,6 @@ func initDB(db *sql.DB) error {
 		return err
 	}
 
-	// Create payments table
-	paymentsQuery := `
-	CREATE TABLE IF NOT EXISTS payments (
-		payment_id SERIAL PRIMARY KEY,
-		payment_type VARCHAR(50) NOT NULL,
-		amount_paid DECIMAL(10,2) NOT NULL,
-		payment_date TIMESTAMP NOT NULL,
-		payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
-		verified_by_admin BOOLEAN DEFAULT FALSE,
-		remark TEXT,
-		user_id INT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		sale_id INT NOT NULL,
-		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
-	);
-	`
-	_, err = db.Exec(paymentsQuery)
-	if err != nil {
-		return err
-	}
 	salesQuery := `
 	CREATE TABLE IF NOT EXISTS sales (
 		sale_id SERIAL PRIMARY KEY,  
@@ -166,6 +145,27 @@ func initDB(db *sql.DB) error {
 	);
 `
 	_, err = db.Exec(salesQuery)
+	if err != nil {
+		return err
+	}
+	// Create payments table
+	paymentsQuery := `
+		CREATE TABLE IF NOT EXISTS payments (
+			payment_id SERIAL PRIMARY KEY,
+			payment_type VARCHAR(50) NOT NULL,
+			amount_paid DECIMAL(10,2) NOT NULL,
+			payment_date TIMESTAMP NOT NULL,
+			payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
+			verified_by_admin BOOLEAN DEFAULT FALSE,
+			remark TEXT,
+			user_id INT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			sale_id INT NOT NULL,
+			FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+		);
+		`
+	_, err = db.Exec(paymentsQuery)
 	if err != nil {
 		return err
 	}
@@ -256,3 +256,4 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
+

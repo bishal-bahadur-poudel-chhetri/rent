@@ -18,16 +18,14 @@ func NewVehicleHandler(vehicleService *services.VehicleService) *VehicleHandler 
 	return &VehicleHandler{vehicleService: vehicleService}
 }
 
-// StandardResponse defines the structure of the API response
 type StandardResponse struct {
 	Status  int         `json:"status"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"` // Optional field to send extra data with error response
+	Data    interface{} `json:"data,omitempty"`
 }
 
-// SuccessResponse creates a dynamic success response
 func SuccessResponse(status int, message string, data interface{}) StandardResponse {
-	// If no data is passed, set Data to nil
+
 	if data == nil {
 		data = struct{}{}
 	}
@@ -38,20 +36,18 @@ func SuccessResponse(status int, message string, data interface{}) StandardRespo
 	}
 }
 
-// ErrorResponse creates a dynamic error response
 func ErrorResponse(status int, message string, data interface{}) StandardResponse {
 	return StandardResponse{
 		Status:  status,
 		Message: message,
-		Data:    data, // Send extra data if provided
+		Data:    data,
 	}
 }
 
 func (h *VehicleHandler) ListVehicles(c *gin.Context) {
-	// Parse query parameters
+
 	queryParams := c.Request.URL.Query()
 
-	// Log query parameters for debugging
 	log.Printf("Query Parameters: %+v", queryParams)
 
 	filters := models.VehicleFilter{
@@ -64,7 +60,6 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 		Status:                    queryParams.Get("status"),
 	}
 
-	// Parse pagination parameters
 	if limit := queryParams.Get("limit"); limit != "" {
 		limitValue, err := strconv.Atoi(limit)
 		if err != nil {
@@ -84,12 +79,10 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 		filters.Offset = offsetValue
 	}
 
-	// Check if booking details should be included
 	includeBookingDetails := queryParams.Get("data") == "true"
-	includeSaleid := queryParams.Get("saleid") == "true"
+	includeSaleid := queryParams.Get("rentedSaleId") == "true"
 	log.Printf("Include Booking Details: %v", includeSaleid)
 
-	// Fetch vehicles from the service
 	vehicles, err := h.vehicleService.GetVehicles(filters, includeBookingDetails, includeSaleid)
 	if err != nil {
 		response := ErrorResponse(http.StatusInternalServerError, err.Error(), nil)
@@ -97,7 +90,6 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 		return
 	}
 
-	// Prepare success response
 	response := SuccessResponse(http.StatusOK, "Vehicles fetched successfully", gin.H{
 		"vehicles": vehicles,
 	})

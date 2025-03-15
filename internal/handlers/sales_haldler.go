@@ -31,7 +31,6 @@ func parseBool(value string) bool {
 }
 
 func (h *SaleHandler) CreateSale(c *gin.Context) {
-
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
@@ -97,11 +96,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	paymentDateStr := c.PostForm("payment_date")
-	if paymentDateStr == "" {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Payment date is required", nil))
-		return
-	}
+	// Use current date and time for payment_date
+	paymentDate := time.Now()
 
 	paymentStatus := c.PostForm("payment_status")
 	if paymentStatus == "" {
@@ -147,7 +143,6 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	}
 
 	salesChargesJSON := c.PostForm("sales_charges")
-	fmt.Println("Raw sales_charges JSON:", salesChargesJSON)
 
 	var salesCharges []models.SalesCharge
 	if salesChargesJSON != "" {
@@ -175,6 +170,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 			return
 		}
 	}
+	fmt.Println("Raw payment JSON:", paymentJSON)
 
 	var salesImages []models.SalesImage
 	imageFiles := c.Request.MultipartForm.File["sales_images"]
@@ -239,6 +235,11 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		SalesVideos:    salesVideos,
 		VehicleUsage:   vehicleUsage,
 		Payments:       payments,
+	}
+
+	// Set payment_date to the current timestamp for all payments
+	for i := range sale.Payments {
+		sale.Payments[i].PaymentDate = paymentDate
 	}
 
 	saleID, err := h.saleService.CreateSale(sale)

@@ -168,7 +168,7 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 }
 
 func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, error) {
-	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount, created_at, updated_at FROM sales_charges WHERE sale_id = $1", saleID)
+	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount FROM sales_charges WHERE sale_id = $1", saleID)
 	if err != nil {
 		return nil, err
 	}
