@@ -28,6 +28,9 @@ func main() {
 	userRepo := repositories.NewUserRepository(db)
 	vehicleRepo := repositories.NewVehicleRepository(db)
 	saleRepo := repositories.NewSaleRepository(db)
+	returnRepo := repositories.NewReturnRepository(db)
+	returnService := services.NewReturnService(returnRepo)
+	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
 
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret, cfg.TokenExpiry)
 	vehicleService := services.NewVehicleService(vehicleRepo)
@@ -57,6 +60,7 @@ func main() {
 		{
 
 			protected.GET("/vehicle", vehicleHandler.ListVehicles)
+			protected.POST("/sales/:id/return", returnHandler.CreateReturn)
 
 			protected.POST("/sales", saleHandler.CreateSale)
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)

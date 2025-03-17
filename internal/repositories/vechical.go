@@ -29,7 +29,8 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 			v.vehicle_model, 
 			v.vehicle_registration_number, 
 			v.is_available, 
-			v.status
+			v.status,
+			v.image_name
 		FROM vehicles v
 		WHERE 1=1
 	`
@@ -71,6 +72,7 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 
 	var vehicles []models.VehicleResponse
 	for rows.Next() {
+
 		var v models.VehicleResponse
 		err := rows.Scan(
 			&v.VehicleID,
@@ -80,6 +82,7 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 			&v.VehicleRegistrationNumber,
 			&v.IsAvailable,
 			&v.Status,
+			&v.SalesImage,
 		)
 		if err != nil {
 			return nil, err
