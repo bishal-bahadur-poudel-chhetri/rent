@@ -17,6 +17,6 @@ func (s *SaleService) CreateSale(sale models.Sale) (int, error) {
 	return s.saleRepo.CreateSale(sale)
 }
 
-func (s *SaleService) GetSaleByID(saleID int) (*models.Sale, error) {
-	return s.saleRepo.GetSaleByID(saleID)
+func (s *SaleService) GetSaleByID(saleID int, include []string) (*models.Sale, error) {
+	return s.saleRepo.GetSaleByID(saleID, include)
 }

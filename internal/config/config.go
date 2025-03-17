@@ -10,10 +10,15 @@ import (
 
 // Config holds application configuration
 type Config struct {
-	DBConnStr     string
-	JWTSecret     string
-	TokenExpiry   time.Duration
-	ServerAddress string
+	DBConnStr         string
+	JWTSecret         string
+	TokenExpiry       time.Duration
+	ServerAddress     string
+	R2Endpoint        string // R2 endpoint URL
+	R2Region          string // R2 region (e.g., "auto")
+	R2AccessKeyID     string // R2 access key ID
+	R2SecretAccessKey string // R2 secret access key
+	R2BucketName      string
 }
 
 // LoadConfig loads application configuration from environment variables
@@ -23,6 +28,13 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		TokenExpiry:   time.Hour * 24, // 24 hours
 		ServerAddress: getEnv("SERVER_ADDRESS", ":8080"),
+
+		// R2 Configuration
+		R2Endpoint:        getEnv("R2_ENDPOINT", "https://472fa3e6a29c7eed2cdadcc070098155.r2.cloudflarestorage.com"),
+		R2Region:          getEnv("R2_REGION", "auto"),
+		R2AccessKeyID:     getEnv("R2_ACCESS_KEY_ID", "9d20e974707b5d0d186f29055252bdb4"),
+		R2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", "41731c6315b55507b61757cb6b40ab6b24c04f6edf5d74f64fcbc4cc7bec7171"),
+		R2BucketName:      getEnv("R2_BUCKET_NAME", "test"),
 	}, nil
 }
 
@@ -118,31 +130,13 @@ func initDB(db *sql.DB) error {
 		return err
 	}
 
-	// Create payments table
-	paymentsQuery := `
-	CREATE TABLE IF NOT EXISTS payments (
-		payment_id SERIAL PRIMARY KEY,
-		payment_type VARCHAR(50) NOT NULL,
-		amount_paid DECIMAL(10,2) NOT NULL,
-		payment_date TIMESTAMP NOT NULL,
-		payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
-		verified_by_admin BOOLEAN DEFAULT FALSE,
-		remark TEXT,
-		user_id INT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
-	`
-	_, err = db.Exec(paymentsQuery)
-	if err != nil {
-		return err
-	}
 	salesQuery := `
 	CREATE TABLE IF NOT EXISTS sales (
 		sale_id SERIAL PRIMARY KEY,  
 		vehicle_id INT,
-		user_id INT NOT NULL, -- Add this line
+		user_id INT NOT NULL, 
 		customer_name VARCHAR(255),
+		customer_destination VARCHAR(255),
 		total_amount DECIMAL(10, 2),
 		charge_per_day DECIMAL(10, 2),
 		booking_date DATE,
@@ -152,7 +146,7 @@ func initDB(db *sql.DB) error {
 		is_washed BOOLEAN,
 		is_delayed BOOLEAN,
 		number_of_days INT,
-		payment_id INT,
+	
 		remark TEXT,
 		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -166,17 +160,40 @@ func initDB(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	// Create payments table
+	paymentsQuery := `
+		CREATE TABLE IF NOT EXISTS payments (
+			payment_id SERIAL PRIMARY KEY,
+			payment_type VARCHAR(50) NOT NULL,
+			amount_paid DECIMAL(10,2) NOT NULL,
+			payment_date TIMESTAMP NOT NULL,
+			payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
+			verified_by_admin BOOLEAN DEFAULT FALSE,
+			remark TEXT,
+			user_id INT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			sale_id INT NOT NULL,
+			FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
+		);
+		`
+	_, err = db.Exec(paymentsQuery)
+	if err != nil {
+		return err
+	}
 
 	vehicle_usage := `
 CREATE TABLE IF NOT EXISTS vehicle_usage (
     usage_id SERIAL PRIMARY KEY,
     vehicle_id INT NOT NULL,
+	sale_id int,
     record_type VARCHAR(50) NOT NULL CHECK (record_type IN ('delivery', 'return')),
     fuel_range DECIMAL(10, 2) NOT NULL, -- Fuel level at delivery or return
     km_reading DECIMAL(10, 2) NOT NULL, -- KM reading at delivery or return
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When the data was recorded
     recorded_by INT, 
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+	FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
 );
 `
 	_, err = db.Exec(vehicle_usage)
@@ -217,6 +234,7 @@ CREATE TABLE IF NOT EXISTS vehicle_usage (
 		sale_id INT NOT NULL,
 		image_url VARCHAR(255) NOT NULL,
 		uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		file_name varchar(255),
 		FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
 	);`
 	_, err = db.Exec(saleVideoQuery)

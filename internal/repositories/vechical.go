@@ -105,7 +105,7 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.FutureBookingDetail, error) {
 	rows, err := r.db.Query(`
 		SELECT booking_date, number_of_days
-		FROM bookings
+		FROM sales
 		WHERE vehicle_id = $1 AND booking_date > NOW()
 		ORDER BY booking_date ASC
 	`, vehicleID)
@@ -122,7 +122,7 @@ func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.Fut
 		if err != nil {
 			return nil, err
 		}
-		booking.BookingDate = bookingDate.Format("2006-01-02") // Format date as YYYY-MM-DD
+		booking.DeliveryDate = bookingDate.Format("2006-01-02") // Format date as YYYY-MM-DD
 		futureBookings = append(futureBookings, booking)
 	}
 

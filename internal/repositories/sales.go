@@ -15,50 +15,36 @@ func NewSaleRepository(db *sql.DB) *SaleRepository {
 }
 
 func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
-	// Start a database transaction
 	tx, err := r.db.Begin()
 	if err != nil {
 		return 0, fmt.Errorf("failed to begin transaction: %v", err)
 	}
-	// Ensure the transaction is rolled back in case of an error
 	defer func() {
 		if err != nil {
-			tx.Rollback() // Rollback if there's an error
+			fmt.Println("Rolling back transaction")
+			fmt.Printf("Rolling back transaction due to error: %v\n", err)
+			tx.Rollback()
 			return
 		}
 	}()
 
-	// Step 1: Insert payment details into the payments table
-	var paymentID int
-	err = tx.QueryRow(`
-		INSERT INTO payments (
-			amount_paid, payment_date, verified_by_admin, 
-			payment_type, payment_status, remark
-		) VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING payment_id
-	`, sale.AmountPaid, sale.PaymentDate, sale.VerifiedByAdmin,
-		sale.PaymentType, sale.PaymentStatus, sale.Remark).Scan(&paymentID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert payment details: %v", err)
-	}
-
-	// Step 2: Insert sale details into the sales table using the paymentID
+	// Insert sale
 	var saleID int
 	err = tx.QueryRow(`
 		INSERT INTO sales (
 			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 			date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
-			number_of_days, payment_id, remark, status,customer_destination
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,$16)
+			number_of_days, remark, status, customer_destination
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		RETURNING sale_id
 	`, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
-		sale.NumberOfDays, paymentID, sale.Remark, sale.Status, sale.Destination).Scan(&saleID)
+		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination).Scan(&saleID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert sale: %v", err)
 	}
 
-	// Step 3: Insert sales charges
+	// Insert sales charges
 	for _, charge := range sale.SalesCharges {
 		_, err := tx.Exec(`
 			INSERT INTO sales_charges (sale_id, charge_type, amount)
@@ -69,7 +55,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		}
 	}
 
-	// Step 4: Insert sales images
+	// Insert sales images
 	for _, image := range sale.SalesImages {
 		_, err := tx.Exec(`
 			INSERT INTO sales_images (sale_id, image_url)
@@ -80,7 +66,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		}
 	}
 
-	// Step 5: Insert sales videos
+	// Insert sales videos
 	for _, video := range sale.SalesVideos {
 		_, err := tx.Exec(`
 			INSERT INTO sales_videos (sale_id, video_url)
@@ -91,53 +77,149 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		}
 	}
 
-	// Step 6: Insert vehicle usage records
+	// Insert vehicle usage records
 	for _, usage := range sale.VehicleUsage {
 		_, err := tx.Exec(`
-			INSERT INTO vehicle_usage (vehicle_id, record_type, fuel_range, km_reading, recorded_by)
-			VALUES ($1, $2, $3, $4, $5)
-		`, sale.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedBy)
+			INSERT INTO vehicle_usage (sale_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`, saleID, usage.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedAt, sale.UserID)
 		if err != nil {
-			return 0, fmt.Errorf("failed to insert vehicle usage record: %v", err)
+			fmt.Printf("Error in query for vehicle ID %d: %v\n", usage.VehicleID, err)
+			return 0, fmt.Errorf("failed to insert vehicle usage record for vehicle ID %d: %v", usage.VehicleID, err)
+		}
+	}
+
+	// Insert payments
+	for _, payment := range sale.Payments {
+		_, err := tx.Exec(`
+			INSERT INTO payments (
+				sale_id, amount_paid, payment_date, verified_by_admin, 
+				payment_type, payment_status, remark, user_id
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`, saleID, payment.AmountPaid, payment.PaymentDate, payment.VerifiedByAdmin,
+			payment.PaymentType, payment.PaymentStatus, payment.Remark, sale.UserID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to insert payment: %v", err)
 		}
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
+		fmt.Printf("Failed to commit transaction: %v\n", err)
 		return 0, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return saleID, nil
 }
 
-func (r *SaleRepository) GetSaleByID(saleID int) (*models.Sale, error) {
-	var sale models.Sale
+func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale, error) {
+	// Fetch the sale (your original query remains unchanged)
+	sale := &models.Sale{}
 	err := r.db.QueryRow(`
 		SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
-		payment_id, remark, status, created_at, updated_at
+		remark, status, created_at, updated_at
 		FROM sales WHERE sale_id = $1
 	`, saleID).Scan(
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
 		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
-		&sale.IsDelayed, &sale.NumberOfDays, &sale.PaymentID, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+		&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch related data
-	sale.SalesCharges, _ = r.getSalesCharges(saleID)
-	sale.SalesImages, _ = r.getSalesImages(saleID)
-	sale.SalesVideos, _ = r.getSalesVideos(saleID)
-	sale.VehicleUsage, _ = r.getVehicleUsage(sale.VehicleID)
+	// Fetch related data based on the include parameter
+	for _, inc := range include {
+		switch inc {
+		case "SalesCharge":
+			fmt.Println("Fetching sales charges...") // Debug log
+			charges, err := r.getSalesCharges(saleID)
+			if err != nil {
+				fmt.Printf("Error fetching sales charges: %v\n", err) // Debug log
+				return nil, err
+			}
+			fmt.Printf("Fetched sales charges: %+v\n", charges) // Debug log
+			sale.SalesCharges = charges
 
-	return &sale, nil
+		case "SalesImages":
+			fmt.Println("Fetching sales images...") // Debug log
+			images, err := r.getSalesImages(saleID)
+			if err != nil {
+				fmt.Printf("Error fetching sales images: %v\n", err) // Debug log
+				return nil, err
+			}
+			fmt.Printf("Fetched sales images: %+v\n", images) // Debug log
+			sale.SalesImages = images
+
+		case "SalesVideos":
+			fmt.Println("Fetching sales videos...") // Debug log
+			videos, err := r.getSalesVideos(saleID)
+			if err != nil {
+				fmt.Printf("Error fetching sales videos: %v\n", err) // Debug log
+				return nil, err
+			}
+			fmt.Printf("Fetched sales videos: %+v\n", videos) // Debug log
+			sale.SalesVideos = videos
+
+		case "VehicleUsage":
+			fmt.Println("Fetching vehicle usage...") // Debug log
+			usage, err := r.getVehicleUsage(sale.VehicleID)
+			if err != nil {
+				fmt.Printf("Error fetching vehicle usage: %v\n", err) // Debug log
+				return nil, err
+			}
+			fmt.Printf("Fetched vehicle usage: %+v\n", usage) // Debug log
+			sale.VehicleUsage = usage
+
+		case "Payments":
+			fmt.Println("Fetching payments...") // Debug log
+			payments, err := r.getPayments(saleID)
+			if err != nil {
+				fmt.Printf("Error fetching payments: %v\n", err) // Debug log
+				return nil, err
+			}
+			fmt.Printf("Fetched payments: %+v\n", payments) // Debug log
+			sale.Payments = payments
+		}
+	}
+
+	return sale, nil
 }
 
-// Helper functions to fetch related data
+func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
+	rows, err := r.db.Query(`
+		SELECT payment_id, sale_id, amount_paid, payment_date, verified_by_admin, 
+		payment_type, payment_status, remark, user_id, created_at, updated_at
+		FROM payments WHERE sale_id = $1
+	`, saleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var payments []models.Payment
+	for rows.Next() {
+		var payment models.Payment
+		err := rows.Scan(
+			&payment.PaymentID, &payment.SaleID, &payment.AmountPaid, &payment.PaymentDate, &payment.VerifiedByAdmin,
+			&payment.PaymentType, &payment.PaymentStatus, &payment.Remark, &payment.UserID, &payment.CreatedAt, &payment.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		payments = append(payments, payment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return payments, nil
+}
+
 func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, error) {
-	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount, created_at, updated_at FROM sales_charges WHERE sale_id = $1", saleID)
+	rows, err := r.db.Query("SELECT charge_id, sale_id, charge_type, amount FROM sales_charges WHERE sale_id = $1", saleID)
 	if err != nil {
 		return nil, err
 	}

@@ -8,13 +8,14 @@ type VehicleResponse struct {
 	VehicleModel              string                `json:"vehicle_model"`
 	VehicleRegistrationNumber string                `json:"vehicle_registration_number"`
 	IsAvailable               bool                  `json:"is_available"`
+	SalesImage                string                `json:"image_name"`
 	Status                    string                `json:"status"`
 	FutureBookingDetails      []FutureBookingDetail `json:"future_booking_details,omitempty"` // List of future bookings
 }
 
 // FutureBookingDetail represents future booking details
 type FutureBookingDetail struct {
-	BookingDate  string `json:"booking_date"`
+	DeliveryDate string `json:"date_of_delivery"`
 	NumberOfDays int    `json:"number_of_days"` // Number of days until the booking date
 }
 
