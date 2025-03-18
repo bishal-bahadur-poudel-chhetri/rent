@@ -27,3 +27,16 @@ type RegisterRequest struct {
 	CompanyID    int    `json:"company_id"` // Use company_id instead of company_code
 	MobileNumber string `json:"mobile_number"`
 }
+
+type Vehicle struct {
+	VehicleID                 int       `json:"vehicle_id"`
+	VehicleTypeID             int       `json:"vehicle_type_id"`
+	VehicleName               string    `json:"vehicle_name"`
+	VehicleModel              string    `json:"vehicle_model"`
+	Status                    string    `json:"status"`
+	VehicleRegistrationNumber string    `json:"vehicle_registration_number"`
+	IsAvailable               bool      `json:"is_available"`
+	ImageName                 string    `json:"image_name"`
+	CreatedAt                 time.Time `json:"created_at"`
+	UpdatedAt                 time.Time `json:"updated_at"`
+}

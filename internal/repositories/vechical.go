@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"renting/internal/models"
 	"strconv"
@@ -16,7 +17,7 @@ func NewVehicleRepository(db *sql.DB) *VehicleRepository {
 	return &VehicleRepository{db: db}
 }
 
-func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBookingDetails bool) ([]models.VehicleResponse, error) {
+func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBookingDetails bool, includeSaleid bool) ([]models.VehicleResponse, error) {
 	// Log filters and includeBookingDetails for debugging
 	log.Printf("Fetching vehicles with filters: %+v, includeBookingDetails: %v", filters, includeBookingDetails)
 
@@ -97,6 +98,14 @@ func (r *VehicleRepository) GetVehicles(filters models.VehicleFilter, includeBoo
 			}
 			v.FutureBookingDetails = futureBookings
 		}
+		if includeSaleid {
+			log.Printf("Fetching sale ID for vehicle ID: %d", v.VehicleID)
+			saleID, err := r.getMostRecentSaleID(v.VehicleID)
+			if err != nil {
+				return nil, err
+			}
+			v.SaleID = saleID
+		}
 
 		vehicles = append(vehicles, v)
 	}
@@ -131,4 +140,22 @@ func (r *VehicleRepository) getFutureBookingDetails(vehicleID int) ([]models.Fut
 
 	log.Printf("Fetched %d future bookings for vehicle ID: %d", len(futureBookings), vehicleID)
 	return futureBookings, nil
+}
+
+func (r *VehicleRepository) getMostRecentSaleID(vehicleID int) (int, error) {
+	fmt.Print(vehicleID)
+	var saleID int
+	err := r.db.QueryRow(`
+		SELECT sale_id
+		FROM sales
+		WHERE vehicle_id = $1 and status='active'
+	`, vehicleID).Scan(&saleID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+
+			return 0, nil
+		}
+		return 0, err
+	}
+	return saleID, nil
 }

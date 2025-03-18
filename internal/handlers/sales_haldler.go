@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ttacon/libphonenumber"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,6 +42,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		TotalAmount         float64               `json:"total_amount"`
 		ChargePerDay        float64               `json:"charge_per_day"`
 		NumberOfDays        int                   `json:"number_of_days"`
+		CustomerPhone       string                `json:"customer_phone"`
 		AmountPaid          float64               `json:"amount_paid"`
 		PaymentStatus       string                `json:"payment_status"`
 		CustomerName        string                `json:"customer_name"`
@@ -74,6 +77,11 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	dateOfDelivery, err := time.Parse(time.RFC3339, saleRequest.DateOfDelivery)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery date", err.Error()))
+		return
+	}
+	// Validate Nepalese phone number
+	if !isValidNepalesePhoneNumber(saleRequest.CustomerPhone) {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid phone number", "Phone number must be a valid Nepalese number (e.g., +9779841234567)"))
 		return
 	}
 
@@ -121,6 +129,16 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", gin.H{"sale_id": saleID}))
+}
+func isValidNepalesePhoneNumber(phone string) bool {
+	// Parse the phone number
+	parsedNumber, err := libphonenumber.Parse(phone, "NP") // "NP" is the region code for Nepal
+	if err != nil {
+		return false
+	}
+
+	// Check if the phone number is valid for Nepal
+	return libphonenumber.IsValidNumberForRegion(parsedNumber, "NP")
 }
 func (h *SaleHandler) GetSaleByID(c *gin.Context) {
 	saleID, err := strconv.Atoi(c.Param("id"))

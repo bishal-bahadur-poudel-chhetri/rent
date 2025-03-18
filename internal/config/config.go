@@ -120,6 +120,7 @@ func initDB(db *sql.DB) error {
 		status VARCHAR(50) DEFAULT 'available' CHECK (status IN ('available', 'rented', 'under_maintenance')),
 		vehicle_registration_number VARCHAR(50) UNIQUE NOT NULL,
 		is_available BOOLEAN DEFAULT TRUE,
+		image_name VARCHAR(255),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (vehicle_type_id) REFERENCES vehicle_types(vehicle_type_id) ON DELETE CASCADE
@@ -137,6 +138,7 @@ func initDB(db *sql.DB) error {
 		user_id INT NOT NULL, 
 		customer_name VARCHAR(255),
 		customer_destination VARCHAR(255),
+		customer_phone VARCHAR(255),
 		total_amount DECIMAL(10, 2),
 		charge_per_day DECIMAL(10, 2),
 		booking_date DATE,
@@ -146,7 +148,6 @@ func initDB(db *sql.DB) error {
 		is_washed BOOLEAN,
 		is_delayed BOOLEAN,
 		number_of_days INT,
-	
 		remark TEXT,
 		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -34,12 +34,12 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		INSERT INTO sales (
 			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
 			date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
-			number_of_days, remark, status, customer_destination
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+			number_of_days, remark, status, customer_destination,customer_phone
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,$16)
 		RETURNING sale_id
 	`, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
-		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination).Scan(&saleID)
+		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination, sale.CustomerPhone).Scan(&saleID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert sale: %v", err)
 	}
@@ -185,6 +185,76 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	}
 
 	return sale, nil
+}
+func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
+	rows, err := r.db.Query(`
+		SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
+		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
+		remark, status, created_at, updated_at
+		FROM sales
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sales []models.Sale
+	for rows.Next() {
+		sale := models.Sale{}
+		err := rows.Scan(
+			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
+			&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
+			&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sales = append(sales, sale)
+	}
+
+	// Fetch related data based on the include parameter
+	for i, sale := range sales {
+		for _, inc := range include {
+			switch inc {
+			case "SalesCharge":
+				charges, err := r.getSalesCharges(sale.SaleID)
+				if err != nil {
+					return nil, err
+				}
+				sales[i].SalesCharges = charges
+
+			case "SalesImages":
+				images, err := r.getSalesImages(sale.SaleID)
+				if err != nil {
+					return nil, err
+				}
+				sales[i].SalesImages = images
+
+			case "SalesVideos":
+				videos, err := r.getSalesVideos(sale.SaleID)
+				if err != nil {
+					return nil, err
+				}
+				sales[i].SalesVideos = videos
+
+			case "VehicleUsage":
+				usage, err := r.getVehicleUsage(sale.VehicleID)
+				if err != nil {
+					return nil, err
+				}
+				sales[i].VehicleUsage = usage
+
+			case "Payments":
+				payments, err := r.getPayments(sale.SaleID)
+				if err != nil {
+					return nil, err
+				}
+				sales[i].Payments = payments
+			}
+		}
+	}
+
+	return sales, nil
 }
 
 func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {

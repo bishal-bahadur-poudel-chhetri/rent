@@ -10,7 +10,8 @@ type VehicleResponse struct {
 	IsAvailable               bool                  `json:"is_available"`
 	SalesImage                string                `json:"image_name"`
 	Status                    string                `json:"status"`
-	FutureBookingDetails      []FutureBookingDetail `json:"future_booking_details,omitempty"` // List of future bookings
+	FutureBookingDetails      []FutureBookingDetail `json:"future_booking_details,omitempty"`
+	SaleID                    int                   `json:"sale_id"`
 }
 
 // FutureBookingDetail represents future booking details

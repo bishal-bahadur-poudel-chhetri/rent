@@ -8,6 +8,7 @@ type Sale struct {
 	UserID         int            `json:"user_id"`
 	CustomerName   string         `json:"customer_name"`
 	Destination    string         `json:"customer_destination"`
+	CustomerPhone  string         `json:"customer_phone"`
 	TotalAmount    float64        `json:"total_amount"`
 	ChargePerDay   float64        `json:"charge_per_day"`
 	BookingDate    time.Time      `json:"booking_date"`
@@ -74,4 +75,25 @@ type Payment struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	SaleID          int       `json:"sale_id"` // Foreign key to Sale
+}
+type SaleWithPayment struct {
+	SaleID              int       `json:"sale_id"`
+	VehicleID           int       `json:"vehicle_id"`
+	UserID              int       `json:"user_id"`
+	CustomerName        string    `json:"customer_name"`
+	CustomerDestination string    `json:"customer_destination"`
+	TotalAmount         float64   `json:"total_amount"`
+	ChargePerDay        float64   `json:"charge_per_day"`
+	BookingDate         time.Time `json:"booking_date"`
+	DateOfDelivery      time.Time `json:"date_of_delivery"`
+	ReturnDate          time.Time `json:"return_date"`
+	IsDamaged           bool      `json:"is_damaged"`
+	IsWashed            bool      `json:"is_washed"`
+	IsDelayed           bool      `json:"is_delayed"`
+	NumberOfDays        int       `json:"number_of_days"`
+	Remark              string    `json:"remark"`
+	Status              string    `json:"status"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+	Payment             Payment   `json:"payment"`
 }
