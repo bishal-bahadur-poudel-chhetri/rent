@@ -21,11 +21,15 @@ type SaleFilter struct {
 	EndDate       *time.Time
 }
 
-func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter) ([]models.PaymentWithSale, error) {
-	return s.paymentRepo.GetPaymentsWithSales(repositories.SaleFilter{
-		SaleID:        filter.SaleID,
-		PaymentStatus: filter.PaymentStatus,
-		StartDate:     filter.StartDate,
-		EndDate:       filter.EndDate,
-	})
+func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
+	return s.paymentRepo.GetPaymentsWithSales(
+		repositories.SaleFilter{
+			SaleID:        filter.SaleID,
+			PaymentStatus: filter.PaymentStatus,
+			StartDate:     filter.StartDate,
+			EndDate:       filter.EndDate,
+		},
+		limit,
+		offset,
+	)
 }

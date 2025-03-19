@@ -47,6 +47,10 @@ func main() {
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService)
 
+	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
+	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
+	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)
+
 	paymentRepo := repositories.NewPaymentRepository(db) // Create PaymentRepository
 
 	// Initialize services
@@ -87,7 +91,9 @@ func main() {
 
 			// Video upload route
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)
-			protected.GET("/sales", paymentHandler.GetPaymentsWithSales)
+			protected.GET("/payment", paymentHandler.GetPaymentsWithSales)
+
+			protected.PUT("sales/:payment_id/verify", paymentVerificationHandler.VerifyPayment)
 		}
 	}
 

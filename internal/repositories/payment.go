@@ -22,7 +22,7 @@ type SaleFilter struct {
 	EndDate       *time.Time
 }
 
-func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter) ([]models.PaymentWithSale, error) {
+func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
 	query := `
 		SELECT 
 			p.payment_id,
@@ -31,9 +31,9 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter) ([]models.Pa
 			p.payment_date,
 			p.payment_status,
 			p.verified_by_admin,
-			p.remark as payment_remark,
-			p.created_at as payment_created_at,
-			p.updated_at as payment_updated_at,
+			p.remark,
+			p.created_at,
+			p.updated_at,
 			s.sale_id, 
 			s.vehicle_id, 
 			s.user_id, 
@@ -53,29 +53,25 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter) ([]models.Pa
 			s.status, 
 			s.created_at, 
 			s.updated_at,
-			v.vehicle_id as vehicle_vehicle_id,
-			v.vehicle_type_id as vehicle_vehicle_type_id,
-			v.vehicle_name as vehicle_vehicle_name,
-			v.vehicle_model as vehicle_vehicle_model,
-			v.vehicle_registration_number as vehicle_vehicle_registration_number,
-			v.is_available as vehicle_is_available,
-			v.image_name as vehicle_sales_image,
-			v.status as vehicle_status
-		FROM 
-			payments p
-		LEFT JOIN 
-			sales s ON p.sale_id = s.sale_id
-		LEFT JOIN
-			vehicles v ON s.vehicle_id = v.vehicle_id
-		WHERE 
-			1=1
+			v.vehicle_id,
+			v.vehicle_type_id,
+			v.vehicle_name,
+			v.vehicle_model,
+			v.vehicle_registration_number,
+			v.is_available,
+			v.image_name,
+			v.status
+		FROM payments p
+		LEFT JOIN sales s ON p.sale_id = s.sale_id
+		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+		WHERE 1=1
 	`
 
 	args := []interface{}{}
 	argCounter := 1
 
 	if filter.SaleID != nil {
-		query += fmt.Sprintf(" AND p.payment_id = $%d", argCounter) // Filter by payment_id
+		query += fmt.Sprintf(" AND p.payment_id = $%d", argCounter)
 		args = append(args, *filter.SaleID)
 		argCounter++
 	}
@@ -97,6 +93,9 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter) ([]models.Pa
 		args = append(args, *filter.EndDate)
 		argCounter++
 	}
+
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCounter, argCounter+1)
+	args = append(args, limit, offset)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -148,7 +147,6 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter) ([]models.Pa
 		if err != nil {
 			return nil, err
 		}
-
 		payments = append(payments, payment)
 	}
 

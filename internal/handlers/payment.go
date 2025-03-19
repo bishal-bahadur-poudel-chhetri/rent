@@ -13,21 +13,19 @@ type PaymentHandler struct {
 	PaymentService *services.PaymentService
 }
 
-func NewPaymentHandler(PaymentService *services.PaymentService) *PaymentHandler {
-	return &PaymentHandler{PaymentService: PaymentService}
+func NewPaymentHandler(paymentService *services.PaymentService) *PaymentHandler {
+	return &PaymentHandler{PaymentService: paymentService}
 }
 
 func (h *PaymentHandler) GetPaymentsWithSales(c *gin.Context) {
 	var filter services.SaleFilter
 
-	// Parse query parameters
+	// Parse filter parameters
 	if paymentID := c.Query("payment_id"); paymentID != "" {
 		id, err := strconv.Atoi(paymentID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payment_id"})
-			return
+		if err == nil {
+			filter.SaleID = &id
 		}
-		filter.SaleID = &id
 	}
 
 	if paymentStatus := c.Query("payment_status"); paymentStatus != "" {
@@ -35,24 +33,32 @@ func (h *PaymentHandler) GetPaymentsWithSales(c *gin.Context) {
 	}
 
 	if startDate := c.Query("start_date"); startDate != "" {
-		parsedStartDate, err := time.Parse("2006-01-02", startDate)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date"})
-			return
+		parsedDate, err := time.Parse("2006-01-02", startDate)
+		if err == nil {
+			filter.StartDate = &parsedDate
 		}
-		filter.StartDate = &parsedStartDate
 	}
 
 	if endDate := c.Query("end_date"); endDate != "" {
-		parsedEndDate, err := time.Parse("2006-01-02", endDate)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date"})
-			return
+		parsedDate, err := time.Parse("2006-01-02", endDate)
+		if err == nil {
+			filter.EndDate = &parsedDate
 		}
-		filter.EndDate = &parsedEndDate
 	}
 
-	payments, err := h.PaymentService.GetPaymentsWithSales(filter)
+	// Parse pagination parameters
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	// Validate pagination
+	if limit < 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	payments, err := h.PaymentService.GetPaymentsWithSales(filter, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
