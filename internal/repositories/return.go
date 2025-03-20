@@ -13,6 +13,29 @@ type ReturnRepository struct {
 func NewReturnRepository(db *sql.DB) *ReturnRepository {
 	return &ReturnRepository{db: db}
 }
+func (r *ReturnRepository) UpdateSalesStatus(saleID int) error {
+	_, err := r.db.Exec(`
+		UPDATE sales
+		SET status = 'completed'
+		WHERE sale_id = $1
+	`, saleID)
+	if err != nil {
+		return fmt.Errorf("failed to update sales status for saleID %d: %v", saleID, err)
+	}
+	return nil
+}
+
+func (r *ReturnRepository) UpdateVehicleStatus(vehicleID int) error {
+	_, err := r.db.Exec(`
+		UPDATE vehicles
+		SET status = 'available'
+		WHERE vehicle_id = $1
+	`, vehicleID)
+	if err != nil {
+		return fmt.Errorf("failed to update vehicle status for vehicleID %d: %v", vehicleID, err)
+	}
+	return nil
+}
 
 func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 	tx, err := r.db.Begin()
@@ -59,6 +82,17 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 			payment.PaymentType, payment.PaymentStatus, payment.Remark, sale.UserID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to insert payment for saleID %d, amountPaid %.2f: %v", sale.SaleID, payment.AmountPaid, err)
+		}
+	}
+	// Update sales status to "Completed"
+	if err := r.UpdateSalesStatus(sale.SaleID); err != nil {
+		return 0, fmt.Errorf("failed to update sales status: %v", err)
+	}
+
+	// Update vehicle status to "Available"
+	for _, usage := range sale.VehicleUsage {
+		if err := r.UpdateVehicleStatus(usage.VehicleID); err != nil {
+			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
 		}
 	}
 

@@ -32,7 +32,10 @@ func main() {
 	saleRepo := repositories.NewSaleRepository(db)
 	returnRepo := repositories.NewReturnRepository(db)
 	videoRepo := repositories.NewVideoRepository(db, cfg)
-	futurBookingRepo := repositories.NewFuturBookingRepository(db) // Add this line
+	futurBookingRepo := repositories.NewFuturBookingRepository(db)
+	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
+	paymentRepo := repositories.NewPaymentRepository(db)
+	saleDetailRepo := repositories.NewSaleDetailRepository(db) // Add this line
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -40,7 +43,10 @@ func main() {
 	vehicleService := services.NewVehicleService(vehicleRepo)
 	saleService := services.NewSaleService(saleRepo)
 	videoService := services.NewVideoService(videoRepo)
-	futurBookingService := services.NewFuturBookingService(futurBookingRepo) // Add this line
+	futurBookingService := services.NewFuturBookingService(futurBookingRepo)
+	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
+	paymentService := services.NewPaymentService(paymentRepo)
+	saleDetailService := services.NewSaleDetailService(saleDetailRepo) // Add this line
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -48,19 +54,10 @@ func main() {
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService)
-	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService) // Add this line
-
-	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
-	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
+	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)
 	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)
-
-	paymentRepo := repositories.NewPaymentRepository(db) // Create PaymentRepository
-
-	// Initialize services
-	paymentService := services.NewPaymentService(paymentRepo) // Pass PaymentRepository to PaymentService
-
-	// Initialize handlers
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
+	saleDetailHandler := handlers.NewSaleDetailHandler(saleDetailService) // Add this line
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -96,10 +93,14 @@ func main() {
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)
 			protected.GET("/payment", paymentHandler.GetPaymentsWithSales)
 
-			protected.PUT("sales/:payment_id/verify", paymentVerificationHandler.VerifyPayment)
+			// Payment verification route
+			protected.PUT("/sales/:payment_id/verify", paymentVerificationHandler.VerifyPayment)
 
 			// FuturBooking route
-			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth) // Add this line
+			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth)
+
+			// SaleDetail route for filtering sales
+			protected.GET("/sales/filter", saleDetailHandler.GetSalesWithFilters) // Add this line
 		}
 	}
 

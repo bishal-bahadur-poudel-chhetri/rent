@@ -41,16 +41,17 @@ func (r *FuturBookingRepository) GetFuturBookingsByMonth(year int, month time.Mo
 	return response, nil
 }
 
-// getSalesInDateRange fetches bookings within a date range and applies filters
 func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filters map[string]string) ([]models.Sale_Future, error) {
 	// Base query
 	query := `
-		SELECT sale_id, vehicle_id, user_id, customer_name, customer_destination, customer_phone, 
-		total_amount, charge_per_day, booking_date, date_of_delivery, return_date, 
-		number_of_days, remark, status, created_at, updated_at
-		FROM sales
-		WHERE date_of_delivery BETWEEN $1 AND $2
-		AND booking_date != date_of_delivery
+		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
+		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
+		s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
+		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status
+		FROM sales s
+		LEFT JOIN payments p ON s.sale_id = p.sale_id
+		WHERE s.date_of_delivery BETWEEN $1 AND $2
+		AND s.booking_date != s.date_of_delivery
 	`
 
 	// Add filters to the query
@@ -60,15 +61,15 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 	for key, value := range filters {
 		switch key {
 		case "status":
-			query += fmt.Sprintf(" AND status = $%d", argCounter)
+			query += fmt.Sprintf(" AND s.status = $%d", argCounter)
 			args = append(args, value)
 			argCounter++
 		case "customer_name":
-			query += fmt.Sprintf(" AND customer_name ILIKE $%d", argCounter)
+			query += fmt.Sprintf(" AND s.customer_name ILIKE $%d", argCounter)
 			args = append(args, "%"+value+"%")
 			argCounter++
 		case "vehicle_id":
-			query += fmt.Sprintf(" AND vehicle_id = $%d", argCounter)
+			query += fmt.Sprintf(" AND s.vehicle_id = $%d", argCounter)
 			args = append(args, value)
 			argCounter++
 			// Add more filters as needed
@@ -82,17 +83,56 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 	}
 	defer rows.Close()
 
-	var sales []models.Sale_Future
+	// Map to group payments by sale_id
+	salesMap := make(map[int]models.Sale_Future)
+
 	for rows.Next() {
 		var sale models.Sale_Future
+		var payment models.Payment_future
+		var paymentID *int
+		var amountPaid *float64
+		var paymentDate *time.Time
+		var paymentType, paymentStatus *string
+
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+			&paymentID, &amountPaid, &paymentDate, &paymentType, &paymentStatus,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan sale: %v", err)
 		}
+
+		// If payment data exists, populate the Payment_future struct
+		if paymentID != nil {
+			payment = models.Payment_future{
+				PaymentID:     *paymentID,
+				AmountPaid:    *amountPaid,
+				PaymentDate:   *paymentDate,
+				PaymentType:   *paymentType,
+				PaymentStatus: *paymentStatus,
+			}
+		}
+
+		// Check if the sale already exists in the map
+		if existingSale, ok := salesMap[sale.SaleID]; ok {
+			// Append the payment to the existing sale
+			existingSale.Payment = append(existingSale.Payment, payment)
+			salesMap[sale.SaleID] = existingSale
+		} else {
+			// Create a new sale entry in the map
+			sale.Payment = []models.Payment_future{}
+			if paymentID != nil {
+				sale.Payment = append(sale.Payment, payment)
+			}
+			salesMap[sale.SaleID] = sale
+		}
+	}
+
+	// Convert the map to a slice
+	var sales []models.Sale_Future
+	for _, sale := range salesMap {
 		sales = append(sales, sale)
 	}
 
