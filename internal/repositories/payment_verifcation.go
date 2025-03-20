@@ -27,11 +27,10 @@ func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status stri
 		return errors.New("only admin users can verify payments")
 	}
 
-	// Update the payment status
 	query := `
 		UPDATE payments
-		SET payment_status = $1, verified_by_admin = $2, remark = $3, updated_at = $4
-		WHERE payment_id = $5 AND user_id = $6
+		SET payment_status = $1, verified_by_admin = $2, remark = $3, updated_at = $4, user_id = $6
+		WHERE payment_id = $5
 	`
 	_, err = r.db.Exec(query, status, true, remark, time.Now(), paymentID, userID)
 	if err != nil {

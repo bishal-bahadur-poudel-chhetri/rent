@@ -13,6 +13,29 @@ type SaleRepository struct {
 func NewSaleRepository(db *sql.DB) *SaleRepository {
 	return &SaleRepository{db: db}
 }
+func (r *SaleRepository) UpdateVehicleStatus(vehicleID int, status string) error {
+	_, err := r.db.Exec(`
+		UPDATE vehicles
+		SET status = $1
+		WHERE vehicle_id = $2
+	`, status, vehicleID)
+	if err != nil {
+		return fmt.Errorf("failed to update vehicle status: %v", err)
+	}
+	return nil
+}
+func (r *SaleRepository) UpdateSaleStatus(saleID int, status string) error {
+	fmt.Print(saleID, status)
+	_, err := r.db.Exec(`
+		UPDATE sales
+		SET status = $2
+		WHERE sale_id = $1
+	`, saleID, status) // Correct order of parameters: saleID ($1), status ($2)
+	if err != nil {
+		return fmt.Errorf("failed to update sale status: %v", err)
+	}
+	return nil
+}
 
 func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 	tx, err := r.db.Begin()
@@ -109,6 +132,17 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		return 0, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
+	// Update vehicle status after the transaction is committed
+	if sale.BookingDate == sale.DateOfDelivery {
+		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
+			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
+		}
+		if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
+			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
+		}
+
+	}
+
 	return saleID, nil
 }
 
@@ -116,12 +150,12 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	// Fetch the sale (your original query remains unchanged)
 	sale := &models.Sale{}
 	err := r.db.QueryRow(`
-		SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
+		SELECT sale_id, vehicle_id, user_id, customer_name,customer_destination total_amount, charge_per_day, booking_date, 
 		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
 		remark, status, created_at, updated_at
 		FROM sales WHERE sale_id = $1
 	`, saleID).Scan(
-		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
+		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.TotalAmount, &sale.ChargePerDay,
 		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
 		&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)
@@ -321,7 +355,7 @@ func (r *SaleRepository) getSalesImages(saleID int) ([]models.SalesImage, error)
 }
 
 func (r *SaleRepository) getSalesVideos(saleID int) ([]models.SalesVideo, error) {
-	rows, err := r.db.Query("SELECT video_id, sale_id, video_url, uploaded_at FROM sales_videos WHERE sale_id = $1", saleID)
+	rows, err := r.db.Query("SELECT video_id, sale_id, video_url,file_name, uploaded_at FROM sales_videos WHERE sale_id = $1", saleID)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +364,7 @@ func (r *SaleRepository) getSalesVideos(saleID int) ([]models.SalesVideo, error)
 	var videos []models.SalesVideo
 	for rows.Next() {
 		var video models.SalesVideo
-		rows.Scan(&video.VideoID, &video.SaleID, &video.VideoURL, &video.UploadedAt)
+		rows.Scan(&video.VideoID, &video.SaleID, &video.VideoURL, &video.FileName, &video.UploadedAt)
 		videos = append(videos, video)
 	}
 	return videos, nil

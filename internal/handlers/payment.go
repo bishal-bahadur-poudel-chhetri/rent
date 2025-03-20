@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"renting/internal/services"
+	"renting/internal/utils" // Import the utils package
 	"strconv"
 	"time"
 
@@ -46,6 +47,14 @@ func (h *PaymentHandler) GetPaymentsWithSales(c *gin.Context) {
 		}
 	}
 
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filter.CustomerName = &customerName
+	}
+
+	if saleStatus := c.Query("status"); saleStatus != "" {
+		filter.SaleStatus = &saleStatus
+	}
+
 	// Parse pagination parameters
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -58,11 +67,13 @@ func (h *PaymentHandler) GetPaymentsWithSales(c *gin.Context) {
 		offset = 0
 	}
 
+	// Call the service to get payments
 	payments, err := h.PaymentService.GetPaymentsWithSales(filter, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
 		return
 	}
 
-	c.JSON(http.StatusOK, payments)
+	// Return the response in the StandardResponse format
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Payments retrieved successfully", payments))
 }

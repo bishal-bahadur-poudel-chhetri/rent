@@ -35,5 +35,5 @@ type Sales_payment struct {
 	Status         string          `json:"status"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
-	Vehicle        VehicleResponse `json:"vehicle"` // Add VehicleResponse as a child
+	Vehicle        VehicleResponse `json:"vehicle"`
 }

@@ -19,6 +19,9 @@ type SaleFilter struct {
 	PaymentStatus *string
 	StartDate     *time.Time
 	EndDate       *time.Time
+	CustomerName  *string
+	SaleStatus    *string
+	VerifiedBy    *string
 }
 
 func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
@@ -28,6 +31,9 @@ func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offs
 			PaymentStatus: filter.PaymentStatus,
 			StartDate:     filter.StartDate,
 			EndDate:       filter.EndDate,
+			CustomerName:  filter.CustomerName,
+			SaleStatus:    filter.SaleStatus,
+			VerifiedBy:    filter.VerifiedBy,
 		},
 		limit,
 		offset,

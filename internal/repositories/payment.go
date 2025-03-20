@@ -20,6 +20,9 @@ type SaleFilter struct {
 	PaymentStatus *string
 	StartDate     *time.Time
 	EndDate       *time.Time
+	CustomerName  *string
+	SaleStatus    *string
+	VerifiedBy    *string
 }
 
 func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
@@ -91,6 +94,21 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 	if filter.EndDate != nil {
 		query += fmt.Sprintf(" AND p.payment_date <= $%d", argCounter)
 		args = append(args, *filter.EndDate)
+		argCounter++
+	}
+	if filter.CustomerName != nil {
+		query += fmt.Sprintf(" AND s.customer_name ILIKE $%d", argCounter)
+		args = append(args, *filter.CustomerName)
+		argCounter++
+	}
+	if filter.SaleStatus != nil {
+		query += fmt.Sprintf(" AND s.status = $%d", argCounter)
+		args = append(args, *filter.SaleStatus)
+		argCounter++
+	}
+	if filter.VerifiedBy != nil {
+		query += fmt.Sprintf(" AND s.user_id = $%d", argCounter)
+		args = append(args, *filter.SaleStatus)
 		argCounter++
 	}
 

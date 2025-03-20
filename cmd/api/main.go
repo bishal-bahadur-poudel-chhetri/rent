@@ -32,6 +32,7 @@ func main() {
 	saleRepo := repositories.NewSaleRepository(db)
 	returnRepo := repositories.NewReturnRepository(db)
 	videoRepo := repositories.NewVideoRepository(db, cfg)
+	futurBookingRepo := repositories.NewFuturBookingRepository(db) // Add this line
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -39,6 +40,7 @@ func main() {
 	vehicleService := services.NewVehicleService(vehicleRepo)
 	saleService := services.NewSaleService(saleRepo)
 	videoService := services.NewVideoService(videoRepo)
+	futurBookingService := services.NewFuturBookingService(futurBookingRepo) // Add this line
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -46,6 +48,7 @@ func main() {
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService)
+	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService) // Add this line
 
 	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
 	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
@@ -94,6 +97,9 @@ func main() {
 			protected.GET("/payment", paymentHandler.GetPaymentsWithSales)
 
 			protected.PUT("sales/:payment_id/verify", paymentVerificationHandler.VerifyPayment)
+
+			// FuturBooking route
+			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth) // Add this line
 		}
 	}
 
