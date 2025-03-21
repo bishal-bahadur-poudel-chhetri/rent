@@ -35,7 +35,7 @@ func main() {
 	futurBookingRepo := repositories.NewFuturBookingRepository(db)
 	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
 	paymentRepo := repositories.NewPaymentRepository(db)
-	saleDetailRepo := repositories.NewSaleDetailRepository(db) // Add this line
+	saleDetailRepo := repositories.NewSaleDetailRepository(db)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -46,7 +46,7 @@ func main() {
 	futurBookingService := services.NewFuturBookingService(futurBookingRepo)
 	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
-	saleDetailService := services.NewSaleDetailService(saleDetailRepo) // Add this line
+	saleDetailService := services.NewSaleDetailService(saleDetailRepo)
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -57,7 +57,12 @@ func main() {
 	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)
 	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
-	saleDetailHandler := handlers.NewSaleDetailHandler(saleDetailService) // Add this line
+	saleDetailHandler := handlers.NewSaleDetailHandler(saleDetailService)
+
+	// Initialize DataAggregate repository, service, and handler
+	dataRepo := repositories.NewDataAggregateRepository(db)
+	dataService := services.NewDataAggregateService(dataRepo)    // Pass the dereferenced repository
+	dataHandler := handlers.NewDataAggregateHandler(dataService) // Pass the pointer to the handler
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -100,7 +105,10 @@ func main() {
 			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth)
 
 			// SaleDetail route for filtering sales
-			protected.GET("/sales/filter", saleDetailHandler.GetSalesWithFilters) // Add this line
+			protected.GET("/sales/filter", saleDetailHandler.GetSalesWithFilters)
+
+			// DataAggregate route
+			protected.GET("/aggregate", dataHandler.GetAggregatedData)
 		}
 	}
 

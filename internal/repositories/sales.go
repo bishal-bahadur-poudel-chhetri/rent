@@ -133,14 +133,16 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 	}
 
 	// Update vehicle status after the transaction is committed
-	if sale.BookingDate == sale.DateOfDelivery {
+	if sale.BookingDate.Year() == sale.DateOfDelivery.Year() &&
+		sale.BookingDate.Month() == sale.DateOfDelivery.Month() &&
+		sale.BookingDate.Day() == sale.DateOfDelivery.Day() {
+
 		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
 			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
 		}
 		if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
-			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
+			return 0, fmt.Errorf("failed to update sale status: %v", err)
 		}
-
 	}
 
 	return saleID, nil
@@ -150,7 +152,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	// Fetch the sale (your original query remains unchanged)
 	sale := &models.Sale{}
 	err := r.db.QueryRow(`
-		SELECT sale_id, vehicle_id, user_id, customer_name,customer_destination total_amount, charge_per_day, booking_date, 
+		SELECT sale_id, vehicle_id, user_id, customer_name,customer_destination,total_amount, charge_per_day, booking_date, 
 		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
 		remark, status, created_at, updated_at
 		FROM sales WHERE sale_id = $1

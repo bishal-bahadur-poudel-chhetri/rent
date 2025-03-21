@@ -10,23 +10,26 @@ type Payment_future struct {
 	PaymentStatus string
 }
 type Sale_Future struct {
-	SaleID         int              `json:"sale_id"`
-	VehicleID      int              `json:"vehicle_id"`
-	UserID         int              `json:"user_id"`
-	CustomerName   string           `json:"customer_name"`
-	Destination    string           `json:"customer_destination"`
-	CustomerPhone  string           `json:"customer_phone"`
-	TotalAmount    float64          `json:"total_amount"`
-	ChargePerDay   float64          `json:"charge_per_day"`
-	BookingDate    time.Time        `json:"booking_date"`
-	DateOfDelivery time.Time        `json:"date_of_delivery"`
-	ReturnDate     time.Time        `json:"return_date"`
-	NumberOfDays   int              `json:"number_of_days"`
-	Remark         string           `json:"remark"`
-	Status         string           `json:"status"`
-	CreatedAt      time.Time        `json:"created_at"`
-	UpdatedAt      time.Time        `json:"updated_at"`
-	Payment        []Payment_future `json:"payments"`
+	SaleID         int       `json:"sale_id"`
+	VehicleID      int       `json:"vehicle_id"`
+	UserID         int       `json:"user_id"`
+	CustomerName   string    `json:"customer_name"`
+	Destination    string    `json:"customer_destination"`
+	CustomerPhone  string    `json:"customer_phone"`
+	TotalAmount    float64   `json:"total_amount"`
+	ChargePerDay   float64   `json:"charge_per_day"`
+	BookingDate    time.Time `json:"booking_date"`
+	DateOfDelivery time.Time `json:"date_of_delivery"`
+	ReturnDate     time.Time `json:"return_date"`
+	NumberOfDays   int       `json:"number_of_days"`
+	Remark         string    `json:"remark"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	VehicleName    string    `json:"vehicle_name"`
+	VehicleImage   string    `json:"image_name"`
+
+	Payment []Payment_future `json:"payments"`
 }
 
 type MonthlyMetadata struct {

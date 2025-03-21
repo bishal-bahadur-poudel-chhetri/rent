@@ -40,25 +40,41 @@ func (r *FuturBookingRepository) GetFuturBookingsByMonth(year int, month time.Mo
 
 	return response, nil
 }
-
 func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filters map[string]string) ([]models.Sale_Future, error) {
+	// Validate date range
+	if start.After(end) {
+		return nil, fmt.Errorf("start date must be before end date")
+	}
+
 	// Base query
 	query := `
 		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
 		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
 		s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
-		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status
+		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status,v.vehicle_name,v.image_name
 		FROM sales s
 		LEFT JOIN payments p ON s.sale_id = p.sale_id
-		WHERE s.date_of_delivery BETWEEN $1 AND $2
-		AND s.booking_date != s.date_of_delivery
+		LEFT JOIN vehicles v on s.vehicle_id = v.vehicle_id
+		WHERE s.booking_date BETWEEN $1 AND $2
+		AND date(s.booking_date) != date(s.date_of_delivery)
 	`
 
 	// Add filters to the query
 	args := []interface{}{start, end}
 	argCounter := 3 // Start from $3 because $1 and $2 are already used for start and end dates
 
+	// Validate filter keys
+	validFilters := map[string]bool{
+		"status":        true,
+		"customer_name": true,
+		"vehicle_id":    true,
+	}
+
 	for key, value := range filters {
+		if !validFilters[key] {
+			return nil, fmt.Errorf("invalid filter key: %s", key)
+		}
+
 		switch key {
 		case "status":
 			query += fmt.Sprintf(" AND s.status = $%d", argCounter)
@@ -72,7 +88,6 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 			query += fmt.Sprintf(" AND s.vehicle_id = $%d", argCounter)
 			args = append(args, value)
 			argCounter++
-			// Add more filters as needed
 		}
 	}
 
@@ -98,10 +113,10 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
-			&paymentID, &amountPaid, &paymentDate, &paymentType, &paymentStatus,
+			&paymentID, &amountPaid, &paymentDate, &paymentType, &paymentStatus, &sale.VehicleName, &sale.VehicleImage,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan sale: %v", err)
+			return nil, fmt.Errorf("failed to scan sale (SaleID: %d): %v", sale.SaleID, err)
 		}
 
 		// If payment data exists, populate the Payment_future struct
@@ -128,6 +143,11 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 			}
 			salesMap[sale.SaleID] = sale
 		}
+	}
+
+	// Check for errors during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during rows iteration: %v", err)
 	}
 
 	// Convert the map to a slice
