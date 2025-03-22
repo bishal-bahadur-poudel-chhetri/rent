@@ -67,7 +67,7 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 		FROM payments p
 		LEFT JOIN sales s ON p.sale_id = s.sale_id
 		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
-		WHERE 1=1 order by p.payment_date desc
+		WHERE 1=1
 	`
 
 	args := []interface{}{}

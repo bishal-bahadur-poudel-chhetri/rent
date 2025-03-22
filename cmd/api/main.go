@@ -63,6 +63,9 @@ func main() {
 	dataRepo := repositories.NewDataAggregateRepository(db)
 	dataService := services.NewDataAggregateService(dataRepo)    // Pass the dereferenced repository
 	dataHandler := handlers.NewDataAggregateHandler(dataService) // Pass the pointer to the handler
+	disableDateRepo := repositories.NewDisableDateRepository(db)
+	disableDateService := services.NewDisableDateService(disableDateRepo)
+	disableDateHandler := handlers.NewDisableDateHandler(disableDateService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -109,6 +112,7 @@ func main() {
 
 			// DataAggregate route
 			protected.GET("/aggregate", dataHandler.GetAggregatedData)
+			protected.GET("/disabled-dates", disableDateHandler.GetDisabledDates)
 		}
 	}
 
