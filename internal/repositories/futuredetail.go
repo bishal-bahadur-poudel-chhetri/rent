@@ -20,6 +20,7 @@ func (r *FuturBookingRepository) GetFuturBookingsByMonth(year int, month time.Mo
 	// Fetch bookings for the selected month
 	startOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+	fmt.Print(startOfMonth)
 
 	sales, err := r.getSalesInDateRange(startOfMonth, endOfMonth, filters)
 	if err != nil {
@@ -48,16 +49,16 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 
 	// Base query
 	query := `
-		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
-		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-		s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
-		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status,v.vehicle_name,v.image_name
-		FROM sales s
-		LEFT JOIN payments p ON s.sale_id = p.sale_id
-		LEFT JOIN vehicles v on s.vehicle_id = v.vehicle_id
-		WHERE s.booking_date BETWEEN $1 AND $2
-		AND date(s.booking_date) != date(s.date_of_delivery)
-	`
+        SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
+        s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
+        s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
+        p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status,v.vehicle_name,v.image_name
+        FROM sales s
+        LEFT JOIN payments p ON s.sale_id = p.sale_id
+        LEFT JOIN vehicles v on s.vehicle_id = v.vehicle_id
+        WHERE s.date_of_delivery BETWEEN $1 AND $2
+        AND date(s.booking_date) != date(s.date_of_delivery)
+    `
 
 	// Add filters to the query
 	args := []interface{}{start, end}
@@ -119,6 +120,9 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 			return nil, fmt.Errorf("failed to scan sale (SaleID: %d): %v", sale.SaleID, err)
 		}
 
+		// Print raw data for debugging
+		fmt.Printf("SaleID: %d, PaymentID: %v, AmountPaid: %v, PaymentDate: %v\n", sale.SaleID, paymentID, amountPaid, paymentDate)
+
 		// If payment data exists, populate the Payment_future struct
 		if paymentID != nil {
 			payment = models.Payment_future{
@@ -133,7 +137,9 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 		// Check if the sale already exists in the map
 		if existingSale, ok := salesMap[sale.SaleID]; ok {
 			// Append the payment to the existing sale
-			existingSale.Payment = append(existingSale.Payment, payment)
+			if paymentID != nil {
+				existingSale.Payment = append(existingSale.Payment, payment)
+			}
 			salesMap[sale.SaleID] = existingSale
 		} else {
 			// Create a new sale entry in the map
@@ -156,6 +162,11 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 		sales = append(sales, sale)
 	}
 
+	// Print final sales map for debugging
+	for saleID, sale := range salesMap {
+		fmt.Printf("Final SaleID: %d, Payments: %+v\n", saleID, sale.Payment)
+	}
+
 	return sales, nil
 }
 
@@ -169,9 +180,10 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 	`
 
 	// Add filters to the query
-	args := []interface{}{startOfMonth}
-	argCounter := 2 // Start from $2 because $1 is already used for startOfMonth
+	args := []interface{}{startOfMonth.Format("2006-01-02")} // Format startOfMonth as YYYY-MM-DD
+	argCounter := 2                                          // Start from $2 because $1 is already used for startOfMonth
 
+	// Apply filters
 	for key, value := range filters {
 		switch key {
 		case "status":
@@ -186,7 +198,6 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 			query += fmt.Sprintf(" AND vehicle_id = $%d", argCounter)
 			args = append(args, value)
 			argCounter++
-			// Add more filters as needed
 		}
 	}
 
@@ -196,6 +207,10 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 		ORDER BY month
 	`
 
+	// Print the query and arguments for debugging
+	fmt.Println("Query:", query)
+	fmt.Println("Arguments:", args)
+
 	// Execute the query
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -203,6 +218,7 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 	}
 	defer rows.Close()
 
+	// Process the results
 	var metadata []models.MonthlyMetadata
 	for rows.Next() {
 		var meta models.MonthlyMetadata
@@ -212,6 +228,14 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 		}
 		metadata = append(metadata, meta)
 	}
+
+	// Check for errors during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during rows iteration: %v", err)
+	}
+
+	// Print the metadata for debugging
+	fmt.Println("Metadata:", metadata)
 
 	return metadata, nil
 }

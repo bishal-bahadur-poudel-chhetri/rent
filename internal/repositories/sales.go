@@ -37,99 +37,112 @@ func (r *SaleRepository) UpdateSaleStatus(saleID int, status string) error {
 	return nil
 }
 
-func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
+func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse, error) {
+	// Initialize the response object
+	var salesResponse models.SaleSubmitResponse
+
+	// Begin the transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %v", err)
+		return salesResponse, fmt.Errorf("failed to begin transaction: %v", err)
 	}
 	defer func() {
 		if err != nil {
 			fmt.Println("Rolling back transaction")
 			fmt.Printf("Rolling back transaction due to error: %v\n", err)
 			tx.Rollback()
-			return
 		}
 	}()
 
 	// Insert sale
 	var saleID int
 	err = tx.QueryRow(`
-		INSERT INTO sales (
-			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
-			date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
-			number_of_days, remark, status, customer_destination,customer_phone
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,$16)
-		RETURNING sale_id
-	`, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
+        INSERT INTO sales (
+            vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
+            date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
+            number_of_days, remark, status, customer_destination, customer_phone
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING sale_id
+    `, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
 		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination, sale.CustomerPhone).Scan(&saleID)
+
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert sale: %v", err)
+		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
 	}
 
 	// Insert sales charges
 	for _, charge := range sale.SalesCharges {
 		_, err := tx.Exec(`
-			INSERT INTO sales_charges (sale_id, charge_type, amount)
-			VALUES ($1, $2, $3)
-		`, saleID, charge.ChargeType, charge.Amount)
+            INSERT INTO sales_charges (sale_id, charge_type, amount)
+            VALUES ($1, $2, $3)
+        `, saleID, charge.ChargeType, charge.Amount)
 		if err != nil {
-			return 0, fmt.Errorf("failed to insert sales charge: %v", err)
+			return salesResponse, fmt.Errorf("failed to insert sales charge: %v", err)
 		}
 	}
 
 	// Insert sales images
 	for _, image := range sale.SalesImages {
 		_, err := tx.Exec(`
-			INSERT INTO sales_images (sale_id, image_url)
-			VALUES ($1, $2)
-		`, saleID, image.ImageURL)
+            INSERT INTO sales_images (sale_id, image_url)
+            VALUES ($1, $2)
+        `, saleID, image.ImageURL)
 		if err != nil {
-			return 0, fmt.Errorf("failed to insert sales image: %v", err)
+			return salesResponse, fmt.Errorf("failed to insert sales image: %v", err)
 		}
 	}
 
 	// Insert sales videos
 	for _, video := range sale.SalesVideos {
 		_, err := tx.Exec(`
-			INSERT INTO sales_videos (sale_id, video_url)
-			VALUES ($1, $2)
-		`, saleID, video.VideoURL)
+            INSERT INTO sales_videos (sale_id, video_url)
+            VALUES ($1, $2)
+        `, saleID, video.VideoURL)
 		if err != nil {
-			return 0, fmt.Errorf("failed to insert sales video: %v", err)
+			return salesResponse, fmt.Errorf("failed to insert sales video: %v", err)
 		}
 	}
 
 	// Insert vehicle usage records
 	for _, usage := range sale.VehicleUsage {
 		_, err := tx.Exec(`
-			INSERT INTO vehicle_usage (sale_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-		`, saleID, usage.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedAt, sale.UserID)
+            INSERT INTO vehicle_usage (sale_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, saleID, usage.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedAt, sale.UserID)
 		if err != nil {
 			fmt.Printf("Error in query for vehicle ID %d: %v\n", usage.VehicleID, err)
-			return 0, fmt.Errorf("failed to insert vehicle usage record for vehicle ID %d: %v", usage.VehicleID, err)
+			return salesResponse, fmt.Errorf("failed to insert vehicle usage record for vehicle ID %d: %v", usage.VehicleID, err)
 		}
 	}
 
 	// Insert payments
 	for _, payment := range sale.Payments {
 		_, err := tx.Exec(`
-			INSERT INTO payments (
-				sale_id, amount_paid, payment_date, verified_by_admin, 
-				payment_type, payment_status, remark, user_id
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		`, saleID, payment.AmountPaid, payment.PaymentDate, payment.VerifiedByAdmin,
+            INSERT INTO payments (
+                sale_id, amount_paid, payment_date, verified_by_admin, 
+                payment_type, payment_status, remark, user_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, saleID, payment.AmountPaid, payment.PaymentDate, payment.VerifiedByAdmin,
 			payment.PaymentType, payment.PaymentStatus, payment.Remark, sale.UserID)
 		if err != nil {
-			return 0, fmt.Errorf("failed to insert payment: %v", err)
+			return salesResponse, fmt.Errorf("failed to insert payment: %v", err)
 		}
+	}
+
+	// Fetch vehicle name
+	var vehicleName string
+	err = tx.QueryRow(`
+        SELECT vehicle_name FROM vehicles WHERE vehicle_id = $1
+    `, sale.VehicleID).Scan(&vehicleName)
+	if err != nil {
+		return salesResponse, fmt.Errorf("failed to fetch vehicle name: %v", err)
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		fmt.Printf("Failed to commit transaction: %v\n", err)
-		return 0, fmt.Errorf("failed to commit transaction: %v", err)
+		return salesResponse, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	// Update vehicle status after the transaction is committed
@@ -138,26 +151,29 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (int, error) {
 		sale.BookingDate.Day() == sale.DateOfDelivery.Day() {
 
 		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
-			return 0, fmt.Errorf("failed to update vehicle status: %v", err)
+			return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
 		}
 		if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
-			return 0, fmt.Errorf("failed to update sale status: %v", err)
+			return salesResponse, fmt.Errorf("failed to update sale status: %v", err)
 		}
 	}
 
-	return saleID, nil
-}
+	// Populate the response object
+	salesResponse.SaleID = saleID
+	salesResponse.VehicleName = vehicleName
 
+	return salesResponse, nil
+}
 func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale, error) {
 	// Fetch the sale (your original query remains unchanged)
 	sale := &models.Sale{}
 	err := r.db.QueryRow(`
-		SELECT sale_id, vehicle_id, user_id, customer_name,customer_destination,total_amount, charge_per_day, booking_date, 
+		SELECT sale_id, vehicle_id, user_id, customer_name,customer_phone,customer_destination,total_amount, charge_per_day, booking_date, 
 		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
 		remark, status, created_at, updated_at
 		FROM sales WHERE sale_id = $1
 	`, saleID).Scan(
-		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.TotalAmount, &sale.ChargePerDay,
+		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination, &sale.TotalAmount, &sale.ChargePerDay,
 		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
 		&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)

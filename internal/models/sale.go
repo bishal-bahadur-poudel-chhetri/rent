@@ -28,6 +28,10 @@ type Sale struct {
 	VehicleUsage   []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
 	Payments       []Payment      `json:"payments"`      // Related payments
 }
+type SaleSubmitResponse struct {
+	SaleID      int    `json:"sale_id"`
+	VehicleName string `json:"vehicle_name"`
+}
 
 type SalesCharge struct {
 	ChargeID   int       `json:"charge_id"`

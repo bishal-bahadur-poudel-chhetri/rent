@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
@@ -79,8 +80,10 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery date", err.Error()))
 		return
 	}
+	fmt.Print(saleRequest.CustomerPhone)
 	// Validate Nepalese phone number
 	if !isValidNepalesePhoneNumber(saleRequest.CustomerPhone) {
+		fmt.Print("hi")
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid phone number", "Phone number must be a valid Nepalese number (e.g., +9779841234567)"))
 		return
 	}
@@ -104,6 +107,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		UserID:         userID,
 		CustomerName:   saleRequest.CustomerName,
 		Destination:    saleRequest.CustomerDestination,
+		CustomerPhone:  saleRequest.CustomerPhone,
 		TotalAmount:    saleRequest.TotalAmount,
 		ChargePerDay:   saleRequest.ChargePerDay,
 		BookingDate:    bookingDate,
