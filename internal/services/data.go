@@ -23,77 +23,84 @@ type AggregatedData struct {
 	TotalRevenue    float64 `json:"total_revenue"`    // Total revenue
 }
 
-func (s *DataAggregateService) GetAggregatedData(date time.Time) (AggregatedData, error) {
-	pendingRequests, err := s.saleRepo.GetPendingRequests(date)
-	if err != nil {
-		return AggregatedData{}, err
+// GetAggregatedData returns aggregated data for a specific date, month, or year.
+func (s *DataAggregateService) GetAggregatedData(date time.Time, filterType string) (AggregatedData, error) {
+	var pendingRequests, totalSales, futureBookings int
+	var totalRevenue float64
+	var err error
+
+	// Fetch data based on the filter type
+	switch filterType {
+	case "date":
+		pendingRequests, err = s.saleRepo.GetPendingRequests(date, "date")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		totalSales, totalRevenue, err = s.saleRepo.GetTotalSales(date, "date")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		futureBookings, err = s.saleRepo.GetFutureBookings(date, "date")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+	case "month":
+		pendingRequests, err = s.saleRepo.GetPendingRequests(date, "month")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		totalSales, totalRevenue, err = s.saleRepo.GetTotalSales(date, "month")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		futureBookings, err = s.saleRepo.GetFutureBookings(date, "month")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+	case "year":
+		pendingRequests, err = s.saleRepo.GetPendingRequests(date, "year")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		totalSales, totalRevenue, err = s.saleRepo.GetTotalSales(date, "year")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+		futureBookings, err = s.saleRepo.GetFutureBookings(date, "year")
+		if err != nil {
+			return AggregatedData{}, err
+		}
+	default:
+		return AggregatedData{}, nil
 	}
 
-	totalSales, totalRevenue, err := s.saleRepo.GetTotalSales(date)
-	if err != nil {
-		return AggregatedData{}, err
+	// Prepare the response based on the filter type
+	switch filterType {
+	case "date":
+		return AggregatedData{
+			Date:            date.Format("2006-01-02"), // Include the date in the response
+			PendingRequests: pendingRequests,
+			TotalSales:      totalSales,
+			FutureBookings:  futureBookings,
+			TotalRevenue:    totalRevenue,
+		}, nil
+	case "month":
+		return AggregatedData{
+			Month:           date.Format("2006-01"), // Include the month in the response
+			PendingRequests: pendingRequests,
+			TotalSales:      totalSales,
+			FutureBookings:  futureBookings,
+			TotalRevenue:    totalRevenue,
+		}, nil
+	case "year":
+		return AggregatedData{
+			Year:            date.Year(), // Include the year in the response
+			PendingRequests: pendingRequests,
+			TotalSales:      totalSales,
+			FutureBookings:  futureBookings,
+			TotalRevenue:    totalRevenue,
+		}, nil
+	default:
+		return AggregatedData{}, nil
 	}
-
-	futureBookings, err := s.saleRepo.GetFutureBookings(date)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	return AggregatedData{
-		Date:            date.Format("2006-01-02"), // Include the date in the response
-		PendingRequests: pendingRequests,
-		TotalSales:      totalSales,
-		FutureBookings:  futureBookings,
-		TotalRevenue:    totalRevenue,
-	}, nil
-}
-
-func (s *DataAggregateService) GetAggregatedDataByYear(year int) (AggregatedData, error) {
-	pendingRequests, err := s.saleRepo.GetPendingRequestsByYear(year)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	totalSales, totalRevenue, err := s.saleRepo.GetTotalSalesByYear(year)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	futureBookings, err := s.saleRepo.GetFutureBookingsByYear(year)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	return AggregatedData{
-		Year:            year, // Include the year in the response
-		PendingRequests: pendingRequests,
-		TotalSales:      totalSales,
-		FutureBookings:  futureBookings,
-		TotalRevenue:    totalRevenue,
-	}, nil
-}
-
-func (s *DataAggregateService) GetAggregatedDataByMonth(month time.Time) (AggregatedData, error) {
-	pendingRequests, err := s.saleRepo.GetPendingRequests(month)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	totalSales, totalRevenue, err := s.saleRepo.GetTotalSales(month)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	futureBookings, err := s.saleRepo.GetFutureBookings(month)
-	if err != nil {
-		return AggregatedData{}, err
-	}
-
-	return AggregatedData{
-		Month:           month.Format("2006-01"), // Include the month in the response
-		PendingRequests: pendingRequests,
-		TotalSales:      totalSales,
-		FutureBookings:  futureBookings,
-		TotalRevenue:    totalRevenue,
-	}, nil
 }

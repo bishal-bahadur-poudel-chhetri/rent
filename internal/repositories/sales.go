@@ -4,10 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"renting/internal/models"
+	"time"
 )
 
 type SaleRepository struct {
 	db *sql.DB
+}
+
+func (r *SaleRepository) GetFutureBookings(vehicleID int, dateOfDelivery time.Time) (any, any) {
+	panic("unimplemented")
 }
 
 func NewSaleRepository(db *sql.DB) *SaleRepository {

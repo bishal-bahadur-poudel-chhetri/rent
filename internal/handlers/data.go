@@ -27,27 +27,33 @@ func (h *DataAggregateHandler) GetAggregatedData(c *gin.Context) {
 	var err error
 
 	if date != "" {
+		// Handle date filter
 		parsedTime, parseErr := time.Parse("2006-01-02", date)
 		if parseErr != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid date format", nil))
 			return
 		}
-		aggregatedData, err = h.DataAggregateService.GetAggregatedData(parsedTime)
+		aggregatedData, err = h.DataAggregateService.GetAggregatedData(parsedTime, "date")
 	} else if year != "" {
+		// Handle year filter
 		yearInt, parseErr := strconv.Atoi(year)
 		if parseErr != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid year format", nil))
 			return
 		}
-		aggregatedData, err = h.DataAggregateService.GetAggregatedDataByYear(yearInt)
+		// Create a time.Time object for the year (e.g., January 1st of the year)
+		parsedTime := time.Date(yearInt, 1, 1, 0, 0, 0, 0, time.UTC)
+		aggregatedData, err = h.DataAggregateService.GetAggregatedData(parsedTime, "year")
 	} else if month != "" {
+		// Handle month filter
 		parsedTime, parseErr := time.Parse("2006-01", month)
 		if parseErr != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid month format", nil))
 			return
 		}
-		aggregatedData, err = h.DataAggregateService.GetAggregatedDataByMonth(parsedTime)
+		aggregatedData, err = h.DataAggregateService.GetAggregatedData(parsedTime, "month")
 	} else {
+		// No filter provided
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Please provide a date, year, or month", nil))
 		return
 	}

@@ -17,15 +17,29 @@ func NewDisableDateRepository(db *sql.DB) *DisableDateRepository {
 
 // GetDisabledDates fetches disabled dates for a specific vehicle and date range
 func (r *DisableDateRepository) GetDisabledDates(vehicleID int, dateOfDelivery time.Time) (*models.DisableDateResponse, error) {
-	// Query to fetch future bookings
+	// Query to fetch future bookings that overlap with the target month
 	futureBookingQuery := `
+        WITH target_month AS (
+            SELECT 
+                DATE_TRUNC('MONTH', $2::DATE) AS month_start,
+                DATE_TRUNC('MONTH', $2::DATE) + INTERVAL '1 MONTH' - INTERVAL '1 DAY' AS month_end
+        )
         SELECT date_of_delivery, return_date
-        FROM sales
+        FROM sales, target_month
         WHERE vehicle_id = $1
           AND booking_date != date_of_delivery
           AND status = 'pending'
-          AND EXTRACT(YEAR FROM date_of_delivery::DATE) <= EXTRACT(YEAR FROM $2::DATE)
-          AND EXTRACT(MONTH FROM date_of_delivery::DATE) <= EXTRACT(MONTH FROM $2::DATE)
+          AND (
+              -- Case 1: date_of_delivery is in the target month
+              date_of_delivery BETWEEN target_month.month_start AND target_month.month_end
+              -- Case 2: return_date is in the target month
+              OR return_date BETWEEN target_month.month_start AND target_month.month_end
+              -- Case 3: Booking spans the target month
+              OR (
+                  date_of_delivery < target_month.month_start 
+                  AND return_date > target_month.month_end
+              )
+          )
     `
 
 	// Query to fetch today's sales
@@ -80,13 +94,11 @@ func (r *DisableDateRepository) fetchDates(query string, vehicleID int, dateOfDe
 		formattedDeliveryDate := deliveryDate.Format("2006-01-02")
 		formattedReturnDate := returnDate.Format("2006-01-02")
 
-		// Filter to include only the date 2025-03-22
-		if formattedDeliveryDate == "2025-03-22" {
-			dates = append(dates, models.DisabledDateResponse{
-				DateOfDelivery: formattedDeliveryDate,
-				ReturnDate:     formattedReturnDate,
-			})
-		}
+		// Append the result without filtering for a specific date
+		dates = append(dates, models.DisabledDateResponse{
+			DateOfDelivery: formattedDeliveryDate,
+			ReturnDate:     formattedReturnDate,
+		})
 	}
 
 	if err := rows.Err(); err != nil {

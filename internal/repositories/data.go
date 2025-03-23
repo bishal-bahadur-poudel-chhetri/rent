@@ -14,77 +14,146 @@ func NewDataAggregateRepository(db *sql.DB) *DataAggregateRepository {
 }
 
 // GetPendingRequests returns the count of pending payment requests for a specific date, year, or month.
-func (r *DataAggregateRepository) GetPendingRequests(date time.Time) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM payments 
-		WHERE payment_status = 'Pending' 
-		AND verified_by_admin = false 
-		AND DATE(payment_date) = $1`
+func (r *DataAggregateRepository) GetPendingRequests(date time.Time, filterType string) (int, error) {
+	var query string
+	switch filterType {
+	case "date":
+		query = `
+			SELECT COUNT(*) 
+			FROM payments 
+			WHERE payment_status = 'Pending' 
+			AND verified_by_admin = false 
+			AND DATE(payment_date) = $1`
+	case "month":
+		query = `
+			SELECT COUNT(*) 
+			FROM payments 
+			WHERE payment_status = 'Pending' 
+			AND verified_by_admin = false 
+			AND EXTRACT(YEAR FROM payment_date) = $1
+			AND EXTRACT(MONTH FROM payment_date) = $2`
+	case "year":
+		query = `
+			SELECT COUNT(*) 
+			FROM payments 
+			WHERE payment_status = 'Pending' 
+			AND verified_by_admin = false 
+			AND EXTRACT(YEAR FROM payment_date) = $1`
+	default:
+		return 0, nil
+	}
+
 	var count int
-	err := r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count)
+	var err error
+	switch filterType {
+	case "date":
+		err = r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count)
+	case "month":
+		err = r.db.QueryRow(query, date.Year(), date.Month()).Scan(&count)
+	case "year":
+		err = r.db.QueryRow(query, date.Year()).Scan(&count)
+	}
 	return count, err
 }
 
-// GetTotalSales returns the total number of completed sales and the total revenue for a specific date, year, or month.
-func (r *DataAggregateRepository) GetTotalSales(date time.Time) (int, float64, error) {
-	query := `
-		SELECT COUNT(*), COALESCE(SUM(total_amount), 0) 
-		FROM sales 
-		WHERE status = 'completed' 
-		AND DATE(booking_date) = $1`
+// GetTotalSales returns the total number of verified payments and the total revenue for a specific date, month, or year.
+func (r *DataAggregateRepository) GetTotalSales(date time.Time, filterType string) (int, float64, error) {
+	var query string
+	switch filterType {
+	case "date":
+		query = `
+			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
+			FROM payments
+			WHERE payment_status = 'Completed' 
+			AND DATE(payment_date) = $1`
+	case "month":
+		query = `
+			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
+			FROM payments
+			WHERE payment_status = 'Completed' 
+			AND EXTRACT(YEAR FROM payment_date) = $1
+			AND EXTRACT(MONTH FROM payment_date) = $2`
+	case "year":
+		query = `
+			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
+			FROM payments
+			WHERE payment_status = 'Completed' 
+			AND EXTRACT(YEAR FROM payment_date) = $1`
+	default:
+		return 0, 0, nil
+	}
+
 	var count int
 	var totalRevenue float64
-	err := r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count, &totalRevenue)
+	var err error
+	switch filterType {
+	case "date":
+		err = r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count, &totalRevenue)
+	case "month":
+		err = r.db.QueryRow(query, date.Year(), date.Month()).Scan(&count, &totalRevenue)
+	case "year":
+		err = r.db.QueryRow(query, date.Year()).Scan(&count, &totalRevenue)
+	}
 	return count, totalRevenue, err
 }
 
-// GetFutureBookings returns the count of future bookings for a specific date, year, or month.
-func (r *DataAggregateRepository) GetFutureBookings(date time.Time) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM sales 
-		WHERE booking_date < date_of_delivery 
-		AND DATE(booking_date) = $1`
-	var count int
-	err := r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count)
-	return count, err
-}
+// GetFutureBookings returns the count of future bookings for a specific date, month, or year.
+func (r *DataAggregateRepository) GetFutureBookings(date time.Time, filterType string) (int, error) {
+	var query string
+	switch filterType {
+	case "date":
+		query = `
+			SELECT COUNT(*) 
+			FROM sales s
+			WHERE s.status = 'pending'
+			AND s.booking_date < s.date_of_delivery
+			AND DATE(s.booking_date) = $1
+			AND EXISTS (
+				SELECT 1
+				FROM payments p
+				WHERE p.sale_id = s.sale_id
+				AND p.payment_status = 'Completed'
+			)`
+	case "month":
+		query = `
+			SELECT COUNT(*) 
+			FROM sales s
+			WHERE s.status = 'pending'
+			AND s.booking_date < s.date_of_delivery
+			AND EXTRACT(YEAR FROM s.booking_date) = $1
+			AND EXTRACT(MONTH FROM s.booking_date) = $2
+			AND EXISTS (
+				SELECT 1
+				FROM payments p
+				WHERE p.sale_id = s.sale_id
+				AND p.payment_status = 'Completed'
+			)`
+	case "year":
+		query = `
+			SELECT COUNT(*) 
+			FROM sales s
+			WHERE s.status = 'pending'
+			AND s.booking_date < s.date_of_delivery
+			AND EXTRACT(YEAR FROM s.booking_date) = $1
+			AND EXISTS (
+				SELECT 1
+				FROM payments p
+				WHERE p.sale_id = s.sale_id
+				AND p.payment_status = 'Completed'
+			)`
+	default:
+		return 0, nil
+	}
 
-// GetPendingRequestsByYear returns the count of pending payment requests for a specific year.
-func (r *DataAggregateRepository) GetPendingRequestsByYear(year int) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM payments 
-		WHERE payment_status = 'Pending' 
-		AND verified_by_admin = false 
-		AND EXTRACT(YEAR FROM payment_date) = $1`
 	var count int
-	err := r.db.QueryRow(query, year).Scan(&count)
-	return count, err
-}
-
-// GetTotalSalesByYear returns the total number of completed sales and the total revenue for a specific year.
-func (r *DataAggregateRepository) GetTotalSalesByYear(year int) (int, float64, error) {
-	query := `
-		SELECT COUNT(*), COALESCE(SUM(total_amount), 0) 
-		FROM sales 
-		WHERE status = 'completed' 
-		AND EXTRACT(YEAR FROM booking_date) = $1`
-	var count int
-	var totalRevenue float64
-	err := r.db.QueryRow(query, year).Scan(&count, &totalRevenue)
-	return count, totalRevenue, err
-}
-
-// GetFutureBookingsByYear returns the count of future bookings for a specific year.
-func (r *DataAggregateRepository) GetFutureBookingsByYear(year int) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM sales 
-		WHERE booking_date > date_of_delivery 
-		AND EXTRACT(YEAR FROM booking_date) = $1`
-	var count int
-	err := r.db.QueryRow(query, year).Scan(&count)
+	var err error
+	switch filterType {
+	case "date":
+		err = r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count)
+	case "month":
+		err = r.db.QueryRow(query, date.Year(), date.Month()).Scan(&count)
+	case "year":
+		err = r.db.QueryRow(query, date.Year()).Scan(&count)
+	}
 	return count, err
 }
