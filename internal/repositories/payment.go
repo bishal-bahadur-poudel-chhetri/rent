@@ -96,22 +96,29 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 		args = append(args, *filter.EndDate)
 		argCounter++
 	}
+
 	if filter.CustomerName != nil {
 		query += fmt.Sprintf(" AND s.customer_name ILIKE $%d", argCounter)
 		args = append(args, *filter.CustomerName)
 		argCounter++
 	}
+
 	if filter.SaleStatus != nil {
 		query += fmt.Sprintf(" AND s.status = $%d", argCounter)
 		args = append(args, *filter.SaleStatus)
 		argCounter++
 	}
+
 	if filter.VerifiedBy != nil {
 		query += fmt.Sprintf(" AND s.user_id = $%d", argCounter)
-		args = append(args, *filter.SaleStatus)
+		args = append(args, *filter.VerifiedBy)
 		argCounter++
 	}
 
+	// Add ORDER BY clause to sort by payment_date in descending order
+	query += " ORDER BY p.payment_date DESC"
+
+	// Add LIMIT and OFFSET
 	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCounter, argCounter+1)
 	args = append(args, limit, offset)
 

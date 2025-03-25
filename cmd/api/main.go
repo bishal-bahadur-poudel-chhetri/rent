@@ -67,6 +67,10 @@ func main() {
 	disableDateService := services.NewDisableDateService(disableDateRepo)
 	disableDateHandler := handlers.NewDisableDateHandler(disableDateService)
 
+	statementRepo := repositories.NewStatementRepository(db)
+	statementService := services.NewStatementService(statementRepo)
+	statementHandler := handlers.NewStatementHandler(statementService)
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -113,6 +117,8 @@ func main() {
 			// DataAggregate route
 			protected.GET("/aggregate", dataHandler.GetAggregatedData)
 			protected.GET("/disabled-dates", disableDateHandler.GetDisabledDates)
+
+			protected.GET("/statements", statementHandler.GetStatements)
 		}
 	}
 
