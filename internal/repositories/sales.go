@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"renting/internal/models"
 	"time"
@@ -42,7 +43,42 @@ func (r *SaleRepository) UpdateSaleStatus(saleID int, status string) error {
 	return nil
 }
 
+func (r *SaleRepository) checkVehicleAvailability(vehicleID int, startDate, endDate time.Time) (bool, error) {
+	var count int
+	err := r.db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM sales 
+		WHERE vehicle_id = $1 
+		AND (
+			(date_of_delivery <= $2 AND return_date >= $3) OR
+			(date_of_delivery BETWEEN $2 AND $3) OR
+			(return_date BETWEEN $2 AND $3)
+		) AND status IN ('active', 'pending')
+	`, vehicleID, endDate, startDate).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check vehicle availability: %v", err)
+	}
+
+	return count == 0, nil
+}
+
 func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse, error) {
+	BookingDate := time.Now()
+	// Check vehicle availability first
+	available, err := r.checkVehicleAvailability(sale.VehicleID, sale.DateOfDelivery, sale.ReturnDate)
+	if err != nil {
+		return models.SaleSubmitResponse{}, err
+	}
+	if !available {
+		return models.SaleSubmitResponse{}, errors.New("vehicle is not available for the selected dates")
+	}
+	actualDeliveryDate := sale.DateOfDelivery
+
+	if sale.BookingDate.Before(sale.DateOfDelivery) {
+		actualDeliveryDate = time.Now()
+	}
+
 	// Initialize the response object
 	var salesResponse models.SaleSubmitResponse
 
@@ -53,8 +89,6 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	}
 	defer func() {
 		if err != nil {
-			fmt.Println("Rolling back transaction")
-			fmt.Printf("Rolling back transaction due to error: %v\n", err)
 			tx.Rollback()
 		}
 	}()
@@ -64,13 +98,14 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	err = tx.QueryRow(`
         INSERT INTO sales (
             vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
-            date_of_delivery, return_date, is_damaged, is_washed, is_delayed, 
-            number_of_days, remark, status, customer_destination, customer_phone
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            date_of_delivery, return_date,
+            number_of_days, remark, status, customer_destination, customer_phone,actual_date_of_delivery
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)
+
         RETURNING sale_id
-    `, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.BookingDate,
-		sale.DateOfDelivery, sale.ReturnDate, sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
-		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination, sale.CustomerPhone).Scan(&saleID)
+    `, sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, BookingDate,
+		sale.DateOfDelivery, sale.ReturnDate,
+		sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination, sale.CustomerPhone, actualDeliveryDate).Scan(&saleID)
 
 	if err != nil {
 		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
@@ -109,27 +144,46 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		}
 	}
 
-	// Insert vehicle usage records
+	// Insert vehicle usage records and set payment sale_type accordingly
 	for _, usage := range sale.VehicleUsage {
 		_, err := tx.Exec(`
             INSERT INTO vehicle_usage (sale_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, saleID, usage.VehicleID, usage.RecordType, usage.FuelRange, usage.KmReading, usage.RecordedAt, sale.UserID)
 		if err != nil {
-			fmt.Printf("Error in query for vehicle ID %d: %v\n", usage.VehicleID, err)
-			return salesResponse, fmt.Errorf("failed to insert vehicle usage record for vehicle ID %d: %v", usage.VehicleID, err)
+			return salesResponse, fmt.Errorf("failed to insert vehicle usage record: %v", err)
 		}
 	}
 
-	// Insert payments
 	for _, payment := range sale.Payments {
+		if payment.SaleType == "" {
+			for _, usage := range sale.VehicleUsage {
+				if usage.RecordType == "delivery" {
+					payment.SaleType = models.TypeDelivery
+					break
+				} else if usage.RecordType == "return" {
+					payment.SaleType = models.TypeReturn
+					break
+				}
+			}
+
+			if payment.SaleType == "" {
+				payment.SaleType = models.TypeBooking
+			}
+		}
+
+		// Validate payment
+		if err := payment.Validate(); err != nil {
+			return salesResponse, fmt.Errorf("invalid payment: %v", err)
+		}
+
 		_, err := tx.Exec(`
             INSERT INTO payments (
                 sale_id, amount_paid, payment_date, verified_by_admin, 
-                payment_type, payment_status, remark, user_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                payment_type, payment_status, remark, user_id, sale_type
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         `, saleID, payment.AmountPaid, payment.PaymentDate, payment.VerifiedByAdmin,
-			payment.PaymentType, payment.PaymentStatus, payment.Remark, sale.UserID)
+			payment.PaymentType, payment.PaymentStatus, payment.Remark, sale.UserID, payment.SaleType)
 		if err != nil {
 			return salesResponse, fmt.Errorf("failed to insert payment: %v", err)
 		}
@@ -146,7 +200,6 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		fmt.Printf("Failed to commit transaction: %v\n", err)
 		return salesResponse, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
@@ -169,18 +222,20 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	return salesResponse, nil
 }
+
 func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale, error) {
-	// Fetch the sale (your original query remains unchanged)
+
 	sale := &models.Sale{}
 	err := r.db.QueryRow(`
-		SELECT sale_id, vehicle_id, user_id, customer_name,customer_phone,customer_destination,total_amount, charge_per_day, booking_date, 
-		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
-		remark, status, created_at, updated_at
-		FROM sales WHERE sale_id = $1
+		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name,s.customer_phone,s.customer_destination,s.total_amount, s.charge_per_day, s.booking_date, 
+		s.date_of_delivery, s.return_date, s.number_of_days, s.actual_date_of_delivery,s.actual_date_of_return,u.username,
+		s.remark, s.status, s.created_at, s.updated_at
+		FROM sales s
+		LEFT JOIN users u ON s.user_id = u.id
+		WHERE s.sale_id = $1 
 	`, saleID).Scan(
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination, &sale.TotalAmount, &sale.ChargePerDay,
-		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
-		&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+		&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.NumberOfDays, &sale.ActualDateofDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -244,11 +299,14 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	return sale, nil
 }
 func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
+
 	rows, err := r.db.Query(`
-		SELECT sale_id, vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
-		date_of_delivery, return_date, is_damaged, is_washed, is_delayed, number_of_days, 
-		remark, status, created_at, updated_at
-		FROM sales
+	SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.total_amount, s.charge_per_day, 
+       s.booking_date, s.date_of_delivery, s.return_date, s.number_of_days, 
+       s.remark, s.status, s.created_at, s.updated_at, u.username
+	FROM sales s
+	LEFT JOIN users u ON s.user_id = u.id
+
 	`)
 	if err != nil {
 		return nil, err
@@ -260,8 +318,7 @@ func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 		sale := models.Sale{}
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
-			&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.IsDamaged, &sale.IsWashed,
-			&sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+			&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName,
 		)
 		if err != nil {
 			return nil, err
@@ -317,7 +374,7 @@ func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 	rows, err := r.db.Query(`
 		SELECT payment_id, sale_id, amount_paid, payment_date, verified_by_admin, 
-		payment_type, payment_status, remark, user_id, created_at, updated_at
+		payment_type, payment_status, remark, user_id,sale_type,created_at, updated_at
 		FROM payments WHERE sale_id = $1
 	`, saleID)
 	if err != nil {
@@ -330,7 +387,7 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 		var payment models.Payment
 		err := rows.Scan(
 			&payment.PaymentID, &payment.SaleID, &payment.AmountPaid, &payment.PaymentDate, &payment.VerifiedByAdmin,
-			&payment.PaymentType, &payment.PaymentStatus, &payment.Remark, &payment.UserID, &payment.CreatedAt, &payment.UpdatedAt,
+			&payment.PaymentType, &payment.PaymentStatus, &payment.Remark, &payment.UserID, &payment.SaleType, &payment.CreatedAt, &payment.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err

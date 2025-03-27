@@ -20,7 +20,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		SELECT 
 			s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
 			s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-			s.is_damaged, s.is_washed, s.is_delayed, s.number_of_days, s.remark, s.status, 
+			 s.number_of_days, s.remark, s.status, s.sale_type,
 			s.created_at, s.updated_at,
 			p.payment_id, p.payment_type, p.amount_paid, p.payment_date, p.payment_status, 
 			p.verified_by_admin, p.remark AS payment_remark, p.user_id AS payment_user_id, 
@@ -110,9 +110,9 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 
 		// Scan the row into variables
 		err := rows.Scan(
-			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
+			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.UserName, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.IsDamaged, &sale.IsWashed, &sale.IsDelayed, &sale.NumberOfDays, &sale.Remark, &sale.Status,
+			&sale.NumberOfDays, &sale.Remark, &sale.Status, &payment.SaleType,
 			&sale.CreatedAt, &sale.UpdatedAt,
 			&paymentID, &paymentType, &amountPaid, &paymentDate, &paymentStatus,
 			&verifiedByAdmin, &paymentRemark, &paymentUserID, &paymentCreatedAt, &paymentUpdatedAt,

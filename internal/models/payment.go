@@ -1,21 +1,27 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type PaymentWithSale struct {
-	PaymentID       int           `json:"payment_id"`
-	PaymentType     string        `json:"payment_type"`
-	AmountPaid      float64       `json:"amount_paid"`
-	PaymentDate     time.Time     `json:"payment_date"`
-	PaymentStatus   string        `json:"payment_status"`
-	VerifiedByAdmin bool          `json:"verified_by_admin"`
-	Remark          string        `json:"remark"`
-	CreatedAt       time.Time     `json:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at"`
-	Sale            Sales_payment `json:"sale"` // Use Sales_payment instead of Sale
+	PaymentID       int          `json:"payment_id"`
+	PaymentType     string       `json:"payment_type"`
+	AmountPaid      float64      `json:"amount_paid"`
+	SaleType        string       `json:"sale_type"`
+	PaymentDate     time.Time    `json:"payment_date"`
+	PaymentStatus   string       `json:"payment_status"`
+	VerifiedByAdmin bool         `json:"verified_by_admin"`
+	Remark          string       `json:"remark"`
+	CreatedAt       time.Time    `json:"created_at"`
+	UpdatedAt       time.Time    `json:"updated_at"`
+	PaymentUserID   int          `json:"payment_user_id"`
+	PaymentUsername string       `json:"payment_username"`
+	Sale            SalesPayment `json:"sale"`
 }
 
-type Sales_payment struct {
+type SalesPayment struct {
 	SaleID         int             `json:"sale_id"`
 	VehicleID      int             `json:"vehicle_id"`
 	UserID         int             `json:"user_id"`
@@ -27,13 +33,57 @@ type Sales_payment struct {
 	BookingDate    time.Time       `json:"booking_date"`
 	DateOfDelivery time.Time       `json:"date_of_delivery"`
 	ReturnDate     time.Time       `json:"return_date"`
-	IsDamaged      bool            `json:"is_damaged"`
-	IsWashed       bool            `json:"is_washed"`
-	IsDelayed      bool            `json:"is_delayed"`
 	NumberOfDays   int             `json:"number_of_days"`
 	Remark         string          `json:"remark"`
 	Status         string          `json:"status"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
 	Vehicle        VehicleResponse `json:"vehicle"`
+}
+
+type Payment struct {
+	PaymentID       int       `json:"payment_id"`
+	PaymentType     string    `json:"payment_type"`
+	SaleType        string    `json:"sale_type"`
+	AmountPaid      float64   `json:"amount_paid"`
+	PaymentDate     time.Time `json:"payment_date"`
+	PaymentStatus   string    `json:"payment_status"`
+	VerifiedByAdmin bool      `json:"verified_by_admin"`
+	Remark          string    `json:"remark"`
+	UserID          int       `json:"user_id"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	SaleID          int       `json:"sale_id"`
+}
+
+// Payment type constants
+const (
+	TypeBooking  = "booking"  // Initial reservation payment
+	TypeDelivery = "delivery" // Payment at vehicle handover
+	TypeReturn   = "return"   // Final payment at vehicle return
+)
+
+// Validate payment data
+func (p *Payment) Validate() error {
+	// Validate payment type
+	validTypes := map[string]bool{
+		TypeBooking:  true,
+		TypeDelivery: true,
+		TypeReturn:   true,
+	}
+	if !validTypes[p.SaleType] {
+		return errors.New("invalid payment type, must be booking/delivery/return")
+	}
+
+	// Validate amount
+	if p.AmountPaid <= 0 {
+		return errors.New("payment amount must be positive")
+	}
+
+	// Validate completed payments are verified
+	if p.SaleType == "Completed" && !p.VerifiedByAdmin {
+		return errors.New("completed payments must be verified by admin")
+	}
+
+	return nil
 }

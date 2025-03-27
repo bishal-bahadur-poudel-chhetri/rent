@@ -27,48 +27,50 @@ type SaleFilter struct {
 
 func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
 	query := `
-		SELECT 
-			p.payment_id,
-			p.payment_type,
-			p.amount_paid,
-			p.payment_date,
-			p.payment_status,
-			p.verified_by_admin,
-			p.remark,
-			p.created_at,
-			p.updated_at,
-			s.sale_id, 
-			s.vehicle_id, 
-			s.user_id, 
-			s.customer_name, 
-			s.customer_destination, 
-			s.customer_phone, 
-			s.total_amount, 
-			s.charge_per_day, 
-			s.booking_date, 
-			s.date_of_delivery, 
-			s.return_date, 
-			s.is_damaged, 
-			s.is_washed, 
-			s.is_delayed, 
-			s.number_of_days, 
-			s.remark, 
-			s.status, 
-			s.created_at, 
-			s.updated_at,
-			v.vehicle_id,
-			v.vehicle_type_id,
-			v.vehicle_name,
-			v.vehicle_model,
-			v.vehicle_registration_number,
-			v.is_available,
-			v.image_name,
-			v.status
-		FROM payments p
-		LEFT JOIN sales s ON p.sale_id = s.sale_id
-		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
-		WHERE 1=1
-	`
+        SELECT 
+            p.payment_id,
+            p.payment_type,
+            p.amount_paid,
+            p.payment_date,
+            p.payment_status,
+            p.verified_by_admin,
+            p.remark,
+            p.sale_type,
+            p.created_at,
+            p.updated_at,
+            p.user_id AS payment_user_id,
+            pu.username AS payment_username,
+            s.sale_id, 
+            s.vehicle_id, 
+            s.user_id AS sale_user_id,
+            s.customer_name, 
+            s.customer_destination, 
+            s.customer_phone,
+            s.total_amount, 
+            s.charge_per_day, 
+            s.booking_date, 
+            s.date_of_delivery, 
+            s.return_date, 
+            s.number_of_days, 
+            s.remark, 
+            s.status, 
+            s.created_at AS sale_created_at, 
+            s.updated_at AS sale_updated_at,
+            v.vehicle_id,
+            v.vehicle_type_id,
+            v.vehicle_name,
+            v.vehicle_model,
+            v.vehicle_registration_number,
+            v.is_available,
+            v.image_name,
+            v.status
+        FROM payments p
+        LEFT JOIN sales s ON p.sale_id = s.sale_id
+        LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+        LEFT JOIN users pu ON p.user_id = pu.ID  -- Payment creator
+        LEFT JOIN users su ON s.user_id = su.ID  -- Sale creator
+        WHERE 1=1
+    `
 
 	args := []interface{}{}
 	argCounter := 1
@@ -99,7 +101,7 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 
 	if filter.CustomerName != nil {
 		query += fmt.Sprintf(" AND s.customer_name ILIKE $%d", argCounter)
-		args = append(args, *filter.CustomerName)
+		args = append(args, "%"+*filter.CustomerName+"%")
 		argCounter++
 	}
 
@@ -115,10 +117,7 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 		argCounter++
 	}
 
-	// Add ORDER BY clause to sort by payment_date in descending order
 	query += " ORDER BY p.payment_date DESC"
-
-	// Add LIMIT and OFFSET
 	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCounter, argCounter+1)
 	args = append(args, limit, offset)
 
@@ -139,8 +138,11 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 			&payment.PaymentStatus,
 			&payment.VerifiedByAdmin,
 			&payment.Remark,
+			&payment.SaleType,
 			&payment.CreatedAt,
 			&payment.UpdatedAt,
+			&payment.PaymentUserID,
+			&payment.PaymentUsername,
 			&payment.Sale.SaleID,
 			&payment.Sale.VehicleID,
 			&payment.Sale.UserID,
@@ -152,9 +154,6 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 			&payment.Sale.BookingDate,
 			&payment.Sale.DateOfDelivery,
 			&payment.Sale.ReturnDate,
-			&payment.Sale.IsDamaged,
-			&payment.Sale.IsWashed,
-			&payment.Sale.IsDelayed,
 			&payment.Sale.NumberOfDays,
 			&payment.Sale.Remark,
 			&payment.Sale.Status,

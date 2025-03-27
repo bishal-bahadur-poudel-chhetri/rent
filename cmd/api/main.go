@@ -71,6 +71,10 @@ func main() {
 	statementService := services.NewStatementService(statementRepo)
 	statementHandler := handlers.NewStatementHandler(statementService)
 
+	expenseRepo := repositories.NewExpenseRepository(db)
+	expenseService := services.NewExpenseService(expenseRepo)
+	expenseHandler := handlers.NewExpenseHandler(expenseService)
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -119,6 +123,10 @@ func main() {
 			protected.GET("/disabled-dates", disableDateHandler.GetDisabledDates)
 
 			protected.GET("/statements", statementHandler.GetStatements)
+			protected.POST("/expenses", expenseHandler.CreateExpense)
+			protected.GET("/expenses/pending", expenseHandler.GetPendingExpenses)
+			protected.POST("/expenses/:id/reimburse", expenseHandler.ReimburseExpense)
+			protected.POST("/expenses/auto-reimburse", expenseHandler.AutoReimburse)
 		}
 	}
 

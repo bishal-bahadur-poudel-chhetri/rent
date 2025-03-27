@@ -48,12 +48,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		PaymentStatus       string                `json:"payment_status"`
 		CustomerName        string                `json:"customer_name"`
 		CustomerDestination string                `json:"customer_destination"`
-		BookingDate         string                `json:"booking_date"`
 		DateOfDelivery      string                `json:"date_of_delivery"`
 		ReturnDate          string                `json:"return_date"`
-		IsDamaged           bool                  `json:"is_damaged"`
-		IsWashed            bool                  `json:"is_washed"`
-		IsDelayed           bool                  `json:"is_delayed"`
 		Remark              string                `json:"remark"`
 		Status              string                `json:"status"`
 		SalesCharges        []models.SalesCharge  `json:"sales_charges"`
@@ -68,19 +64,12 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Parse dates
-	bookingDate, err := time.Parse(time.RFC3339, saleRequest.BookingDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid booking date", err.Error()))
-		return
-	}
-
 	dateOfDelivery, err := time.Parse(time.RFC3339, saleRequest.DateOfDelivery)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery date", err.Error()))
 		return
 	}
-	fmt.Print(saleRequest.CustomerPhone)
+	fmt.Println(saleRequest.DateOfDelivery)
 	// Validate Nepalese phone number
 	if !isValidNepalesePhoneNumber(saleRequest.CustomerPhone) {
 		fmt.Print("hi")
@@ -110,12 +99,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		CustomerPhone:  saleRequest.CustomerPhone,
 		TotalAmount:    saleRequest.TotalAmount,
 		ChargePerDay:   saleRequest.ChargePerDay,
-		BookingDate:    bookingDate,
 		DateOfDelivery: dateOfDelivery,
 		ReturnDate:     returnDate,
-		IsDamaged:      saleRequest.IsDamaged,
-		IsWashed:       saleRequest.IsWashed,
-		IsDelayed:      saleRequest.IsDelayed,
 		NumberOfDays:   saleRequest.NumberOfDays,
 		Remark:         saleRequest.Remark,
 		Status:         saleRequest.Status,

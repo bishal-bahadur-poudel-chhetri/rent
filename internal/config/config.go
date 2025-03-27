@@ -163,21 +163,52 @@ func initDB(db *sql.DB) error {
 	}
 	// Create payments table
 	paymentsQuery := `
-		CREATE TABLE IF NOT EXISTS payments (
-			payment_id SERIAL PRIMARY KEY,
-			payment_type VARCHAR(50) NOT NULL,
-			amount_paid DECIMAL(10,2) NOT NULL,
-			payment_date TIMESTAMP NOT NULL,
-			payment_status VARCHAR(50) NOT NULL CHECK (payment_status IN ('Pending', 'Completed', 'Failed')),
-			verified_by_admin BOOLEAN DEFAULT FALSE,
-			remark TEXT,
-			user_id INT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			sale_id INT NOT NULL,
-			FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
-		);
-		`
+	CREATE TABLE IF NOT EXISTS payments (
+		payment_id SERIAL PRIMARY KEY,
+		sale_id INT NOT NULL REFERENCES sales(sale_id) ON DELETE CASCADE,
+		payment_stage VARCHAR(20) NOT NULL CHECK (
+			payment_stage IN (
+				'booking_deposit',    
+				'delivery_payment',  
+				'return_payment',
+				'refund',    
+				'other'  
+			)
+		),
+		amount_paid DECIMAL(10,2) NOT NULL,
+		payment_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		payment_method VARCHAR(20) NOT NULL CHECK (
+			payment_method IN (
+				'cash',
+				'credit_card',
+				'debit_card',
+				'bank_transfer',
+				'mobile_payment'
+			)
+		),
+		payment_status VARCHAR(20) NOT NULL CHECK (
+			payment_status IN (
+				'Pending',    -- Payment initiated but not confirmed
+				'Completed',   -- Payment successfully received
+				'Failed',      -- Payment failed/declined
+				'Refunded'     -- Payment was refunded
+			)
+		),
+		collected_by INT REFERENCES users(id),  -- Staff member who collected payment
+		verified_by INT REFERENCES users(id),   -- Admin who verified payment
+		verified_at TIMESTAMP,                  -- When payment was verified
+		receipt_number VARCHAR(50),             -- Official receipt number
+		remark TEXT,                            -- Additional notes
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		
+		-- Ensure verification is recorded if marked as verified
+		CONSTRAINT verification_check CHECK (
+			(payment_status = 'Completed' AND verified_by IS NOT NULL AND verified_at IS NOT NULL)
+			OR (payment_status != 'Completed')
+		)
+	);
+	`
 	_, err = db.Exec(paymentsQuery)
 	if err != nil {
 		return err
