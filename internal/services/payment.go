@@ -24,6 +24,7 @@ type SaleFilter struct {
 	VerifiedBy    *string
 }
 
+// GetPaymentsWithSales (unchanged except for repository filter mapping)
 func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
 	return s.paymentRepo.GetPaymentsWithSales(
 		repositories.SaleFilter{
@@ -38,4 +39,14 @@ func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offs
 		limit,
 		offset,
 	)
+}
+
+// UpdatePayment updates an existing payment's payment_type and amount_paid
+func (s *PaymentService) UpdatePayment(paymentID int, userID int, paymentType string, amountPaid float64) error {
+	return s.paymentRepo.UpdatePayment(paymentID, userID, paymentType, amountPaid)
+}
+
+// InsertPayment creates a new payment
+func (s *PaymentService) InsertPayment(saleID int, userID int, paymentType string, amountPaid float64) (int, error) {
+	return s.paymentRepo.InsertPayment(saleID, userID, paymentType, amountPaid)
 }

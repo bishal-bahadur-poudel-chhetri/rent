@@ -156,3 +156,70 @@ func (h *SaleHandler) GetSaleByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale fetched successfully", sale))
 }
+
+func (h *SaleHandler) GetSales(c *gin.Context) {
+	_, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
+		return
+	}
+
+	// Parse query parameters for filters
+	filters := make(map[string]string)
+	if status := c.Query("status"); status != "" {
+		filters["status"] = status
+	}
+	if actualDelivery := c.Query("actual_date_of_delivery"); actualDelivery != "" {
+		filters["actual_date_of_delivery"] = actualDelivery
+	}
+	if dateBefore := c.Query("date_of_delivery_before"); dateBefore != "" {
+		filters["date_of_delivery_before"] = dateBefore
+	}
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filters["customer_name"] = customerName
+	}
+	if vehicleID := c.Query("vehicle_id"); vehicleID != "" {
+		filters["vehicle_id"] = vehicleID
+	}
+
+	// Parse other query parameters
+	sort := c.Query("sort")
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "0")) // Default to 0 for all sales
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	// Parse include parameter
+	includeParam := c.Query("include")
+	var include []string
+	if includeParam != "" {
+		include = strings.Split(includeParam, ",")
+	}
+
+	response, err := h.saleService.GetSales(filters, sort, limit, offset, include)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to fetch sales", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sales fetched successfully", response))
+}
+
+func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
+	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err))
+		return
+	}
+
+	var req models.UpdateSaleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request payload", err))
+		return
+	}
+
+	if err := h.saleService.UpdateSaleByUserID(req.SaleID, userID, req); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale updated successfully", nil))
+}

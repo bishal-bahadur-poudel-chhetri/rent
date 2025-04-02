@@ -32,6 +32,11 @@ func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", nil))
 		return
 	}
+	saleID, err := strconv.Atoi(c.Param("sale_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", nil))
+		return
+	}
 
 	// Extract user ID from the JWT token
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
@@ -48,7 +53,7 @@ func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 	}
 
 	// Call the service layer to verify the payment
-	err = h.paymentService.VerifyPayment(paymentID, req.Status, userID, req.Remark)
+	err = h.paymentService.VerifyPayment(paymentID, req.Status, userID, saleID, req.Remark)
 	if err != nil {
 		switch {
 		case errors.Is(err, errors.New("only admin users can verify payments")):

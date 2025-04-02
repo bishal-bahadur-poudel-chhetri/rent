@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"renting/internal/models"
 	"time"
@@ -25,6 +26,7 @@ type SaleFilter struct {
 	VerifiedBy    *string
 }
 
+// GetPaymentsWithSales (unchanged)
 func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, offset int) ([]models.PaymentWithSale, error) {
 	query := `
         SELECT 
@@ -53,6 +55,9 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
             s.return_date, 
             s.number_of_days, 
             s.remark, 
+			s.actual_date_of_delivery,
+			s.actual_date_of_return,
+			s.payment_status,
             s.status, 
             s.created_at AS sale_created_at, 
             s.updated_at AS sale_updated_at,
@@ -67,8 +72,8 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
         FROM payments p
         LEFT JOIN sales s ON p.sale_id = s.sale_id
         LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
-        LEFT JOIN users pu ON p.user_id = pu.ID  -- Payment creator
-        LEFT JOIN users su ON s.user_id = su.ID  -- Sale creator
+        LEFT JOIN users pu ON p.user_id = pu.ID
+        LEFT JOIN users su ON s.user_id = su.ID
         WHERE 1=1
     `
 
@@ -156,6 +161,9 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 			&payment.Sale.ReturnDate,
 			&payment.Sale.NumberOfDays,
 			&payment.Sale.Remark,
+			&payment.Sale.ActualDateofDelivery,
+			&payment.Sale.ActualReturnDate,
+			&payment.Sale.PaymentStatus,
 			&payment.Sale.Status,
 			&payment.Sale.CreatedAt,
 			&payment.Sale.UpdatedAt,
@@ -175,4 +183,139 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 	}
 
 	return payments, nil
+}
+
+// UpdatePayment updates payment_type and amount_paid for a payment
+func (r *PaymentRepository) UpdatePayment(paymentID int, userID int, paymentType string, amountPaid float64) error {
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Check current payment status
+	var currentStatus string
+	statusQuery := `
+		SELECT payment_status
+		FROM payments
+		WHERE payment_id = $1
+	`
+	err = tx.QueryRow(statusQuery, paymentID).Scan(&currentStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("payment not found")
+		}
+		return err
+	}
+
+	// Prevent update if payment is already Completed
+	if currentStatus == "Completed" {
+		return errors.New("cannot update a completed payment")
+	}
+
+	// Determine new status based on user role
+	isAdmin, err := r.isAdmin(userID)
+	if err != nil {
+		return err
+	}
+	newStatus := "Pending"
+	if isAdmin {
+		newStatus = "Completed"
+	}
+
+	// Update payment
+	query := `
+		UPDATE payments
+		SET 
+			payment_type = $1,
+			amount_paid = $2,
+			payment_status = $3,
+			updated_at = $4,
+			user_id = $5
+		WHERE payment_id = $6
+	`
+	result, err := tx.Exec(query,
+		paymentType,
+		amountPaid,
+		newStatus,
+		time.Now(),
+		userID,
+		paymentID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("payment not found")
+	}
+
+	return tx.Commit()
+}
+
+// InsertPayment adds a new payment
+func (r *PaymentRepository) InsertPayment(saleID int, userID int, paymentType string, amountPaid float64) (int, error) {
+	// Determine status based on user role
+	isAdmin, err := r.isAdmin(userID)
+	if err != nil {
+		return 0, err
+	}
+	paymentStatus := "Pending"
+	if isAdmin {
+		paymentStatus = "Completed"
+	}
+
+	// Insert payment
+	query := `
+		INSERT INTO payments (
+			sale_id,
+			payment_type,
+			amount_paid,
+			payment_date,
+			payment_status,
+			created_at,
+			updated_at,
+			user_id
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING payment_id
+	`
+	var paymentID int
+	err = r.db.QueryRow(query,
+		saleID,
+		paymentType,
+		amountPaid,
+		time.Now(),
+		paymentStatus,
+		time.Now(),
+		time.Now(),
+		userID,
+	).Scan(&paymentID)
+	if err != nil {
+		return 0, err
+	}
+
+	return paymentID, nil
+}
+
+// isAdmin checks if the user is an admin
+func (r *PaymentRepository) isAdmin(userID int) (bool, error) {
+	query := `
+		SELECT is_admin
+		FROM users
+		WHERE id = $1
+	`
+	var isAdmin bool
+	err := r.db.QueryRow(query, userID).Scan(&isAdmin)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, errors.New("user not found")
+		}
+		return false, err
+	}
+	return isAdmin, nil
 }

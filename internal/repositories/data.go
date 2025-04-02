@@ -13,7 +13,7 @@ func NewDataAggregateRepository(db *sql.DB) *DataAggregateRepository {
 	return &DataAggregateRepository{db: db}
 }
 
-// GetPendingRequests returns the count of pending payment requests for a specific date, year, or month.
+// GetPendingRequests (unchanged)
 func (r *DataAggregateRepository) GetPendingRequests(date time.Time, filterType string) (int, error) {
 	var query string
 	switch filterType {
@@ -56,29 +56,29 @@ func (r *DataAggregateRepository) GetPendingRequests(date time.Time, filterType 
 	return count, err
 }
 
-// GetTotalSales returns the total number of verified payments and the total revenue for a specific date, month, or year.
+// GetTotalSales (modified to use revenue_recognition daily_amount)
 func (r *DataAggregateRepository) GetTotalSales(date time.Time, filterType string) (int, float64, error) {
 	var query string
 	switch filterType {
 	case "date":
 		query = `
-			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
-			FROM payments
-			WHERE payment_status = 'Completed' 
-			AND DATE(payment_date) = $1`
+			SELECT COUNT(DISTINCT sale_id), COALESCE(SUM(daily_amount), 0)
+			FROM revenue_recognition
+			WHERE $1 BETWEEN start_date AND end_date`
 	case "month":
 		query = `
-			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
-			FROM payments
-			WHERE payment_status = 'Completed' 
-			AND EXTRACT(YEAR FROM payment_date) = $1
-			AND EXTRACT(MONTH FROM payment_date) = $2`
+			SELECT COUNT(DISTINCT sale_id), COALESCE(SUM(daily_amount * (
+				LEAST(end_date, $2) - GREATEST(start_date, $1) + 1
+			)), 0)
+			FROM revenue_recognition
+			WHERE start_date <= $2 AND end_date >= $1`
 	case "year":
 		query = `
-			SELECT COUNT(*), COALESCE(SUM(amount_paid), 0)
-			FROM payments
-			WHERE payment_status = 'Completed' 
-			AND EXTRACT(YEAR FROM payment_date) = $1`
+			SELECT COUNT(DISTINCT sale_id), COALESCE(SUM(daily_amount * (
+				LEAST(end_date, $2) - GREATEST(start_date, $1) + 1
+			)), 0)
+			FROM revenue_recognition
+			WHERE start_date <= $2 AND end_date >= $1`
 	default:
 		return 0, 0, nil
 	}
@@ -90,14 +90,18 @@ func (r *DataAggregateRepository) GetTotalSales(date time.Time, filterType strin
 	case "date":
 		err = r.db.QueryRow(query, date.Format("2006-01-02")).Scan(&count, &totalRevenue)
 	case "month":
-		err = r.db.QueryRow(query, date.Year(), date.Month()).Scan(&count, &totalRevenue)
+		monthStart := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
+		monthEnd := monthStart.AddDate(0, 1, -1)
+		err = r.db.QueryRow(query, monthStart, monthEnd).Scan(&count, &totalRevenue)
 	case "year":
-		err = r.db.QueryRow(query, date.Year()).Scan(&count, &totalRevenue)
+		yearStart := time.Date(date.Year(), 1, 1, 0, 0, 0, 0, date.Location())
+		yearEnd := time.Date(date.Year(), 12, 31, 0, 0, 0, 0, date.Location())
+		err = r.db.QueryRow(query, yearStart, yearEnd).Scan(&count, &totalRevenue)
 	}
 	return count, totalRevenue, err
 }
 
-// GetFutureBookings returns the count of future bookings for a specific date, month, or year.
+// GetFutureBookings (unchanged)
 func (r *DataAggregateRepository) GetFutureBookings(date time.Time, filterType string) (int, error) {
 	var query string
 	switch filterType {

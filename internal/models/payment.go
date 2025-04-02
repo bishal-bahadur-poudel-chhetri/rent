@@ -22,23 +22,26 @@ type PaymentWithSale struct {
 }
 
 type SalesPayment struct {
-	SaleID         int             `json:"sale_id"`
-	VehicleID      int             `json:"vehicle_id"`
-	UserID         int             `json:"user_id"`
-	CustomerName   string          `json:"customer_name"`
-	Destination    string          `json:"customer_destination"`
-	CustomerPhone  string          `json:"customer_phone"`
-	TotalAmount    float64         `json:"total_amount"`
-	ChargePerDay   float64         `json:"charge_per_day"`
-	BookingDate    time.Time       `json:"booking_date"`
-	DateOfDelivery time.Time       `json:"date_of_delivery"`
-	ReturnDate     time.Time       `json:"return_date"`
-	NumberOfDays   int             `json:"number_of_days"`
-	Remark         string          `json:"remark"`
-	Status         string          `json:"status"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
-	Vehicle        VehicleResponse `json:"vehicle"`
+	SaleID               int             `json:"sale_id"`
+	VehicleID            int             `json:"vehicle_id"`
+	UserID               int             `json:"user_id"`
+	CustomerName         string          `json:"customer_name"`
+	Destination          string          `json:"customer_destination"`
+	CustomerPhone        string          `json:"customer_phone"`
+	TotalAmount          float64         `json:"total_amount"`
+	ChargePerDay         float64         `json:"charge_per_day"`
+	BookingDate          time.Time       `json:"booking_date"`
+	DateOfDelivery       time.Time       `json:"date_of_delivery"`
+	ReturnDate           time.Time       `json:"return_date"`
+	NumberOfDays         int             `json:"number_of_days"`
+	Remark               string          `json:"remark"`
+	Status               string          `json:"status"`
+	CreatedAt            time.Time       `json:"created_at"`
+	UpdatedAt            time.Time       `json:"updated_at"`
+	Vehicle              VehicleResponse `json:"vehicle"`
+	ActualDateofDelivery *time.Time      `json:"actual_date_of_delivery"`
+	ActualReturnDate     *time.Time      `json:"actual_date_of_return"`
+	PaymentStatus        string          `json:"payment_status"`
 }
 
 type Payment struct {

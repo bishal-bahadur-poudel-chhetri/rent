@@ -5,6 +5,7 @@ import (
 	"renting/internal/services"
 	"renting/internal/utils" // Import the utils package
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,4 +55,45 @@ func (h *FuturBookingHandler) GetFuturBookingsByMonth(c *gin.Context) {
 
 	// Return the response
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "success", response))
+}
+
+func (h *FuturBookingHandler) CancelFuturBooking(c *gin.Context) {
+	// Extract and validate sale ID
+	saleIDStr := c.Param("saleID")
+	saleID, err := strconv.Atoi(saleIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(
+			http.StatusBadRequest,
+			"invalid sale ID format",
+			nil,
+		))
+		return
+	}
+
+	// Call service to cancel booking
+	err = h.futurBookingService.CancelFuturBooking(saleID)
+	if err != nil {
+		// Handle different error cases
+		if strings.Contains(err.Error(), "no booking found") {
+			c.JSON(http.StatusNotFound, utils.ErrorResponse(
+				http.StatusNotFound,
+				err.Error(),
+				nil,
+			))
+		} else {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(
+				http.StatusInternalServerError,
+				err.Error(),
+				nil,
+			))
+		}
+		return
+	}
+
+	// Success response
+	c.JSON(http.StatusOK, utils.SuccessResponse(
+		http.StatusOK,
+		"booking cancelled successfully",
+		nil,
+	))
 }

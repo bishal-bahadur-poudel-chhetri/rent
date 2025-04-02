@@ -2,12 +2,12 @@ package services
 
 import (
 	"fmt"
-	"io"
 	"mime"
 	"mime/multipart"
-	"os"
+	"path/filepath"
 	"renting/internal/models"
 	"renting/internal/repositories"
+	"strings"
 )
 
 type VideoService interface {
@@ -30,26 +30,26 @@ func (s *videoService) UploadVideo(file *multipart.FileHeader, saleID int, video
 	}
 	defer src.Close()
 
-	// Create a temporary file to store the uploaded video
-	tmpFile, err := os.CreateTemp("", "video-*.mp4")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer tmpFile.Close()
-
-	// Copy the uploaded file content to the temporary file
-	if _, err := io.Copy(tmpFile, src); err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
-	}
-
-	// Determine the MIME type of the file
-	contentType := mime.TypeByExtension(".mp4")
+	// Determine content type
+	contentType := file.Header.Get("Content-Type")
 	if contentType == "" {
-		contentType = "video/mp4" // Fallback to video/mp4 if MIME type detection fails
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		contentType = mime.TypeByExtension(ext)
+		if contentType == "" {
+			// Common iOS video types
+			switch ext {
+			case ".mov":
+				contentType = "video/quicktime"
+			case ".mp4":
+				contentType = "video/mp4"
+			default:
+				contentType = "application/octet-stream"
+			}
+		}
 	}
 
-	// Upload the file to the repository (e.g., Cloudflare R2)
-	salesVideo, err := s.videoRepo.UploadFile(tmpFile.Name(), contentType, saleID, videoURL)
+	// Upload directly from the reader
+	salesVideo, err := s.videoRepo.UploadFileFromReader(src, file.Size, contentType, saleID, videoURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}

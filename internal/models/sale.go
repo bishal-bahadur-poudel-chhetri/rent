@@ -17,8 +17,10 @@ type Sale struct {
 	ReturnDate           time.Time      `json:"return_date"`
 	NumberOfDays         int            `json:"number_of_days"`
 	Remark               string         `json:"remark"`
+	PaymentStatus        string         `json:"payment_status"` // Change to PaymentStatus
 	Status               string         `json:"status"`
-	ActualDateofDelivery time.Time      `json:"actual_date_of_delivery"`
+	OtherCharges         float64        `json:"other_charges"`
+	ActualDateofDelivery *time.Time     `json:"actual_date_of_delivery"`
 	ActualReturnDate     *time.Time     `json:"actual_date_of_return"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
@@ -27,6 +29,36 @@ type Sale struct {
 	SalesVideos          []SalesVideo   `json:"sales_videos"`  // Related sales videos
 	VehicleUsage         []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
 	Payments             []Payment      `json:"payments"`      // Related payments
+	Vehicle              *Vehicle       `json:"vehicle,omitempty"`
+}
+
+type SalePending struct {
+	SaleID               int            `json:"sale_id"`
+	VehicleID            int            `json:"vehicle_id"`
+	UserID               int            `json:"user_id"` // Change to
+	UserName             string         `json:"username"`
+	CustomerName         string         `json:"customer_name"`
+	Destination          string         `json:"customer_destination"`
+	CustomerPhone        string         `json:"customer_phone"`
+	TotalAmount          float64        `json:"total_amount"`
+	ChargePerDay         float64        `json:"charge_per_day"`
+	BookingDate          time.Time      `json:"booking_date"`
+	DateOfDelivery       time.Time      `json:"date_of_delivery"`
+	ReturnDate           time.Time      `json:"return_date"`
+	NumberOfDays         int            `json:"number_of_days"`
+	Remark               string         `json:"remark"`
+	PaymentStatus        string         `json:"payment_status"` // Change to PaymentStatus
+	Status               string         `json:"status"`
+	ActualDateofDelivery *time.Time     `json:"actual_date_of_delivery"`
+	ActualReturnDate     *time.Time     `json:"actual_date_of_return"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	SalesCharges         []SalesCharge  `json:"sales_charges"` // Related sales charges
+	SalesImages          []SalesImage   `json:"sales_images"`  // Related sales images
+	SalesVideos          []SalesVideo   `json:"sales_videos"`  // Related sales videos
+	VehicleUsage         []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
+	Payments             []Payment      `json:"payments"`      // Related payments
+	Vehicle              *Vehicle       `json:"vehicle,omitempty"`
 }
 type SaleSubmitResponse struct {
 	SaleID      int    `json:"sale_id"`
@@ -47,14 +79,6 @@ type SalesImage struct {
 	SaleID     int       `json:"sale_id"`
 	ImageURL   string    `json:"image_url"`
 	UploadedAt time.Time `json:"uploaded_at"`
-}
-
-type SalesVideo struct {
-	VideoID    int       `json:"video_id"`
-	SaleID     int       `json:"sale_id"`
-	VideoURL   string    `json:"video_url"`
-	UploadedAt time.Time `json:"uploaded_at"`
-	FileName   string    `json:"file_name"` // Ensure this field exists
 }
 
 type VehicleUsage struct {
@@ -87,4 +111,37 @@ type SaleWithPayment struct {
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 	Payment             Payment   `json:"payment"`
+	Vehicle             *Vehicle  `json:"vehicle,omitempty"`
+}
+type Pagination struct {
+	CurrentPage int  `json:"current_page"`
+	PageSize    int  `json:"page_size"`
+	TotalCount  int  `json:"total_count"`
+	TotalPages  int  `json:"total_pages"`
+	HasNext     bool `json:"has_next"`
+	HasPrevious bool `json:"has_previous"`
+}
+
+// PendingSalesResponse represents the response structure for pending sales
+type PendingSalesResponse struct {
+	Sales      []Sale     `json:"sales"`
+	Pagination Pagination `json:"pagination"`
+}
+
+type UpdateSaleRequest struct {
+	SaleID               int      `json:"sale_id" binding:"required"`
+	UserID               *int     `json:"user_id,omitempty"`
+	Status               *string  `json:"status,omitempty"`
+	PaymentStatus        *string  `json:"payment_status,omitempty"`
+	Remark               *string  `json:"remark,omitempty"`
+	CustomerName         *string  `json:"customer_name,omitempty"`
+	CustomerPhone        *string  `json:"customer_phone,omitempty"`
+	CustomerDestination  *string  `json:"customer_destination,omitempty"`
+	TotalAmount          *float64 `json:"total_amount,omitempty"`
+	ChargePerDay         *float64 `json:"charge_per_day,omitempty"`
+	DateOfDelivery       *string  `json:"date_of_delivery,omitempty"`
+	ReturnDate           *string  `json:"return_date,omitempty"`
+	ActualDateOfDelivery *string  `json:"actual_date_of_delivery,omitempty"`
+	ActualDateOfReturn   *string  `json:"actual_date_of_return,omitempty"`
+	NumberOfDays         *int     `json:"number_of_days,omitempty"`
 }

@@ -36,6 +36,11 @@ func main() {
 	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
 	paymentRepo := repositories.NewPaymentRepository(db)
 	saleDetailRepo := repositories.NewSaleDetailRepository(db)
+	dataRepo := repositories.NewDataAggregateRepository(db)
+	disableDateRepo := repositories.NewDisableDateRepository(db)
+	statementRepo := repositories.NewStatementRepository(db)
+	expenseRepo := repositories.NewExpenseRepository(db)
+	revenueRepo := repositories.NewRevenueRepository(db)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -47,6 +52,11 @@ func main() {
 	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
 	saleDetailService := services.NewSaleDetailService(saleDetailRepo)
+	dataService := services.NewDataAggregateService(dataRepo)
+	disableDateService := services.NewDisableDateService(disableDateRepo)
+	statementService := services.NewStatementService(statementRepo)
+	expenseService := services.NewExpenseService(expenseRepo)
+	revenueService := services.NewRevenueService(revenueRepo)
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -56,33 +66,28 @@ func main() {
 	videoHandler := handlers.NewVideoHandler(videoService)
 	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)
 	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)
-	paymentHandler := handlers.NewPaymentHandler(paymentService)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, cfg.JWTSecret)
 	saleDetailHandler := handlers.NewSaleDetailHandler(saleDetailService)
-
-	// Initialize DataAggregate repository, service, and handler
-	dataRepo := repositories.NewDataAggregateRepository(db)
-	dataService := services.NewDataAggregateService(dataRepo)    // Pass the dereferenced repository
-	dataHandler := handlers.NewDataAggregateHandler(dataService) // Pass the pointer to the handler
-	disableDateRepo := repositories.NewDisableDateRepository(db)
-	disableDateService := services.NewDisableDateService(disableDateRepo)
+	dataHandler := handlers.NewDataAggregateHandler(dataService)
 	disableDateHandler := handlers.NewDisableDateHandler(disableDateService)
-
-	statementRepo := repositories.NewStatementRepository(db)
-	statementService := services.NewStatementService(statementRepo)
 	statementHandler := handlers.NewStatementHandler(statementService)
-
-	expenseRepo := repositories.NewExpenseRepository(db)
-	expenseService := services.NewExpenseService(expenseRepo)
-	expenseHandler := handlers.NewExpenseHandler(expenseService)
+	expenseHandler := handlers.NewExpenseHandler(expenseService) // Already correct
+	revenueHandler := handlers.NewRevenueHandler(revenueService)
 
 	// Initialize Gin router
 	router := gin.Default()
 
-	// Set trusted proxies if needed (this can be helpful if you're behind a reverse proxy)
+	// Set trusted proxies if needed
 	router.SetTrustedProxies([]string{"0.0.0.0"})
 
 	// CORS middleware to allow cross-origin requests
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	// Define API routes under /api/v1
 	v1 := router.Group("/api/v1")
@@ -104,16 +109,23 @@ func main() {
 			// Sale routes
 			protected.POST("/sales", saleHandler.CreateSale)
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)
+			protected.GET("/sales", saleHandler.GetSales)
+			protected.PATCH("/sales/update", saleHandler.UpdateSaleByUserID)
 
 			// Video upload route
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)
 			protected.GET("/payment", paymentHandler.GetPaymentsWithSales)
 
 			// Payment verification route
-			protected.PUT("/sales/:payment_id/verify", paymentVerificationHandler.VerifyPayment)
+			protected.PUT("/:payment_id/:sale_id/verify", paymentVerificationHandler.VerifyPayment)
 
-			// FuturBooking route
+			// Payment routes
+			protected.PUT("/payments/:payment_id", paymentHandler.UpdatePayment)
+			protected.POST("/sales/:id/payments", paymentHandler.InsertPayment)
+
+			// FuturBooking routes
 			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth)
+			protected.POST("/futur-bookings/:saleID/cancel", futurBookingHandler.CancelFuturBooking)
 
 			// SaleDetail route for filtering sales
 			protected.GET("/sales/filter", saleDetailHandler.GetSalesWithFilters)
@@ -123,10 +135,16 @@ func main() {
 			protected.GET("/disabled-dates", disableDateHandler.GetDisabledDates)
 
 			protected.GET("/statements", statementHandler.GetStatements)
+
+			// Expense routes (added full CRUD + filter)
 			protected.POST("/expenses", expenseHandler.CreateExpense)
-			protected.GET("/expenses/pending", expenseHandler.GetPendingExpenses)
-			protected.POST("/expenses/:id/reimburse", expenseHandler.ReimburseExpense)
-			protected.POST("/expenses/auto-reimburse", expenseHandler.AutoReimburse)
+			protected.PUT("/expenses/:id", expenseHandler.UpdateExpense)
+			protected.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
+			protected.GET("/expenses/:id", expenseHandler.GetExpenseByID)
+			protected.GET("/expenses", expenseHandler.GetAllExpenses)
+
+			// Revenue route
+			protected.GET("/revenue", revenueHandler.GetRevenue)
 		}
 	}
 
