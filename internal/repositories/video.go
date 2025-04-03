@@ -45,7 +45,7 @@ func (r *videoRepository) UploadFileFromReader(reader io.Reader, size int64, con
 		Credentials: credentials.NewStaticCredentials(r.config.R2AccessKeyID, r.config.R2SecretAccessKey, ""),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
 
 	// Generate filename
@@ -65,7 +65,7 @@ func (r *videoRepository) UploadFileFromReader(reader io.Reader, size int64, con
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload file: %w", err)
+		return nil, fmt.Errorf("failed to upload file to R2: %w", err)
 	}
 
 	// Save to database
@@ -76,24 +76,25 @@ func (r *videoRepository) UploadFileFromReader(reader io.Reader, size int64, con
     `
 	fullURL := fmt.Sprintf("%s/%s", videoURL, filename)
 	var salesVideo models.SalesVideo
+	var fileNamePtr *string = &filename // Convert string to *string for nullable field
 	err = r.db.QueryRow(
 		query,
 		saleID,
 		fullURL,
-		filename,
+		fileNamePtr, // Use pointer for nullable field
 		contentType,
 		size,
 	).Scan(&salesVideo.VideoID, &salesVideo.UploadedAt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert video metadata: %w", err)
+		return nil, fmt.Errorf("failed to insert video metadata into database: %w", err)
 	}
 
 	// Set all fields
 	salesVideo.SaleID = saleID
 	salesVideo.VideoURL = fullURL
-	salesVideo.FileName = filename
-	salesVideo.MimeType = contentType // Now this field exists
-	salesVideo.Size = size            // Now this field exists
+	salesVideo.FileName = fileNamePtr // Already a *string
+	salesVideo.MimeType = contentType
+	salesVideo.Size = size
 
 	log.Printf("Upload completed in %s", time.Since(startTime))
 	return &salesVideo, nil

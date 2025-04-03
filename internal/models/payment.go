@@ -46,17 +46,17 @@ type SalesPayment struct {
 
 type Payment struct {
 	PaymentID       int       `json:"payment_id"`
-	PaymentType     string    `json:"payment_type"`
-	SaleType        string    `json:"sale_type"`
+	SaleID          int       `json:"sale_id"`
 	AmountPaid      float64   `json:"amount_paid"`
 	PaymentDate     time.Time `json:"payment_date"`
-	PaymentStatus   string    `json:"payment_status"`
 	VerifiedByAdmin bool      `json:"verified_by_admin"`
+	PaymentType     string    `json:"payment_type"`
+	PaymentStatus   string    `json:"payment_status"`
 	Remark          string    `json:"remark"`
 	UserID          int       `json:"user_id"`
+	SaleType        string    `json:"sale_type"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
-	SaleID          int       `json:"sale_id"`
 }
 
 // Payment type constants

@@ -3,33 +3,38 @@ package models
 import "time"
 
 type Sale struct {
-	SaleID               int            `json:"sale_id"`
-	VehicleID            int            `json:"vehicle_id"`
-	UserID               int            `json:"user_id"` // Change to
-	UserName             string         `json:"username"`
-	CustomerName         string         `json:"customer_name"`
-	Destination          string         `json:"customer_destination"`
-	CustomerPhone        string         `json:"customer_phone"`
-	TotalAmount          float64        `json:"total_amount"`
-	ChargePerDay         float64        `json:"charge_per_day"`
-	BookingDate          time.Time      `json:"booking_date"`
-	DateOfDelivery       time.Time      `json:"date_of_delivery"`
-	ReturnDate           time.Time      `json:"return_date"`
-	NumberOfDays         int            `json:"number_of_days"`
-	Remark               string         `json:"remark"`
-	PaymentStatus        string         `json:"payment_status"` // Change to PaymentStatus
-	Status               string         `json:"status"`
-	OtherCharges         float64        `json:"other_charges"`
-	ActualDateofDelivery *time.Time     `json:"actual_date_of_delivery"`
-	ActualReturnDate     *time.Time     `json:"actual_date_of_return"`
-	CreatedAt            time.Time      `json:"created_at"`
-	UpdatedAt            time.Time      `json:"updated_at"`
-	SalesCharges         []SalesCharge  `json:"sales_charges"` // Related sales charges
-	SalesImages          []SalesImage   `json:"sales_images"`  // Related sales images
-	SalesVideos          []SalesVideo   `json:"sales_videos"`  // Related sales videos
-	VehicleUsage         []VehicleUsage `json:"vehicle_usage"` // Related vehicle usage records
-	Payments             []Payment      `json:"payments"`      // Related payments
-	Vehicle              *Vehicle       `json:"vehicle,omitempty"`
+	SaleID               int        `json:"sale_id"`
+	VehicleID            int        `json:"vehicle_id"`
+	UserID               int        `json:"user_id"`
+	CustomerName         string     `json:"customer_name"`
+	Destination          string     `json:"customer_destination"`
+	CustomerPhone        string     `json:"customer_phone"`
+	TotalAmount          float64    `json:"total_amount"`
+	ChargePerDay         float64    `json:"charge_per_day"`
+	BookingDate          time.Time  `json:"booking_date"`
+	DateOfDelivery       time.Time  `json:"date_of_delivery"`
+	ReturnDate           time.Time  `json:"return_date"`
+	IsDamaged            bool       `json:"is_damaged"`
+	IsWashed             bool       `json:"is_washed"`
+	IsDelayed            bool       `json:"is_delayed"`
+	NumberOfDays         int        `json:"number_of_days"`
+	Remark               string     `json:"remark"`
+	Status               string     `json:"status"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
+	ActualDateOfDelivery *time.Time `json:"actual_date_of_delivery"`
+	ActualReturnDate     *time.Time `json:"actual_date_of_return"`
+	PaymentStatus        string     `json:"payment_status"`
+	OtherCharges         *float64   `json:"other_charges"`
+	ModifiedBy           int        `json:"modified_by"` // Assuming this is a user ID
+	// Related fields from your previous struct
+	UserName     string         `json:"username"`
+	SalesCharges []SalesCharge  `json:"sales_charges"`
+	SalesImages  []SalesImage   `json:"sales_images"`
+	SalesVideos  []SalesVideo   `json:"sales_videos"`
+	VehicleUsage []VehicleUsage `json:"vehicle_usage"`
+	Payments     []Payment      `json:"payments"`
+	Vehicle      *Vehicle       `json:"vehicle,omitempty"`
 }
 
 type SalePending struct {

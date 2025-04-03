@@ -262,15 +262,15 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
         SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination, 
                s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
-               s.remark, s.status, s.created_at, s.updated_at
+               s.remark, s.status, s.created_at, s.updated_at, s.other_charges
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
     `, saleID).Scan(
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
 		&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-		&sale.NumberOfDays, &sale.ActualDateofDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
-		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
+		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.OtherCharges,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -282,31 +282,31 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	// Load related data based on include parameter
 	for _, inc := range include {
 		switch inc {
-		case "SalesCharge": // Consider updating to "sales_charges" for consistency
+		case "SalesCharge":
 			charges, err := r.getSalesCharges(saleID)
 			if err != nil {
 				return nil, err
 			}
 			sale.SalesCharges = charges
-		case "SalesImages": // Consider updating to "sales_images" for consistency
+		case "SalesImages":
 			images, err := r.getSalesImages(saleID)
 			if err != nil {
 				return nil, err
 			}
 			sale.SalesImages = images
-		case "SalesVideos": // Consider updating to "sales_videos" for consistency
+		case "SalesVideos":
 			videos, err := r.getSalesVideos(saleID)
 			if err != nil {
 				return nil, err
 			}
 			sale.SalesVideos = videos
-		case "VehicleUsage": // Consider updating to "vehicle_usage" for consistency
+		case "VehicleUsage":
 			usage, err := r.getVehicleUsage(sale.VehicleID)
 			if err != nil {
 				return nil, err
 			}
 			sale.VehicleUsage = usage
-		case "Payments": // Consider updating to "payments" for consistency
+		case "Payments":
 			payments, err := r.getPayments(saleID)
 			if err != nil {
 				return nil, err
@@ -360,8 +360,8 @@ func (r *SaleRepository) getVehicle(vehicleID int) (*models.Vehicle, error) {
 func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 	rows, err := r.db.Query(`
 		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.total_amount, s.charge_per_day, 
-		       s.booking_date, s.date_of_delivery, s.return_date, s.number_of_days,s.other_charges
-		       s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
+		       s.booking_date, s.date_of_delivery, s.return_date, s.number_of_days,s.other_charges,
+		       s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status,
 		FROM sales s
 		LEFT JOIN users u ON s.user_id = u.id
 	`)
@@ -428,7 +428,7 @@ func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 // Helper methods for fetching related records
 func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, error) {
 	rows, err := r.db.Query(`
-		SELECT charge_id, sale_id, charge_type, amount, created_at, updated_at 
+		SELECT charge_id, sale_id, charge_type, amount 
 		FROM sales_charges 
 		WHERE sale_id = $1
 	`, saleID)
@@ -440,7 +440,7 @@ func (r *SaleRepository) getSalesCharges(saleID int) ([]models.SalesCharge, erro
 	var charges []models.SalesCharge
 	for rows.Next() {
 		var charge models.SalesCharge
-		err := rows.Scan(&charge.ChargeID, &charge.SaleID, &charge.ChargeType, &charge.Amount, &charge.CreatedAt, &charge.UpdatedAt)
+		err := rows.Scan(&charge.ChargeID, &charge.SaleID, &charge.ChargeType, &charge.Amount)
 		if err != nil {
 			return nil, err
 		}
@@ -474,27 +474,38 @@ func (r *SaleRepository) getSalesImages(saleID int) ([]models.SalesImage, error)
 
 func (r *SaleRepository) getSalesVideos(saleID int) ([]models.SalesVideo, error) {
 	rows, err := r.db.Query(`
-		SELECT video_id, sale_id, video_url, file_name, uploaded_at 
-		FROM sales_videos 
-		WHERE sale_id = $1
-	`, saleID)
+        SELECT video_id, sale_id, video_url, file_name, uploaded_at 
+        FROM sales_videos 
+        WHERE sale_id = $1
+    `, saleID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch sales videos: %v", err)
 	}
 	defer rows.Close()
 
 	var videos []models.SalesVideo
 	for rows.Next() {
 		var video models.SalesVideo
-		err := rows.Scan(&video.VideoID, &video.SaleID, &video.VideoURL, &video.FileName, &video.UploadedAt)
+		err := rows.Scan(
+			&video.VideoID,
+			&video.SaleID,
+			&video.VideoURL,
+			&video.FileName,
+			&video.UploadedAt,
+		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan sales video: %v", err)
 		}
 		videos = append(videos, video)
 	}
+
+	// Check for errors encountered during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating sales videos: %v", err)
+	}
+
 	return videos, nil
 }
-
 func (r *SaleRepository) getVehicleUsage(vehicleID int) ([]models.VehicleUsage, error) {
 	rows, err := r.db.Query(`
 		SELECT usage_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by 
@@ -521,13 +532,13 @@ func (r *SaleRepository) getVehicleUsage(vehicleID int) ([]models.VehicleUsage, 
 
 func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 	rows, err := r.db.Query(`
-		SELECT payment_id, sale_id, amount_paid, payment_date, verified_by_admin, 
-		       payment_type, payment_status, remark, user_id, sale_type, created_at, updated_at
-		FROM payments 
-		WHERE sale_id = $1
-	`, saleID)
+        SELECT payment_id, sale_id, amount_paid, payment_date, verified_by_admin, 
+               payment_type, payment_status, remark, user_id, sale_type, created_at, updated_at
+        FROM payments 
+        WHERE sale_id = $1
+    `, saleID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch payments: %v", err)
 	}
 	defer rows.Close()
 
@@ -540,13 +551,13 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 			&payment.CreatedAt, &payment.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan payment: %v", err)
 		}
 		payments = append(payments, payment)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error iterating payments: %v", err)
 	}
 	return payments, nil
 }
@@ -558,7 +569,7 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
         SELECT 
             s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination,
             s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-            s.actual_date_of_delivery, s.actual_date_of_return,s.other_charges
+            s.actual_date_of_delivery, s.actual_date_of_return,s.other_charges,
             s.number_of_days, s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
@@ -653,7 +664,7 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.ActualDateofDelivery, &sale.ActualReturnDate, &sale.OtherCharges,
+			&sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.OtherCharges,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName, &sale.PaymentStatus,
 		)
 		if err != nil {
