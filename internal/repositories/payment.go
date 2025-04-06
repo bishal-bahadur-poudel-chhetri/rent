@@ -259,33 +259,25 @@ func (r *PaymentRepository) UpdatePayment(paymentID int, userID int, paymentType
 }
 
 // InsertPayment adds a new payment
-func (r *PaymentRepository) InsertPayment(saleID int, userID int, paymentType string, amountPaid float64) (int, error) {
-	// Determine status based on user role
-	isAdmin, err := r.isAdmin(userID)
-	if err != nil {
-		return 0, err
-	}
+func (r *PaymentRepository) InsertPayment(saleID int, paymentType string, amountPaid float64, remark string) (int, error) {
 	paymentStatus := "Pending"
-	if isAdmin {
-		paymentStatus = "Completed"
-	}
 
-	// Insert payment
 	query := `
-		INSERT INTO payments (
-			sale_id,
-			payment_type,
-			amount_paid,
-			payment_date,
-			payment_status,
-			created_at,
-			updated_at,
-			user_id
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING payment_id
-	`
+        INSERT INTO payments (
+            sale_id,
+            payment_type,
+            amount_paid,
+            payment_date,
+            payment_status,
+            created_at,
+            updated_at,
+            remark
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING payment_id
+    `
+
 	var paymentID int
-	err = r.db.QueryRow(query,
+	err := r.db.QueryRow(query,
 		saleID,
 		paymentType,
 		amountPaid,
@@ -293,10 +285,11 @@ func (r *PaymentRepository) InsertPayment(saleID int, userID int, paymentType st
 		paymentStatus,
 		time.Now(),
 		time.Now(),
-		userID,
+		remark,
 	).Scan(&paymentID)
+
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to insert payment: %w", err)
 	}
 
 	return paymentID, nil
@@ -319,3 +312,4 @@ func (r *PaymentRepository) isAdmin(userID int) (bool, error) {
 	}
 	return isAdmin, nil
 }
+

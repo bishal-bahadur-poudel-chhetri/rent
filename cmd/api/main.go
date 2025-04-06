@@ -63,7 +63,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
-	videoHandler := handlers.NewVideoHandler(videoService)
+	videoHandler := handlers.NewVideoHandler(videoService, "https://pub-8da91f66939f4cdc9e4206024a0e68e9.r2.dev")
 	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)
 	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)
 	paymentHandler := handlers.NewPaymentHandler(paymentService, cfg.JWTSecret)
@@ -71,7 +71,7 @@ func main() {
 	dataHandler := handlers.NewDataAggregateHandler(dataService)
 	disableDateHandler := handlers.NewDisableDateHandler(disableDateService)
 	statementHandler := handlers.NewStatementHandler(statementService)
-	expenseHandler := handlers.NewExpenseHandler(expenseService) // Already correct
+	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
 
 	// Initialize Gin router
@@ -134,9 +134,10 @@ func main() {
 			protected.GET("/aggregate", dataHandler.GetAggregatedData)
 			protected.GET("/disabled-dates", disableDateHandler.GetDisabledDates)
 
-			protected.GET("/statements", statementHandler.GetStatements)
+			// Statement routes
+			protected.GET("/statements", statementHandler.GetOutstandingStatements)
 
-			// Expense routes (added full CRUD + filter)
+			// Expense routes
 			protected.POST("/expenses", expenseHandler.CreateExpense)
 			protected.PUT("/expenses/:id", expenseHandler.UpdateExpense)
 			protected.DELETE("/expenses/:id", expenseHandler.DeleteExpense)

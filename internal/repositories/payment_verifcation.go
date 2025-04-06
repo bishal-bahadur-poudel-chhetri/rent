@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -78,6 +79,8 @@ func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status stri
 	if err != nil {
 		return err
 	}
+	fmt.Println("Total Amount:", totalAmount)
+	fmt.Println("Sale Charges:", saleCharges)
 
 	// Handle NULL other_charges by defaulting to 0 if invalid/NULL
 	totalSaleAmount := totalAmount
@@ -90,7 +93,7 @@ func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status stri
 	paymentsQuery := `
 		SELECT COALESCE(SUM(amount_paid), 0)
 		FROM payments
-		WHERE sale_id = $1
+		WHERE sale_id = $1 AND payment_status = 'Completed' 	
 	`
 	err = tx.QueryRow(paymentsQuery, saleID).Scan(&totalPaid)
 	if err != nil {
@@ -112,18 +115,19 @@ func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status stri
 			return err
 		}
 
-		// Optionally update all payments for this sale
-		paymentsUpdateQuery := `
-			UPDATE sales
-			SET payment_status = 'paid',
-				updated_at = $1,
-			WHERE sale_id = $3
-		`
-		_, err = tx.Exec(paymentsUpdateQuery, time.Now(), saleID)
-		if err != nil {
-			return err
-		}
+		// // Optionally update all payments for this sale
+		// paymentsUpdateQuery := `
+		// 	UPDATE sales
+		// 	SET payment_status = 'paid',
+		// 		updated_at = $1,
+		// 	WHERE sale_id = $3
+		// `
+		// _, err = tx.Exec(paymentsUpdateQuery, time.Now(), saleID)
+		// if err != nil {
+		// 	return err
+		// }
 	}
 
 	return tx.Commit()
 }
+

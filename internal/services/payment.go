@@ -47,6 +47,7 @@ func (s *PaymentService) UpdatePayment(paymentID int, userID int, paymentType st
 }
 
 // InsertPayment creates a new payment
-func (s *PaymentService) InsertPayment(saleID int, userID int, paymentType string, amountPaid float64) (int, error) {
-	return s.paymentRepo.InsertPayment(saleID, userID, paymentType, amountPaid)
+func (s *PaymentService) InsertPayment(saleID int, paymentType string, amountPaid float64, remark string) (int, error) {
+	return s.paymentRepo.InsertPayment(saleID, paymentType, amountPaid, remark)
 }
+

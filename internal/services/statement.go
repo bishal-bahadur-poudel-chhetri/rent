@@ -1,48 +1,23 @@
 package services
 
 import (
+	"context"
 	"renting/internal/models"
 	"renting/internal/repositories"
 )
 
 type StatementService interface {
-	GetStatements(filter models.StatementFilter) (*models.PaginatedStatements, error)
+	GetOutstandingStatements(ctx context.Context, filters map[string]string, offset, limit int) ([]*models.Statement, error)
 }
 
 type statementService struct {
-	repo *repositories.StatementRepository
+	repo repositories.StatementRepository
 }
 
-func NewStatementService(repo *repositories.StatementRepository) *statementService {
+func NewStatementService(repo repositories.StatementRepository) StatementService {
 	return &statementService{repo: repo}
 }
 
-func (s *statementService) GetStatements(filter models.StatementFilter) (*models.PaginatedStatements, error) {
-	// Set default limit if not provided
-	if filter.Limit <= 0 {
-		filter.Limit = 50
-	}
-
-	// Get paginated data
-	statements, err := s.repo.GetStatements(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get total count
-	total, err := s.repo.GetTotalCount(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	// Prepare response
-	response := &models.PaginatedStatements{
-		Data:       statements,
-		TotalCount: total,
-		Limit:      filter.Limit,
-		Offset:     filter.Offset,
-		HasMore:    (filter.Offset + filter.Limit) < total,
-	}
-
-	return response, nil
+func (s *statementService) GetOutstandingStatements(ctx context.Context, filters map[string]string, offset, limit int) ([]*models.Statement, error) {
+	return s.repo.GetOutstandingStatements(ctx, filters, offset, limit)
 }

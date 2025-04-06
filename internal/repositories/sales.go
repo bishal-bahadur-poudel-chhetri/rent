@@ -752,146 +752,144 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 }
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
-	// Check if the sale exists and belongs to the user
-	var exists bool
-	err := r.db.QueryRow(`
-		SELECT EXISTS (
-			SELECT 1 
-			FROM sales 
-			WHERE sale_id = $1 AND user_id = $2
-		)
-	`, saleID, userID).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("failed to check sale ownership: %v", err)
-	}
+    // Check if the sale exists and belongs to the user
+    var exists bool
+    err := r.db.QueryRow(`
+        SELECT EXISTS (
+            SELECT 1 
+            FROM sales 
+            WHERE sale_id = $1 AND user_id = $2
+        )
+    `, saleID, userID).Scan(&exists)
+    if err != nil {
+        return fmt.Errorf("failed to check sale ownership: %v", err)
+    }
 
-	// Check if the user is an admin
-	isAdmin, err := r.isAdmin(userID)
-	if err != nil {
-		return err
-	}
+    // Check if the user is an admin
+    isAdmin, err := r.isAdmin(userID)
+    if err != nil {
+        return err
+    }
 
-	// Check if the sale's payment is verified
-	paymentVerified, err := r.isVerified(saleID)
-	if err != nil {
-		return err
-	}
+    // Check if the sale's payment is verified
+    paymentVerified, err := r.isVerified(saleID)
+    if err != nil {
+        return err
+    }
 
-	// If payment is verified, only admin can update
-	if paymentVerified && !isAdmin {
-		return fmt.Errorf("cannot update sale with ID %d: payment is verified and user is not an admin", saleID)
-	}
+    // If payment is verified, only admin can update
+    if paymentVerified && !isAdmin {
+        return fmt.Errorf("cannot update sale with ID %d: payment is verified and user is not an admin", saleID)
+    }
 
-	// If user is not an admin, enforce ownership
-	if !isAdmin && !exists {
-		return fmt.Errorf("cannot update sale with ID %d: user %d does not own this sale", saleID, userID)
-	}
+    // If user is not an admin, enforce ownership
+    if !isAdmin && !exists {
+        return fmt.Errorf("cannot update sale with ID %d: user %d does not own this sale", saleID, userID)
+    }
 
-	// Build the dynamic UPDATE query
-	var setClauses []string
-	var args []interface{}
-	argIndex := 3
+    // Build the dynamic UPDATE query
+    var setClauses []string
+    args := []interface{}{saleID}
+    if !isAdmin {
+        args = append(args, userID)
+    }
+    argIndex := len(args) + 1
 
-	for field, value := range updates {
-		switch field {
-		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination":
-			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
-			args = append(args, value)
-			argIndex++
-		case "total_amount", "charge_per_day":
-			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
-			args = append(args, value.(float64))
-			argIndex++
-		case "date_of_delivery", "return_date", "actual_date_of_delivery", "actual_date_of_return":
-			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
-			args = append(args, value.(time.Time))
-			argIndex++
-		case "number_of_days":
-			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
-			args = append(args, value.(int))
-			argIndex++
-		default:
-			return fmt.Errorf("unsupported field for update: %s", field)
-		}
-	}
+    for field, value := range updates {
+        switch field {
+        case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination":
+            setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
+            args = append(args, value)
+            argIndex++
+        case "total_amount", "charge_per_day":
+            setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
+            args = append(args, value.(float64))
+            argIndex++
+        case "date_of_delivery", "return_date", "actual_date_of_delivery", "actual_date_of_return":
+            setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
+            args = append(args, value.(time.Time))
+            argIndex++
+        case "number_of_days":
+            setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
+            args = append(args, value.(int))
+            argIndex++
+        default:
+            return fmt.Errorf("unsupported field for update: %s", field)
+        }
+    }
 
-	if len(setClauses) == 0 {
-		return errors.New("no fields provided to update")
-	}
+    if len(setClauses) == 0 {
+        return errors.New("no fields provided to update")
+    }
 
-	// Update query: Admins can update any sale, non-admins must own it
-	query := `
-		UPDATE sales 
-		SET %s, updated_at = NOW()
-		WHERE sale_id = $1
-	`
-	if !isAdmin {
-		query += " AND user_id = $2"
-	}
-	query = fmt.Sprintf(query, strings.Join(setClauses, ", "))
+    // Update query: Admins can update any sale, non-admins must own it
+    query := `
+        UPDATE sales 
+        SET %s, updated_at = NOW()
+        WHERE sale_id = $1
+    `
+    if !isAdmin {
+        query += " AND user_id = $2"
+    }
+    query = fmt.Sprintf(query, strings.Join(setClauses, ", "))
 
-	if isAdmin {
-		args = append([]interface{}{saleID}, args...)
-	} else {
-		args = append([]interface{}{saleID, userID}, args...)
-	}
+    result, err := r.db.Exec(query, args...)
+    if err != nil {
+        return fmt.Errorf("failed to update sale: %v", err)
+    }
 
-	result, err := r.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to update sale: %v", err)
-	}
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return fmt.Errorf("failed to check rows affected: %v", err)
+    }
+    if rowsAffected == 0 {
+        return fmt.Errorf("no sale updated for sale_id %d", saleID)
+    }
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %v", err)
-	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("no sale updated for sale_id %d", saleID)
-	}
+    // Handle vehicle status updates
+    for field, value := range updates {
+        if field == "actual_date_of_delivery" && value != nil {
+            var vehicleID int
+            var currentStatus string
+            err = r.db.QueryRow(`
+                SELECT vehicle_id, status 
+                FROM sales 
+                WHERE sale_id = $1
+            `, saleID).Scan(&vehicleID, &currentStatus)
+            if err != nil {
+                return fmt.Errorf("failed to fetch vehicle info: %v", err)
+            }
+            if currentStatus != "active" {
+                if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
+                    return err
+                }
+                if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
+                    return err
+                }
+            }
+        } else if field == "status" {
+            var vehicleID int
+            err = r.db.QueryRow(`
+                SELECT vehicle_id 
+                FROM sales 
+                WHERE sale_id = $1
+            `, saleID).Scan(&vehicleID)
+            if err != nil {
+                return fmt.Errorf("failed to fetch vehicle_id: %v", err)
+            }
+            switch value.(string) {
+            case "active":
+                if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
+                    return err
+                }
+            case "completed", "cancelled":
+                if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
+                    return err
+                }
+            }
+        }
+    }
 
-	// Handle vehicle status updates
-	for field, value := range updates {
-		if field == "actual_date_of_delivery" && value != nil {
-			var vehicleID int
-			var currentStatus string
-			err = r.db.QueryRow(`
-				SELECT vehicle_id, status 
-				FROM sales 
-				WHERE sale_id = $1
-			`, saleID).Scan(&vehicleID, &currentStatus) // Fixed typo: currentStatus
-			if err != nil {
-				return fmt.Errorf("failed to fetch vehicle info: %v", err)
-			}
-			if currentStatus != "active" {
-				if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
-					return err
-				}
-				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
-					return err
-				}
-			}
-		} else if field == "status" {
-			var vehicleID int
-			err = r.db.QueryRow(`
-				SELECT vehicle_id 
-				FROM sales 
-				WHERE sale_id = $1
-			`, saleID).Scan(&vehicleID)
-			if err != nil {
-				return fmt.Errorf("failed to fetch vehicle_id: %v", err)
-			}
-			switch value.(string) {
-			case "active":
-				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
-					return err
-				}
-			case "completed", "cancelled":
-				if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
+    return nil
 }
+

@@ -137,7 +137,7 @@ func (h *PaymentHandler) InsertPayment(c *gin.Context) {
 	}
 
 	// Extract user_id using utils.ExtractUserIDFromToken
-	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	// userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
 		return
@@ -147,6 +147,7 @@ func (h *PaymentHandler) InsertPayment(c *gin.Context) {
 	type InsertPaymentRequest struct {
 		PaymentType string  `json:"payment_type" binding:"required"`
 		AmountPaid  float64 `json:"amount_paid" binding:"required,gt=0"`
+		Remark      string  `json:"remark"`
 	}
 	var req InsertPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -155,7 +156,7 @@ func (h *PaymentHandler) InsertPayment(c *gin.Context) {
 	}
 
 	// Call the service to insert payment
-	paymentID, err := h.PaymentService.InsertPayment(saleID, userID, req.PaymentType, req.AmountPaid)
+	paymentID, err := h.PaymentService.InsertPayment(saleID, req.PaymentType, req.AmountPaid, req.Remark)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to create payment", err.Error()))
 		return
@@ -165,3 +166,4 @@ func (h *PaymentHandler) InsertPayment(c *gin.Context) {
 	responseData := map[string]int{"payment_id": paymentID}
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Payment created successfully", responseData))
 }
+
