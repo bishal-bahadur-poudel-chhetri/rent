@@ -24,6 +24,7 @@ type SaleFilter struct {
 	CustomerName  *string
 	SaleStatus    *string
 	VerifiedBy    *string
+	SaleType      *string
 }
 
 // GetPaymentsWithSales (unchanged)
@@ -119,6 +120,12 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 	if filter.VerifiedBy != nil {
 		query += fmt.Sprintf(" AND s.user_id = $%d", argCounter)
 		args = append(args, *filter.VerifiedBy)
+		argCounter++
+	}
+
+	if filter.SaleType != nil {
+		query += fmt.Sprintf(" AND p.sale_type = $%d", argCounter)
+		args = append(args, *filter.SaleType)
 		argCounter++
 	}
 
@@ -261,7 +268,7 @@ func (r *PaymentRepository) UpdatePayment(paymentID int, userID int, paymentType
 // InsertPayment adds a new payment
 func (r *PaymentRepository) InsertPayment(saleID int, paymentType string, amountPaid float64, remark string) (int, error) {
 	paymentStatus := "Pending"
-
+	sale_type := "manual"
 	query := `
         INSERT INTO payments (
             sale_id,
@@ -271,8 +278,9 @@ func (r *PaymentRepository) InsertPayment(saleID int, paymentType string, amount
             payment_status,
             created_at,
             updated_at,
+			sale_type,
             remark
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9)
         RETURNING payment_id
     `
 
@@ -285,6 +293,7 @@ func (r *PaymentRepository) InsertPayment(saleID int, paymentType string, amount
 		paymentStatus,
 		time.Now(),
 		time.Now(),
+		sale_type,
 		remark,
 	).Scan(&paymentID)
 
@@ -312,4 +321,3 @@ func (r *PaymentRepository) isAdmin(userID int) (bool, error) {
 	}
 	return isAdmin, nil
 }
-

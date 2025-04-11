@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"renting/internal/services"
@@ -27,17 +29,31 @@ func NewVideoHandler(videoService services.VideoService, videoURL string) *Video
 func (h *VideoHandler) UploadVideo(c *gin.Context) {
 	startTime := time.Now()
 
-	// Limit form size
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 32<<20) // 32MB
-	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Form data too large or invalid", nil))
+	// Increased form size limit to 100MB
+	maxSize := int64(100 << 20) // 100MB
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxSize)
+	if err := c.Request.ParseMultipartForm(maxSize); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "File too large. Maximum size is 100MB", nil))
 		return
 	}
 
 	// Get file
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Failed to read file", nil))
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Failed to read file: "+err.Error(), nil))
+		return
+	}
+
+	// Check file size
+	if file.Size > maxSize {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "File too large. Maximum size is 100MB", nil))
+		return
+	}
+
+	// Validate file type
+	contentType := file.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "video/") {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid file type. Only video files are allowed", nil))
 		return
 	}
 
@@ -56,11 +72,23 @@ func (h *VideoHandler) UploadVideo(c *gin.Context) {
 	// Upload via service
 	salesVideo, err := h.videoService.UploadVideo(file, saleID, h.videoURL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
+		log.Printf("Error uploading video for saleID %d: %v", saleID, err)
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to upload video: "+err.Error(), nil))
 		return
 	}
 
 	// Log and respond
-	go log.Printf("VideoHandler: Upload for saleID %d took %s", saleID, time.Since(startTime))
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "File uploaded successfully", salesVideo))
+	duration := time.Since(startTime)
+	uploadSpeedMBps := float64(file.Size) / (1024 * 1024) / duration.Seconds()
+	log.Printf("VideoHandler: Upload for saleID %d completed. Size: %.2fMB, Duration: %s, Speed: %.2f MB/s",
+		saleID, float64(file.Size)/(1024*1024), duration, uploadSpeedMBps)
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "File uploaded successfully", gin.H{
+		"video": salesVideo,
+		"stats": gin.H{
+			"size":     file.Size,
+			"duration": duration.String(),
+			"speed":    fmt.Sprintf("%.2f MB/s", uploadSpeedMBps),
+		},
+	}))
 }

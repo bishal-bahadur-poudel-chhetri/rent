@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
@@ -10,9 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ttacon/libphonenumber"
-
 	"github.com/gin-gonic/gin"
+	"github.com/ttacon/libphonenumber"
 )
 
 type SaleHandler struct {
@@ -70,7 +71,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 	fmt.Println(saleRequest.DateOfDelivery)
-	// Validate Nepalese phone number
+
 	if !isValidNepalesePhoneNumber(saleRequest.CustomerPhone) {
 		fmt.Print("hi")
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid phone number", "Phone number must be a valid Nepalese number (e.g., +9779841234567)"))
@@ -83,10 +84,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Use current date and time for payment_date
 	paymentDate := time.Now()
-
-	// Set payment_date to the current timestamp for all payments
 	for i := range saleRequest.Payments {
 		saleRequest.Payments[i].PaymentDate = paymentDate
 	}
@@ -119,16 +117,15 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", gin.H{"sale_id": saleID}))
 }
+
 func isValidNepalesePhoneNumber(phone string) bool {
-	// Parse the phone number
-	parsedNumber, err := libphonenumber.Parse(phone, "NP") // "NP" is the region code for Nepal
+	parsedNumber, err := libphonenumber.Parse(phone, "NP")
 	if err != nil {
 		return false
 	}
-
-	// Check if the phone number is valid for Nepal
 	return libphonenumber.IsValidNumberForRegion(parsedNumber, "NP")
 }
+
 func (h *SaleHandler) GetSaleByID(c *gin.Context) {
 	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -136,7 +133,6 @@ func (h *SaleHandler) GetSaleByID(c *gin.Context) {
 		return
 	}
 
-	// Parse the include query parameter
 	includeParam := c.Query("include")
 	var include []string
 	if includeParam != "" {
@@ -164,7 +160,6 @@ func (h *SaleHandler) GetSales(c *gin.Context) {
 		return
 	}
 
-	// Parse query parameters for filters
 	filters := make(map[string]string)
 	if status := c.Query("status"); status != "" {
 		filters["status"] = status
@@ -182,12 +177,10 @@ func (h *SaleHandler) GetSales(c *gin.Context) {
 		filters["vehicle_id"] = vehicleID
 	}
 
-	// Parse other query parameters
 	sort := c.Query("sort")
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "0")) // Default to 0 for all sales
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "0"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	// Parse include parameter
 	includeParam := c.Query("include")
 	var include []string
 	if includeParam != "" {
@@ -204,22 +197,58 @@ func (h *SaleHandler) GetSales(c *gin.Context) {
 }
 
 func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
+	body, _ := c.GetRawData()
+	fmt.Println("Received body:", string(body))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+
 	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err))
 		return
 	}
 
+	saleIDStr := c.Param("saleID")
+	saleID, err := strconv.Atoi(saleIDStr)
+	if err != nil || saleID <= 0 {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", err))
+		return
+	}
+
 	var req models.UpdateSaleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Binding error:", err)
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request payload", err))
 		return
 	}
 
-	if err := h.saleService.UpdateSaleByUserID(req.SaleID, userID, req); err != nil {
+	// Debug: Check if VehicleID is bound correctly
+	fmt.Printf("req.VehicleID: %v\n", req.VehicleID)
+
+	if err := validateUpdateSaleRequest(req); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
+		return
+	}
+
+	// Pass the req directly to the service
+	if err := h.saleService.UpdateSaleByUserID(saleID, userID, req); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
 		return
 	}
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale updated successfully", nil))
 }
+
+func validateUpdateSaleRequest(req models.UpdateSaleRequest) error {
+	// Only validate if fields are provided (non-nil)
+	if req.Status != nil && *req.Status == "" {
+		return fmt.Errorf("status cannot be empty if provided")
+	}
+	if req.CustomerName != nil && *req.CustomerName == "" {
+		return fmt.Errorf("customer_name cannot be empty if provided")
+	}
+	if req.TotalAmount != nil && *req.TotalAmount == 0 {
+		return fmt.Errorf("total_amount cannot be zero if provided")
+	}
+	return nil
+}
+

@@ -60,6 +60,14 @@ func (h *PaymentHandler) GetPaymentsWithSales(c *gin.Context) {
 		filter.SaleStatus = &saleStatus
 	}
 
+	if verifiedBy := c.Query("verified_by"); verifiedBy != "" {
+		filter.VerifiedBy = &verifiedBy
+	}
+
+	if saleType := c.Query("sale_type"); saleType != "" {
+		filter.SaleType = &saleType
+	}
+
 	// Parse pagination parameters
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
@@ -166,4 +174,3 @@ func (h *PaymentHandler) InsertPayment(c *gin.Context) {
 	responseData := map[string]int{"payment_id": paymentID}
 	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Payment created successfully", responseData))
 }
-

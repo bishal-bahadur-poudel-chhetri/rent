@@ -20,6 +20,12 @@ type RevenueFilter struct {
 	Date   time.Time // Specific date to filter (optional)
 }
 
+// MonthlyRevenue represents revenue data for a specific month
+type MonthlyRevenue struct {
+	Month  time.Time
+	Amount float64
+}
+
 // GetTotalRevenue calculates total revenue based on the filter
 func (r *RevenueRepository) GetTotalRevenue(filter RevenueFilter) (float64, error) {
 	var query string
@@ -79,4 +85,53 @@ func (r *RevenueRepository) GetTotalRevenue(filter RevenueFilter) (float64, erro
 		return 0, fmt.Errorf("failed to query revenue: %v", err)
 	}
 	return total, nil
+}
+
+// GetMonthlyRevenue returns monthly revenue data within a date range
+func (r *RevenueRepository) GetMonthlyRevenue(startDate, endDate time.Time) ([]MonthlyRevenue, error) {
+	query := `
+		WITH months AS (
+			SELECT generate_series(
+				$1::timestamp,
+				$2::timestamp,
+				'1 month'::interval
+			) as month
+		),
+		monthly_revenue AS (
+			SELECT 
+				date_trunc('month', month) as month,
+				COALESCE(SUM(daily_amount * (
+					LEAST(end_date, (date_trunc('month', month) + interval '1 month' - interval '1 day')::date) - 
+					GREATEST(start_date, date_trunc('month', month)::date) + 1
+				)), 0) as amount
+			FROM months
+			LEFT JOIN revenue_recognition ON 
+				start_date <= (date_trunc('month', month) + interval '1 month' - interval '1 day')::date AND 
+				end_date >= date_trunc('month', month)::date
+			GROUP BY month
+			ORDER BY month
+		)
+		SELECT month, amount
+		FROM monthly_revenue`
+
+	rows, err := r.db.Query(query, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query monthly revenue: %v", err)
+	}
+	defer rows.Close()
+
+	var results []MonthlyRevenue
+	for rows.Next() {
+		var mr MonthlyRevenue
+		if err := rows.Scan(&mr.Month, &mr.Amount); err != nil {
+			return nil, fmt.Errorf("failed to scan monthly revenue row: %v", err)
+		}
+		results = append(results, mr)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating monthly revenue rows: %v", err)
+	}
+
+	return results, nil
 }

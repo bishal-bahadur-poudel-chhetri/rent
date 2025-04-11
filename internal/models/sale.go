@@ -134,7 +134,6 @@ type PendingSalesResponse struct {
 }
 
 type UpdateSaleRequest struct {
-	SaleID               int      `json:"sale_id" binding:"required"`
 	UserID               *int     `json:"user_id,omitempty"`
 	Status               *string  `json:"status,omitempty"`
 	PaymentStatus        *string  `json:"payment_status,omitempty"`
@@ -149,4 +148,6 @@ type UpdateSaleRequest struct {
 	ActualDateOfDelivery *string  `json:"actual_date_of_delivery,omitempty"`
 	ActualDateOfReturn   *string  `json:"actual_date_of_return,omitempty"`
 	NumberOfDays         *int     `json:"number_of_days,omitempty"`
+	VehicleID            *int     `json:"vehicle_id"`
 }
+

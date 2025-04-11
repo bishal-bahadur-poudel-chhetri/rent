@@ -16,8 +16,8 @@ type PaymentWithSale struct {
 	Remark          string       `json:"remark"`
 	CreatedAt       time.Time    `json:"created_at"`
 	UpdatedAt       time.Time    `json:"updated_at"`
-	PaymentUserID   int          `json:"payment_user_id"`
-	PaymentUsername string       `json:"payment_username"`
+	PaymentUserID   *int         `json:"payment_user_id"`
+	PaymentUsername *string      `json:"payment_username"`
 	Sale            SalesPayment `json:"sale"`
 }
 
@@ -45,18 +45,18 @@ type SalesPayment struct {
 }
 
 type Payment struct {
-    PaymentID       int        `json:"payment_id"`
-    SaleID          int        `json:"sale_id"`
-    AmountPaid      float64    `json:"amount_paid"`
-    PaymentDate     time.Time  `json:"payment_date"`
-    VerifiedByAdmin bool       `json:"verified_by_admin"`
-    PaymentType     string     `json:"payment_type"`
-    PaymentStatus   string     `json:"payment_status"`
-    Remark          string     `json:"remark"`
-    UserID          int       `json:"user_id"` // Pointer makes it optional
-    SaleType        string     `json:"sale_type"`
-    CreatedAt       time.Time  `json:"created_at"`
-    UpdatedAt       time.Time  `json:"updated_at"`
+	PaymentID       int       `json:"payment_id"`
+	SaleID          int       `json:"sale_id"`
+	AmountPaid      float64   `json:"amount_paid"`
+	PaymentDate     time.Time `json:"payment_date"`
+	VerifiedByAdmin bool      `json:"verified_by_admin"`
+	PaymentType     string    `json:"payment_type"`
+	PaymentStatus   string    `json:"payment_status"`
+	Remark          string    `json:"remark"`
+	UserID          *int      `json:"user_id"` // Pointer makes it optional
+	SaleType        string    `json:"sale_type"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 // Payment type constants
@@ -90,3 +90,4 @@ func (p *Payment) Validate() error {
 
 	return nil
 }
+

@@ -69,6 +69,7 @@ func (s *SaleService) GetSales(filters map[string]string, sort string, limit, of
 func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSaleRequest) error {
 	updates := make(map[string]interface{})
 
+	// Populate updates map only with provided (non-nil) fields
 	if req.Status != nil {
 		updates["status"] = *req.Status
 	}
@@ -92,6 +93,10 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	}
 	if req.ChargePerDay != nil {
 		updates["charge_per_day"] = *req.ChargePerDay
+	}
+	if req.VehicleID != nil { // Added this block
+		updates["vehicle_id"] = *req.VehicleID
+		fmt.Println("Adding vehicle_id to updates:", *req.VehicleID) // Debug
 	}
 	if req.DateOfDelivery != nil {
 		date, err := time.Parse("2006-01-02", *req.DateOfDelivery)
@@ -125,9 +130,12 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 		updates["number_of_days"] = *req.NumberOfDays
 	}
 
+	// Check if any fields were provided
 	if len(updates) == 0 {
 		return fmt.Errorf("no fields provided to update")
 	}
 
+	// Call the repository to perform the update
 	return s.saleRepo.UpdateSaleByUserID(saleID, userID, updates)
 }
+

@@ -140,7 +140,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 				PaymentStatus:   *paymentStatus,
 				VerifiedByAdmin: *verifiedByAdmin,
 				Remark:          *paymentRemark,
-				UserID:          *paymentUserID,
+				UserID:          paymentUserID,
 				CreatedAt:       *paymentCreatedAt,
 				UpdatedAt:       *paymentUpdatedAt,
 				SaleID:          sale.SaleID,
@@ -225,3 +225,4 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 
 	return sales, nil
 }
+

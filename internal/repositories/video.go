@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"renting/internal/config"
 	"renting/internal/models"
@@ -48,13 +50,32 @@ func NewVideoRepository(db *sql.DB, config *config.Config) VideoRepository {
 		Region:           aws.String("auto"),
 		Credentials:      credentials.NewStaticCredentials(config.R2AccessKeyID, config.R2SecretAccessKey, ""),
 		S3ForcePathStyle: aws.Bool(true),
+		HTTPClient: &http.Client{
+			Timeout: 1 * time.Minute,
+			Transport: &http.Transport{
+				MaxIdleConns:          200, // Increased from 100
+				MaxIdleConnsPerHost:   200, // Increased from 100
+				IdleConnTimeout:       30 * time.Second,
+				DisableCompression:    true,             // Videos are already compressed
+				MaxConnsPerHost:       200,              // Added to allow more connections per host
+				ResponseHeaderTimeout: 30 * time.Second, // Added timeout for response headers
+				ExpectContinueTimeout: 1 * time.Second,  // Added timeout for expect continue
+				TLSHandshakeTimeout:   10 * time.Second, // Added timeout for TLS handshake
+				DialContext: (&net.Dialer{
+					Timeout:   30 * time.Second,
+					KeepAlive: 30 * time.Second,
+					DualStack: true,
+				}).DialContext,
+			},
+		},
 	}))
 
 	// Create uploader with optimized settings
 	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
-		u.PartSize = 10 * 1024 * 1024 // 10MB per part
-		u.Concurrency = 5             // 5 concurrent uploads
+		u.PartSize = 20 * 1024 * 1024 // 20MB per part for faster uploads
+		u.Concurrency = 20            // Increased from 10 to 20 concurrent uploads
 		u.LeavePartsOnError = false   // Clean up on failure
+		u.MaxUploadParts = 10000      // Maximum number of parts for very large files
 	})
 
 	return &videoRepository{

@@ -14,16 +14,21 @@ func NewPaymentVerificationService(paymentRepo *repositories.PaymentVerification
 }
 
 func (s *PaymentVerificationService) VerifyPayment(paymentID int, status string, userID int, saleID int, remark string) error {
-	// Validate the status
 	if status != "Completed" && status != "Failed" {
 		return errors.New("invalid payment status")
 	}
-
-	// Call the repository to update the payment status
-	err := s.paymentRepo.VerifyPayment(paymentID, status, userID, saleID, remark)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.paymentRepo.VerifyPayment(paymentID, status, userID, saleID, remark)
 }
+
+// GetPaymentDetails retrieves payment details, now accepting userID
+func (s *PaymentVerificationService) GetPaymentDetails(paymentID int, userID int) (map[string]interface{}, error) {
+	// Optionally check if user is admin or log the request
+	// For now, just pass to repository
+	return s.paymentRepo.GetPaymentDetails(paymentID)
+}
+
+// CancelPayment cancels a payment
+func (s *PaymentVerificationService) CancelPayment(paymentID int, userID int, remark string) error {
+	return s.paymentRepo.CancelPayment(paymentID, userID, remark)
+}
+

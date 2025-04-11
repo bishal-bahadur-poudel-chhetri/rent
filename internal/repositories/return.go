@@ -39,16 +39,16 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 		totalCharge += charge.Amount // Accumulate total charge
 	}
 
-	// Update sales table with the additional charge
+	// Update sales table with the additional charge in other_charges
 	if totalCharge > 0 {
 		_, err = tx.Exec(`
             UPDATE sales
-            SET total_amount = total_amount + $1,
+            SET other_charges = COALESCE(other_charges, 0) + $1,
                 updated_at = NOW()
             WHERE sale_id = $2
         `, totalCharge, sale.SaleID)
 		if err != nil {
-			return 0, fmt.Errorf("failed to update total_amount for saleID %d with additional charge %.2f: %v", sale.SaleID, totalCharge, err)
+			return 0, fmt.Errorf("failed to update other_charges for saleID %d with additional charge %.2f: %v", sale.SaleID, totalCharge, err)
 		}
 	}
 

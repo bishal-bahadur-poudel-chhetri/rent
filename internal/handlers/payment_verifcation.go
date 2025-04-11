@@ -21,10 +21,14 @@ func NewPaymentVerification(paymentService *services.PaymentVerificationService,
 
 type VerifyPaymentRequest struct {
 	Status string `json:"status"`
-	UserID int    `json:"user_id"`
 	Remark string `json:"remark"`
 }
 
+type CancelPaymentRequest struct {
+	Remark string `json:"remark"`
+}
+
+// VerifyPayment handles payment verification (POST)
 func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 	// Extract payment_id from the URL
 	paymentID, err := strconv.Atoi(c.Param("payment_id"))
@@ -34,7 +38,7 @@ func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 	}
 	saleID, err := strconv.Atoi(c.Param("sale_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", nil))
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", nil))
 		return
 	}
 
@@ -69,3 +73,68 @@ func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 	// Return success response
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Payment verification updated successfully", nil))
 }
+
+// GetPaymentDetails handles fetching payment details (GET)
+func (h *PaymentVerification) GetPaymentDetails(c *gin.Context) {
+	paymentID, err := strconv.Atoi(c.Param("payment_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", nil))
+		return
+	}
+
+	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
+		return
+	}
+
+	// Pass userID to the service layer (e.g., for potential admin check or logging)
+	paymentDetails, err := h.paymentService.GetPaymentDetails(paymentID, userID)
+	if err != nil {
+		if errors.Is(err, errors.New("payment not found")) {
+			c.JSON(http.StatusNotFound, utils.ErrorResponse(http.StatusNotFound, err.Error(), nil))
+		} else {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Internal server error", err.Error()))
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Payment details retrieved successfully", paymentDetails))
+}
+
+// CancelPayment handles payment cancellation (POST)
+func (h *PaymentVerification) CancelPayment(c *gin.Context) {
+	paymentID, err := strconv.Atoi(c.Param("payment_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid payment ID", nil))
+		return
+	}
+
+	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
+		return
+	}
+
+	var req CancelPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", nil))
+		return
+	}
+
+	err = h.paymentService.CancelPayment(paymentID, userID, req.Remark)
+	if err != nil {
+		switch {
+		case errors.Is(err, errors.New("only admin users can cancel payments")):
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, err.Error(), nil))
+		case errors.Is(err, errors.New("payment not found or already canceled")):
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
+		default:
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Internal server error", err.Error()))
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Payment canceled successfully", nil))
+}
+

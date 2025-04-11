@@ -46,7 +46,7 @@ func (r *statementRepository) GetOutstandingStatements(ctx context.Context, filt
             modified_by,
             outstanding_balance,
             vehicle_name
-        FROM sales_outstanding_payment_view`
+        FROM sales_statement_view`
 
 	var conditions []string
 	var args []interface{}

@@ -22,6 +22,7 @@ type SaleFilter struct {
 	CustomerName  *string
 	SaleStatus    *string
 	VerifiedBy    *string
+	SaleType      *string
 }
 
 // GetPaymentsWithSales (unchanged except for repository filter mapping)
@@ -35,6 +36,7 @@ func (s *PaymentService) GetPaymentsWithSales(filter SaleFilter, limit int, offs
 			CustomerName:  filter.CustomerName,
 			SaleStatus:    filter.SaleStatus,
 			VerifiedBy:    filter.VerifiedBy,
+			SaleType:      filter.SaleType,
 		},
 		limit,
 		offset,
@@ -50,4 +52,3 @@ func (s *PaymentService) UpdatePayment(paymentID int, userID int, paymentType st
 func (s *PaymentService) InsertPayment(saleID int, paymentType string, amountPaid float64, remark string) (int, error) {
 	return s.paymentRepo.InsertPayment(saleID, paymentType, amountPaid, remark)
 }
-

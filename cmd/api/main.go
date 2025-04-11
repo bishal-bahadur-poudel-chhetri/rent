@@ -110,18 +110,20 @@ func main() {
 			protected.POST("/sales", saleHandler.CreateSale)
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)
 			protected.GET("/sales", saleHandler.GetSales)
-			protected.PATCH("/sales/update", saleHandler.UpdateSaleByUserID)
+			protected.PUT("/sales/:saleID", saleHandler.UpdateSaleByUserID)
 
 			// Video upload route
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)
 			protected.GET("/payment", paymentHandler.GetPaymentsWithSales)
 
-			// Payment verification route
-			protected.PUT("/:payment_id/:sale_id/verify", paymentVerificationHandler.VerifyPayment)
+			// Payment verification routes
+			protected.PUT("/payment/:payment_id/sales/:sale_id/verify", paymentVerificationHandler.VerifyPayment) // Updated path
+			protected.GET("/payment/:payment_id", paymentVerificationHandler.GetPaymentDetails)                   // New GET endpoint
+			protected.POST("/payment/:payment_id/cancel", paymentVerificationHandler.CancelPayment)               // New Cancel endpoint
 
 			// Payment routes
-			protected.PUT("/payments/:payment_id", paymentHandler.UpdatePayment)
-			protected.POST("/sales/:id/payments", paymentHandler.InsertPayment)
+			protected.PUT("/payment/:payment_id", paymentHandler.UpdatePayment)
+			protected.POST("/sales/:id/payment", paymentHandler.InsertPayment)
 
 			// FuturBooking routes
 			protected.GET("/futur-bookings", futurBookingHandler.GetFuturBookingsByMonth)
@@ -146,6 +148,8 @@ func main() {
 
 			// Revenue route
 			protected.GET("/revenue", revenueHandler.GetRevenue)
+			protected.GET("/revenue/monthly", revenueHandler.GetMonthlyRevenue)
+			protected.GET("/revenue/mobile-visualization", revenueHandler.GetMobileRevenueVisualization)
 		}
 	}
 
