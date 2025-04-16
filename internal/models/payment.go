@@ -25,6 +25,7 @@ type SalesPayment struct {
 	SaleID               int             `json:"sale_id"`
 	VehicleID            int             `json:"vehicle_id"`
 	UserID               int             `json:"user_id"`
+	Username             *string         `json:"username"` // Username of the user who created the sale
 	CustomerName         string          `json:"customer_name"`
 	Destination          string          `json:"customer_destination"`
 	CustomerPhone        string          `json:"customer_phone"`
@@ -53,7 +54,8 @@ type Payment struct {
 	PaymentType     string    `json:"payment_type"`
 	PaymentStatus   string    `json:"payment_status"`
 	Remark          string    `json:"remark"`
-	UserID          *int      `json:"user_id"` // Pointer makes it optional
+	UserID          *int      `json:"user_id"`  // Pointer makes it optional
+	Username        *string   `json:"username"` // Username associated with UserID
 	SaleType        string    `json:"sale_type"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
@@ -90,4 +92,3 @@ func (p *Payment) Validate() error {
 
 	return nil
 }
-

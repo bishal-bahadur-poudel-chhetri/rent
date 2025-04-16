@@ -20,9 +20,24 @@ func NewStatementHandler(svc services.StatementService) *StatementHandler {
 func (h *StatementHandler) GetOutstandingStatements(c *gin.Context) {
 	// Parse query parameters
 	filters := make(map[string]string)
-	if bookingDate := c.Query("booking_date"); bookingDate != "" {
-		filters["booking_date"] = bookingDate
+	
+	// Date range filters
+	if startDate := c.Query("start_date"); startDate != "" {
+		filters["start_date"] = startDate
 	}
+	if endDate := c.Query("end_date"); endDate != "" {
+		filters["end_date"] = endDate
+	}
+	
+	// Sale and customer filters
+	if saleID := c.Query("sale_id"); saleID != "" {
+		filters["sale_id"] = saleID
+	}
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filters["customer_name"] = customerName
+	}
+	
+	// Other filters
 	if status := c.Query("status"); status != "" {
 		filters["status"] = status
 	}
@@ -39,7 +54,7 @@ func (h *StatementHandler) GetOutstandingStatements(c *gin.Context) {
 		offset = 0
 	}
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if limit <= 0 {
+	if limit <= 0 || limit > 100 { // Added upper limit for safety
 		limit = 10
 	}
 

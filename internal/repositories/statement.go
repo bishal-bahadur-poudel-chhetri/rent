@@ -21,7 +21,7 @@ func NewStatementRepository(db *sql.DB) StatementRepository {
 }
 
 func (r *statementRepository) GetOutstandingStatements(ctx context.Context, filters map[string]string, offset, limit int) ([]*models.Statement, error) {
-	baseQuery := `
+    baseQuery := `
         SELECT 
             sale_id AS statement_id,
             vehicle_id,
@@ -45,81 +45,107 @@ func (r *statementRepository) GetOutstandingStatements(ctx context.Context, filt
             other_charges,
             modified_by,
             outstanding_balance,
-            vehicle_name
+            vehicle_name,
+            vehicle_registration_number,
+            image_name
         FROM sales_statement_view`
 
-	var conditions []string
-	var args []interface{}
-	argIndex := 1
+    var conditions []string
+    var args []interface{}
+    argIndex := 1
 
-	if bookingDate, ok := filters["booking_date"]; ok && bookingDate != "" {
-		conditions = append(conditions, "booking_date = $"+strconv.Itoa(argIndex))
-		args = append(args, bookingDate)
-		argIndex++
-	}
-	if status, ok := filters["status"]; ok && status != "" {
-		conditions = append(conditions, "status = $"+strconv.Itoa(argIndex))
-		args = append(args, status)
-		argIndex++
-	}
-	if paymentStatus, ok := filters["payment_status"]; ok && paymentStatus != "" {
-		conditions = append(conditions, "payment_status = $"+strconv.Itoa(argIndex))
-		args = append(args, paymentStatus)
-		argIndex++
-	}
-	if vehicleName, ok := filters["vehicle_name"]; ok && vehicleName != "" {
-		conditions = append(conditions, "vehicle_name ILIKE $"+strconv.Itoa(argIndex))
-		args = append(args, "%"+vehicleName+"%")
-		argIndex++
-	}
+    // Date range filters
+    if startDate, ok := filters["start_date"]; ok && startDate != "" {
+        conditions = append(conditions, "booking_date >= $"+strconv.Itoa(argIndex))
+        args = append(args, startDate)
+        argIndex++
+    }
+    if endDate, ok := filters["end_date"]; ok && endDate != "" {
+        conditions = append(conditions, "booking_date <= $"+strconv.Itoa(argIndex))
+        args = append(args, endDate)
+        argIndex++
+    }
 
-	if len(conditions) > 0 {
-		baseQuery += " WHERE " + strings.Join(conditions, " AND ")
-	}
+    // Sale ID filter (exact match)
+    if saleID, ok := filters["sale_id"]; ok && saleID != "" {
+        conditions = append(conditions, "sale_id = $"+strconv.Itoa(argIndex))
+        args = append(args, saleID)
+        argIndex++
+    }
 
-	baseQuery += " ORDER BY booking_date DESC, statement_id DESC"
-	baseQuery += " OFFSET $" + strconv.Itoa(argIndex) + " LIMIT $" + strconv.Itoa(argIndex+1)
-	args = append(args, offset, limit)
+    // Customer name filter (case-insensitive partial match)
+    if customerName, ok := filters["customer_name"]; ok && customerName != "" {
+        conditions = append(conditions, "customer_name ILIKE $"+strconv.Itoa(argIndex))
+        args = append(args, "%"+customerName+"%")
+        argIndex++
+    }
 
-	rows, err := r.db.QueryContext(ctx, baseQuery, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    // Other existing filters
+    if status, ok := filters["status"]; ok && status != "" {
+        conditions = append(conditions, "status = $"+strconv.Itoa(argIndex))
+        args = append(args, status)
+        argIndex++
+    }
+    if paymentStatus, ok := filters["payment_status"]; ok && paymentStatus != "" {
+        conditions = append(conditions, "payment_status = $"+strconv.Itoa(argIndex))
+        args = append(args, paymentStatus)
+        argIndex++
+    }
+    if vehicleName, ok := filters["vehicle_name"]; ok && vehicleName != "" {
+        conditions = append(conditions, "vehicle_name ILIKE $"+strconv.Itoa(argIndex))
+        args = append(args, "%"+vehicleName+"%")
+        argIndex++
+    }
 
-	var statements []*models.Statement
-	for rows.Next() {
-		var s models.Statement
-		err := rows.Scan(
-			&s.StatementID,
-			&s.VehicleID,
-			&s.UserID,
-			&s.CustomerName,
-			&s.CustomerDestination,
-			&s.CustomerPhone,
-			&s.TotalAmount,
-			&s.ChargePerDay,
-			&s.BookingDate,
-			&s.DateOfDelivery,
-			&s.ReturnDate,
-			&s.NumberOfDays,
-			&s.Remark,
-			&s.Status,
-			&s.CreatedAt,
-			&s.UpdatedAt,
-			&s.ActualDateOfDelivery,
-			&s.ActualDateOfReturn,
-			&s.PaymentStatus,
-			&s.OtherCharges,
-			&s.ModifiedBy,
-			&s.OutstandingBalance,
-			&s.VehicleName,
-		)
-		if err != nil {
-			return nil, err
-		}
-		statements = append(statements, &s)
-	}
+    if len(conditions) > 0 {
+        baseQuery += " WHERE " + strings.Join(conditions, " AND ")
+    }
 
-	return statements, nil
+    baseQuery += " ORDER BY booking_date DESC, statement_id DESC"
+    baseQuery += " OFFSET $" + strconv.Itoa(argIndex) + " LIMIT $" + strconv.Itoa(argIndex+1)
+    args = append(args, offset, limit)
+
+    rows, err := r.db.QueryContext(ctx, baseQuery, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var statements []*models.Statement
+    for rows.Next() {
+        var s models.Statement
+        err := rows.Scan(
+            &s.StatementID,
+            &s.VehicleID,
+            &s.UserID,
+            &s.CustomerName,
+            &s.CustomerDestination,
+            &s.CustomerPhone,
+            &s.TotalAmount,
+            &s.ChargePerDay,
+            &s.BookingDate,
+            &s.DateOfDelivery,
+            &s.ReturnDate,
+            &s.NumberOfDays,
+            &s.Remark,
+            &s.Status,
+            &s.CreatedAt,
+            &s.UpdatedAt,
+            &s.ActualDateOfDelivery,
+            &s.ActualDateOfReturn,
+            &s.PaymentStatus,
+            &s.OtherCharges,
+            &s.ModifiedBy,
+            &s.OutstandingBalance,
+            &s.VehicleName,
+            &s.VehicleRegistration,
+            &s.VehicleImage,
+        )
+        if err != nil {
+            return nil, err
+        }
+        statements = append(statements, &s)
+    }
+
+    return statements, nil
 }

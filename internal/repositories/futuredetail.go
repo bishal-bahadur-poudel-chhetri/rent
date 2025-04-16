@@ -20,12 +20,16 @@ func (r *FuturBookingRepository) GetFuturBookingsByMonth(year int, month time.Mo
 	startOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
 
-	sales, err := r.getSalesInDateRange(startOfMonth, endOfMonth, filters)
+	// Format dates to YYYY-MM-DD
+	startDate := startOfMonth.Format("2006-01-02")
+	endDate := endOfMonth.Format("2006-01-02")
+
+	sales, err := r.getSalesInDateRange(startDate, endDate, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch bookings for the month: %w", err)
 	}
 
-	metadata, err := r.getMonthlyMetadata(startOfMonth, filters)
+	metadata, err := r.getMonthlyMetadata(startDate, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch monthly metadata: %w", err)
 	}
@@ -36,11 +40,7 @@ func (r *FuturBookingRepository) GetFuturBookingsByMonth(year int, month time.Mo
 	}, nil
 }
 
-func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filters map[string]string) ([]models.Sale_Future, error) {
-	if start.After(end) {
-		return nil, fmt.Errorf("start date must be before end date")
-	}
-
+func (r *FuturBookingRepository) getSalesInDateRange(start, end string, filters map[string]string) ([]models.Sale_Future, error) {
 	query, args := buildSalesQuery(start, end, filters)
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *FuturBookingRepository) getSalesInDateRange(start, end time.Time, filte
 	return mapToSalesSlice(salesMap), nil
 }
 
-func buildSalesQuery(start, end time.Time, filters map[string]string) (string, []interface{}) {
+func buildSalesQuery(start, end string, filters map[string]string) (string, []interface{}) {
 	baseQuery := `
 		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
 		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
@@ -86,7 +86,8 @@ func buildSalesQuery(start, end time.Time, filters map[string]string) (string, [
 		FROM sales s
 		LEFT JOIN payments p ON s.sale_id = p.sale_id
 		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
-		WHERE s.date_of_delivery BETWEEN $1 AND $2
+		WHERE date(s.date_of_delivery) >= date($1)
+		AND date(s.date_of_delivery) <= date($2)
 		AND date(s.booking_date) != date(s.date_of_delivery)
 	`
 
@@ -119,6 +120,7 @@ func buildSalesQuery(start, end time.Time, filters map[string]string) (string, [
 		argCounter++
 	}
 
+	query += " ORDER BY s.date_of_delivery ASC"
 	return query, args
 }
 
@@ -162,8 +164,8 @@ func mapToSalesSlice(salesMap map[int]models.Sale_Future) []models.Sale_Future {
 	return sales
 }
 
-func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filters map[string]string) ([]models.MonthlyMetadata, error) {
-	query, args := buildMetadataQuery(startOfMonth, filters)
+func (r *FuturBookingRepository) getMonthlyMetadata(startDate string, filters map[string]string) ([]models.MonthlyMetadata, error) {
+	query, args := buildMetadataQuery(startDate, filters)
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query monthly metadata: %w", err)
@@ -186,14 +188,15 @@ func (r *FuturBookingRepository) getMonthlyMetadata(startOfMonth time.Time, filt
 	return metadata, nil
 }
 
-func buildMetadataQuery(startOfMonth time.Time, filters map[string]string) (string, []interface{}) {
+func buildMetadataQuery(startDate string, filters map[string]string) (string, []interface{}) {
 	baseQuery := `
 		SELECT TO_CHAR(date_of_delivery, 'YYYY-MM') AS month, COUNT(*) AS count
 		FROM sales
-		WHERE date_of_delivery >= $1
+		WHERE date(date_of_delivery) >= date($1)
+		AND status != 'cancelled'
 	`
 
-	args := []interface{}{startOfMonth.Format("2006-01-02")}
+	args := []interface{}{startDate}
 	query := baseQuery
 	argCounter := 2
 
@@ -245,3 +248,4 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 
 	return nil
 }
+

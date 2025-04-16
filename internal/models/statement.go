@@ -30,6 +30,8 @@ type Statement struct {
 	ModifiedBy           sql.NullString  `json:"modified_by"`
 	OutstandingBalance   float64         `json:"outstanding_balance"`
 	VehicleName          string          `json:"vehicle_name"`
+	VehicleRegistration  string          `json:"vehicle_registration_number"`
+	VehicleImage         string          `json:"image_name"`
 }
 
 // MarshalJSON customizes JSON output for nullable fields
@@ -71,3 +73,4 @@ func (s Statement) MarshalJSON() ([]byte, error) {
 		Alias:                (*Alias)(&s),
 	})
 }
+

@@ -49,11 +49,14 @@ func (h *VideoHandler) UploadVideo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "File too large. Maximum size is 100MB", nil))
 		return
 	}
-
-	// Validate file type
 	contentType := file.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "video/") {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid file type. Only video files are allowed", nil))
+	log.Printf("Received Content-Type: %s, Filename: %s", contentType, file.Filename)
+
+	// Allow only video/* or exactly application/octet-stream
+	if !(strings.HasPrefix(contentType, "video/") || contentType == "application/octet-stream") {
+		log.Printf("Rejected file: Filename: %s, Content-Type: %s", file.Filename, contentType)
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest,
+			"Invalid file type. Only video files (video/* or application/octet-stream) are allowed", nil))
 		return
 	}
 
@@ -92,3 +95,4 @@ func (h *VideoHandler) UploadVideo(c *gin.Context) {
 		},
 	}))
 }
+

@@ -4,24 +4,30 @@ import (
 	"fmt"
 	"renting/internal/models"
 	"renting/internal/repositories"
-	"time"
 )
 
 type DisableDateService struct {
-	disableDateRepo *repositories.DisableDateRepository
+	disableDateRepo repositories.DisableDateRepository
 }
 
-func NewDisableDateService(disableDateRepo *repositories.DisableDateRepository) *DisableDateService {
+func NewDisableDateService(disableDateRepo repositories.DisableDateRepository) *DisableDateService {
 	return &DisableDateService{disableDateRepo: disableDateRepo}
 }
 
-// GetDisabledDates fetches disabled dates for a specific vehicle and date range
-func (s *DisableDateService) GetDisabledDates(vehicleID int, dateOfDelivery time.Time) (*models.DisableDateResponse, error) {
-	// Call the repository to fetch disabled dates
-	response, err := s.disableDateRepo.GetDisabledDates(vehicleID, dateOfDelivery)
+func (s *DisableDateService) GetDisabledDates(vehicleID int, excludeSaleID *int) (*models.DisableDateResponse, error) {
+	response, err := s.disableDateRepo.GetDisabledDates(vehicleID, excludeSaleID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get disabled dates: %v", err)
+		return nil, fmt.Errorf("failed to get disabled dates: %w", err)
+	}
+
+	// Ensure we never return nil for the slices
+	if response == nil {
+		response = &models.DisableDateResponse{
+			ActiveRentals:  []models.DisabledDateResponse{},
+			FutureBookings: []models.DisabledDateResponse{}, // Changed to FutureBookings
+		}
 	}
 
 	return response, nil
 }
+
