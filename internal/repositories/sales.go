@@ -213,6 +213,7 @@ func (r *SaleRepository) insertSalesVideos(tx *sql.Tx, saleID int, videos []mode
 
 func (r *SaleRepository) insertVehicleUsage(tx *sql.Tx, saleID int, usageRecords []models.VehicleUsage, userID int) error {
 	for _, usage := range usageRecords {
+		// Insert the usage record
 		_, err := tx.Exec(`
 			INSERT INTO vehicle_usage (sale_id, vehicle_id, record_type, fuel_range, km_reading, recorded_at, recorded_by)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -220,6 +221,7 @@ func (r *SaleRepository) insertVehicleUsage(tx *sql.Tx, saleID int, usageRecords
 		if err != nil {
 			return fmt.Errorf("failed to insert vehicle usage record: %v", err)
 		}
+
 	}
 	return nil
 }

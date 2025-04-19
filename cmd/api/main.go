@@ -41,6 +41,7 @@ func main() {
 	statementRepo := repositories.NewStatementRepository(db)
 	expenseRepo := repositories.NewExpenseRepository(db)
 	revenueRepo := repositories.NewRevenueRepository(db)
+	vehicleServicingRepo := repositories.NewVehicleServicingRepository(db)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -52,11 +53,12 @@ func main() {
 	paymentVerificationService := services.NewPaymentVerificationService(paymentVerificationRepo)
 	paymentService := services.NewPaymentService(paymentRepo)
 	saleDetailService := services.NewSaleDetailService(saleDetailRepo)
-	dataService := services.NewDataAggregateService(dataRepo)
+	dataService := services.NewDataAggregateService(dataRepo, dataRepo)
 	disableDateService := services.NewDisableDateService(disableDateRepo)
 	statementService := services.NewStatementService(statementRepo)
 	expenseService := services.NewExpenseService(expenseRepo)
 	revenueService := services.NewRevenueService(revenueRepo)
+	vehicleServicingService := services.NewVehicleServicingService(vehicleServicingRepo)
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -73,6 +75,7 @@ func main() {
 	statementHandler := handlers.NewStatementHandler(statementService)
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
+	vehicleServicingHandler := handlers.NewVehicleServicingHandler(vehicleServicingService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -150,6 +153,11 @@ func main() {
 			protected.GET("/revenue", revenueHandler.GetRevenue)
 			protected.GET("/revenue/monthly", revenueHandler.GetMonthlyRevenue)
 			protected.GET("/revenue/mobile-visualization", revenueHandler.GetMobileRevenueVisualization)
+
+			// Vehicle Servicing routes
+			protected.GET("/vehicles/servicing/due", vehicleServicingHandler.GetVehiclesDueForServicing)
+			protected.GET("/vehicles/:vehicle_id/servicing/history", vehicleServicingHandler.GetServicingHistory)
+			protected.POST("/vehicles/:vehicle_id/servicing/mark-serviced", vehicleServicingHandler.MarkAsServiced)
 		}
 	}
 

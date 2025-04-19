@@ -233,6 +233,44 @@ CREATE TABLE IF NOT EXISTS vehicle_usage (
 		return err
 	}
 
+	// Create vehicle servicing table
+	vehicle_servicing := `
+CREATE TABLE IF NOT EXISTS vehicle_servicing (
+    servicing_id SERIAL PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    last_servicing_km DECIMAL(10, 2) NOT NULL,
+    next_servicing_km DECIMAL(10, 2) NOT NULL,
+    servicing_interval_km DECIMAL(10, 2) NOT NULL,
+    is_servicing_due BOOLEAN DEFAULT FALSE,
+    status VARCHAR(20) DEFAULT 'pending', -- pending, in_progress, completed
+    last_serviced_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE
+);
+
+-- Create vehicle servicing history table
+CREATE TABLE IF NOT EXISTS vehicle_servicing_history (
+    history_id SERIAL PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    servicing_id INT NOT NULL,
+    km_reading DECIMAL(10, 2) NOT NULL,
+    servicing_type VARCHAR(50) NOT NULL,
+    servicing_date TIMESTAMP NOT NULL,
+    servicing_cost DECIMAL(10, 2),
+    notes TEXT,
+    serviced_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+    FOREIGN KEY (servicing_id) REFERENCES vehicle_servicing(servicing_id) ON DELETE CASCADE,
+    FOREIGN KEY (serviced_by) REFERENCES users(id) ON DELETE SET NULL
+);
+`
+	_, err = db.Exec(vehicle_servicing)
+	if err != nil {
+		return err
+	}
+
 	sale_charge := `
 	CREATE TABLE IF NOT EXISTS sales_charges (
 		charge_id SERIAL PRIMARY KEY,

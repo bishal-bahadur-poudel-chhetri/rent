@@ -96,6 +96,36 @@ type VehicleUsage struct {
 	RecordedBy int       `json:"recorded_by"`
 }
 
+type VehicleServicing struct {
+	ServicingID        int       `json:"servicing_id"`
+	VehicleID          int       `json:"vehicle_id"`
+	LastServicingKm    float64   `json:"last_servicing_km"`
+	NextServicingKm    float64   `json:"next_servicing_km"`
+	ServicingInterval  float64   `json:"servicing_interval_km"`
+	IsServicingDue     bool      `json:"is_servicing_due"`
+	Status             string    `json:"status"`
+	LastServicedAt     time.Time `json:"last_serviced_at"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	CurrentKm          float64   `json:"current_km,omitempty"`
+	VehicleName        string    `json:"vehicle_name,omitempty"`
+	RegistrationNumber string    `json:"registration_number,omitempty"`
+}
+
+type VehicleServicingHistory struct {
+	HistoryID      int       `json:"history_id"`
+	VehicleID      int       `json:"vehicle_id"`
+	ServicingID    int       `json:"servicing_id"`
+	KmReading      float64   `json:"km_reading"`
+	ServicingType  string    `json:"servicing_type"`
+	ServicingDate  time.Time `json:"servicing_date"`
+	ServicingCost  float64   `json:"servicing_cost"`
+	Notes          string    `json:"notes"`
+	ServicedBy     int       `json:"serviced_by"`
+	CreatedAt      time.Time `json:"created_at"`
+	ServicedByName string    `json:"serviced_by_name,omitempty"`
+}
+
 type SaleWithPayment struct {
 	SaleID              int       `json:"sale_id"`
 	VehicleID           int       `json:"vehicle_id"`
@@ -150,4 +180,3 @@ type UpdateSaleRequest struct {
 	NumberOfDays         *int     `json:"number_of_days,omitempty"`
 	VehicleID            *int     `json:"vehicle_id"`
 }
-

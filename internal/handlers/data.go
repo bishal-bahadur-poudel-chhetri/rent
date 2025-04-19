@@ -60,3 +60,24 @@ func (h *DataAggregateHandler) GetAggregatedData(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Data retrieved successfully", aggregatedData))
 }
+
+// GetTotalAvailableCars handles retrieving the total count of available cars
+func (h *DataAggregateHandler) GetTotalAvailableCars(c *gin.Context) {
+	count, err := h.DataAggregateService.GetTotalAvailableCars()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  http.StatusInternalServerError,
+			"message": "Failed to get total available cars",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Total available cars retrieved successfully",
+		"data": gin.H{
+			"total_available_cars": count,
+		},
+	})
+}

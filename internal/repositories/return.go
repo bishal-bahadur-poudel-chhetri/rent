@@ -61,6 +61,47 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 		if err != nil {
 			return 0, fmt.Errorf("failed to insert vehicle usage record for saleID %d, vehicleID %d: %v", sale.SaleID, usage.VehicleID, err)
 		}
+		fmt.Println(usage.RecordType)
+		// Only check servicing status for return records
+		if usage.RecordType == "return" {
+			// Check if servicing record exists for this vehicle
+			var servicingExists bool
+			err = tx.QueryRow(`
+				SELECT EXISTS (
+					SELECT 1 FROM vehicle_servicing WHERE vehicle_id = $1
+				)
+			`, usage.VehicleID).Scan(&servicingExists)
+			if err != nil {
+				return 0, fmt.Errorf("failed to check servicing record existence: %v", err)
+			}
+
+			if !servicingExists {
+				// Initialize servicing record if it doesn't exist
+				_, err = tx.Exec(`
+					INSERT INTO vehicle_servicing (
+						vehicle_id, last_servicing_km, next_servicing_km, 
+						servicing_interval_km, is_servicing_due, last_serviced_at
+					) VALUES ($1, $2, $3, $4, $5, $6)
+				`, usage.VehicleID, usage.KmReading, usage.KmReading+5000, 5000, false, usage.RecordedAt)
+				if err != nil {
+					return 0, fmt.Errorf("failed to initialize servicing record: %v", err)
+				}
+			} else {
+				// Update servicing status based on new km reading
+				_, err = tx.Exec(`
+					UPDATE vehicle_servicing
+					SET is_servicing_due = CASE 
+						WHEN $1 >= next_servicing_km THEN true 
+						ELSE is_servicing_due 
+					END,
+					updated_at = CURRENT_TIMESTAMP
+					WHERE vehicle_id = $2
+				`, usage.KmReading, usage.VehicleID)
+				if err != nil {
+					return 0, fmt.Errorf("failed to update servicing status: %v", err)
+				}
+			}
+		}
 	}
 
 	currentTime := time.Now()
