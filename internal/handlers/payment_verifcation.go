@@ -21,11 +21,9 @@ func NewPaymentVerification(paymentService *services.PaymentVerificationService,
 
 type VerifyPaymentRequest struct {
 	Status string `json:"status"`
-	Remark string `json:"remark"`
 }
 
 type CancelPaymentRequest struct {
-	Remark string `json:"remark"`
 }
 
 // VerifyPayment handles payment verification (POST)
@@ -57,7 +55,7 @@ func (h *PaymentVerification) VerifyPayment(c *gin.Context) {
 	}
 
 	// Call the service layer to verify the payment
-	err = h.paymentService.VerifyPayment(paymentID, req.Status, userID, saleID, req.Remark)
+	err = h.paymentService.VerifyPayment(paymentID, req.Status, userID, saleID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errors.New("only admin users can verify payments")):
@@ -116,13 +114,7 @@ func (h *PaymentVerification) CancelPayment(c *gin.Context) {
 		return
 	}
 
-	var req CancelPaymentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", nil))
-		return
-	}
-
-	err = h.paymentService.CancelPayment(paymentID, userID, req.Remark)
+	err = h.paymentService.CancelPayment(paymentID, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errors.New("only admin users can cancel payments")):
@@ -137,4 +129,3 @@ func (h *PaymentVerification) CancelPayment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Payment canceled successfully", nil))
 }
-

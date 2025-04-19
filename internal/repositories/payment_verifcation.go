@@ -35,7 +35,7 @@ func (r *PaymentVerificationRepository) isAdmin(userID int) (bool, error) {
 }
 
 // VerifyPayment updates payment status and related sale records
-func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status string, userID int, saleID int, remark string) error {
+func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status string, userID int, saleID int) error {
 	// 1. Admin check
 	isAdmin, err := r.isAdmin(userID)
 	if err != nil {
@@ -63,12 +63,11 @@ func (r *PaymentVerificationRepository) VerifyPayment(paymentID int, status stri
         UPDATE payments
         SET payment_status = $1, 
             verified_by_admin = $2, 
-            remark = $3, 
-            updated_at = $4, 
-            user_id = $5
-        WHERE payment_id = $6
+            updated_at = $3, 
+            user_id = $4
+        WHERE payment_id = $5
     `
-	_, err = tx.Exec(updateQuery, status, true, remark, time.Now(), userID, paymentID)
+	_, err = tx.Exec(updateQuery, status, true, time.Now(), userID, paymentID)
 	if err != nil {
 		return err
 	}
@@ -232,7 +231,7 @@ func (r *PaymentVerificationRepository) GetPaymentDetails(paymentID int) (map[st
 }
 
 // CancelPayment marks a payment as canceled
-func (r *PaymentVerificationRepository) CancelPayment(paymentID int, userID int, remark string) error {
+func (r *PaymentVerificationRepository) CancelPayment(paymentID int, userID int) error {
 	isAdmin, err := r.isAdmin(userID)
 	if err != nil {
 		return err
@@ -250,12 +249,11 @@ func (r *PaymentVerificationRepository) CancelPayment(paymentID int, userID int,
 	query := `
 		UPDATE payments
 		SET payment_status = 'Failed', 
-			remark = $1, 
-			updated_at = $2, 
-			user_id = $3
-		WHERE payment_id = $4 AND payment_status != 'Failed'
+			updated_at = $1,
+			user_id = $2
+		WHERE payment_id = $3 AND payment_status != 'Failed'
 	`
-	result, err := tx.Exec(query, remark, time.Now(), userID, paymentID)
+	result, err := tx.Exec(query, time.Now(), userID, paymentID)
 	if err != nil {
 		return err
 	}
@@ -270,4 +268,3 @@ func (r *PaymentVerificationRepository) CancelPayment(paymentID int, userID int,
 
 	return tx.Commit()
 }
-
