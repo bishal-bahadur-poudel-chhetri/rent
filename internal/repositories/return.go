@@ -79,10 +79,11 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 				// Initialize servicing record if it doesn't exist
 				_, err = tx.Exec(`
 					INSERT INTO vehicle_servicing (
-						vehicle_id, last_servicing_km, next_servicing_km, 
-						servicing_interval_km, is_servicing_due, last_serviced_at
-					) VALUES ($1, $2, $3, $4, $5, $6)
-				`, usage.VehicleID, usage.KmReading, usage.KmReading+5000, 5000, false, usage.RecordedAt)
+						vehicle_id, current_km, next_servicing_km, 
+						servicing_interval_km, is_servicing_due, last_serviced_at,
+						status
+					) VALUES ($1, $2, $3, $4, $5, $6, $7)
+				`, usage.VehicleID, usage.KmReading, usage.KmReading+5000, 5000, false, usage.RecordedAt, "pending")
 				if err != nil {
 					return 0, fmt.Errorf("failed to initialize servicing record: %v", err)
 				}
@@ -90,12 +91,18 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 				// Update servicing status based on new km reading
 				_, err = tx.Exec(`
 					UPDATE vehicle_servicing
-					SET is_servicing_due = CASE 
-						WHEN $1 >= next_servicing_km THEN true 
-						ELSE is_servicing_due 
-					END,
-					updated_at = CURRENT_TIMESTAMP
+					SET current_km = $1,
+						is_servicing_due = CASE 
+							WHEN $1 >= next_servicing_km THEN true 
+							ELSE is_servicing_due 
+						END,
+						status = CASE
+							WHEN $1 >= next_servicing_km AND status = 'pending' THEN 'in_progress'
+							ELSE status
+						END,
+						updated_at = CURRENT_TIMESTAMP
 					WHERE vehicle_id = $2
+					AND status IN ('pending', 'in_progress')
 				`, usage.KmReading, usage.VehicleID)
 				if err != nil {
 					return 0, fmt.Errorf("failed to update servicing status: %v", err)

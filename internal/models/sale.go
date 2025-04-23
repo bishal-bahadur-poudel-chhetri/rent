@@ -99,7 +99,7 @@ type VehicleUsage struct {
 type VehicleServicing struct {
 	ServicingID        int       `json:"servicing_id"`
 	VehicleID          int       `json:"vehicle_id"`
-	LastServicingKm    float64   `json:"last_servicing_km"`
+	CurrentKm          float64   `json:"current_km"`
 	NextServicingKm    float64   `json:"next_servicing_km"`
 	ServicingInterval  float64   `json:"servicing_interval_km"`
 	IsServicingDue     bool      `json:"is_servicing_due"`
@@ -107,7 +107,7 @@ type VehicleServicing struct {
 	LastServicedAt     time.Time `json:"last_serviced_at"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
-	CurrentKm          float64   `json:"current_km,omitempty"`
+
 	VehicleName        string    `json:"vehicle_name,omitempty"`
 	RegistrationNumber string    `json:"registration_number,omitempty"`
 }

@@ -19,9 +19,9 @@ func NewVehicleServicingRepository(db *sql.DB) *VehicleServicingRepository {
 func (r *VehicleServicingRepository) InitializeServicingRecord(vehicleID int, initialKm float64, servicingInterval float64) error {
 	_, err := r.db.Exec(`
 		INSERT INTO vehicle_servicing (
-			vehicle_id, last_servicing_km, next_servicing_km, 
-			servicing_interval_km, is_servicing_due, last_serviced_at
-		) VALUES ($1, $2, $3, $4, $5, $6)
+			vehicle_id, current_km, next_servicing_km, 
+			servicing_interval_km, is_servicing_due, last_serviced_at, status
+		) VALUES ($1, $2, $3, $4, $5, $6, 'pending')
 	`, vehicleID, initialKm, initialKm+servicingInterval, servicingInterval, false, time.Now())
 	return err
 }
@@ -31,14 +31,14 @@ func (r *VehicleServicingRepository) UpdateServicingStatus(vehicleID int, curren
 	// Get the current servicing record
 	var servicing models.VehicleServicing
 	err := r.db.QueryRow(`
-		SELECT servicing_id, vehicle_id, last_servicing_km, next_servicing_km, 
+		SELECT servicing_id, vehicle_id, current_km, next_servicing_km, 
 			servicing_interval_km, is_servicing_due, status, last_serviced_at
 		FROM vehicle_servicing
 		WHERE vehicle_id = $1
 		ORDER BY created_at DESC
 		LIMIT 1
 	`, vehicleID).Scan(
-		&servicing.ServicingID, &servicing.VehicleID, &servicing.LastServicingKm,
+		&servicing.ServicingID, &servicing.VehicleID, &servicing.CurrentKm,
 		&servicing.NextServicingKm, &servicing.ServicingInterval,
 		&servicing.IsServicingDue, &servicing.Status, &servicing.LastServicedAt,
 	)
@@ -57,7 +57,7 @@ func (r *VehicleServicingRepository) UpdateServicingStatus(vehicleID int, curren
 	if status != servicing.Status {
 		_, err = r.db.Exec(`
 			INSERT INTO vehicle_servicing (
-				vehicle_id, last_servicing_km, next_servicing_km,
+				vehicle_id, current_km, next_servicing_km,
 				servicing_interval_km, is_servicing_due, status,
 				last_serviced_at
 			) VALUES (
@@ -102,19 +102,45 @@ func (r *VehicleServicingRepository) MarkAsServiced(vehicleID int, servicedAt ti
 		return fmt.Errorf("failed to get servicing interval: %v", err)
 	}
 
-	// Create a new servicing record
-	_, err = r.db.Exec(`
+	// Start transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Create record for completed servicing
+	_, err = tx.Exec(`
 		INSERT INTO vehicle_servicing (
-			vehicle_id, last_servicing_km, next_servicing_km,
+			vehicle_id, current_km, next_servicing_km,
 			servicing_interval_km, is_servicing_due, status,
-			last_serviced_at
+			last_serviced_at, created_at
 		) VALUES (
 			$1, $2, $3, $4, false, 'completed',
-			$5
+			$5, $5
 		)
 	`, vehicleID, currentKm, currentKm+servicing.ServicingInterval,
 		servicing.ServicingInterval, servicedAt)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to create completed servicing record: %v", err)
+	}
+
+	// 2. Create record for next pending servicing
+	_, err = tx.Exec(`
+		INSERT INTO vehicle_servicing (
+			vehicle_id, current_km, next_servicing_km,
+			servicing_interval_km, is_servicing_due, status,
+			last_serviced_at
+		) VALUES (
+			$1, $2, $3, $4, false, 'pending',
+			$5
+		)
+	`, vehicleID, currentKm, currentKm+servicing.ServicingInterval, servicing.ServicingInterval, servicedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create pending servicing record: %v", err)
+	}
+
+	return tx.Commit()
 }
 
 // GetServicingHistory retrieves the servicing history for a vehicle
@@ -169,7 +195,7 @@ func (r *VehicleServicingRepository) GetCurrentKmAndServicingStatus(vehicleID in
 	// Get the servicing record
 	var servicing models.VehicleServicing
 	err = r.db.QueryRow(`
-		SELECT vs.servicing_id, vs.vehicle_id, vs.last_servicing_km, vs.next_servicing_km, 
+		SELECT vs.servicing_id, vs.vehicle_id, vs.current_km, vs.next_servicing_km, 
 			vs.servicing_interval_km, vs.is_servicing_due, vs.last_serviced_at,
 			vs.created_at, vs.updated_at,
 			v.vehicle_name, v.vehicle_registration_number
@@ -177,7 +203,7 @@ func (r *VehicleServicingRepository) GetCurrentKmAndServicingStatus(vehicleID in
 		JOIN vehicles v ON vs.vehicle_id = v.vehicle_id
 		WHERE vs.vehicle_id = $1
 	`, vehicleID).Scan(
-		&servicing.ServicingID, &servicing.VehicleID, &servicing.LastServicingKm,
+		&servicing.ServicingID, &servicing.VehicleID, &servicing.CurrentKm,
 		&servicing.NextServicingKm, &servicing.ServicingInterval,
 		&servicing.IsServicingDue, &servicing.LastServicedAt,
 		&servicing.CreatedAt, &servicing.UpdatedAt,
@@ -200,7 +226,7 @@ func (r *VehicleServicingRepository) GetCurrentKmAndServicingStatus(vehicleID in
 func (r *VehicleServicingRepository) GetVehiclesDueForServicing() ([]models.VehicleServicing, error) {
 	rows, err := r.db.Query(`
 		SELECT DISTINCT ON (vs.vehicle_id)
-			vs.servicing_id, vs.vehicle_id, vs.last_servicing_km, vs.next_servicing_km,
+			vs.servicing_id, vs.vehicle_id, vs.current_km, vs.next_servicing_km,
 			vs.servicing_interval_km, vs.is_servicing_due, vs.last_serviced_at,
 			vs.created_at, vs.updated_at,
 			v.vehicle_name, v.vehicle_registration_number,
@@ -228,7 +254,7 @@ func (r *VehicleServicingRepository) GetVehiclesDueForServicing() ([]models.Vehi
 	for rows.Next() {
 		var servicing models.VehicleServicing
 		err := rows.Scan(
-			&servicing.ServicingID, &servicing.VehicleID, &servicing.LastServicingKm,
+			&servicing.ServicingID, &servicing.VehicleID, &servicing.CurrentKm,
 			&servicing.NextServicingKm, &servicing.ServicingInterval,
 			&servicing.IsServicingDue, &servicing.LastServicedAt,
 			&servicing.CreatedAt, &servicing.UpdatedAt,

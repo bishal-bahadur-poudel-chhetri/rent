@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS vehicle_usage (
 CREATE TABLE IF NOT EXISTS vehicle_servicing (
     servicing_id SERIAL PRIMARY KEY,
     vehicle_id INT NOT NULL,
-    last_servicing_km DECIMAL(10, 2) NOT NULL,
+    current_km DECIMAL(10, 2) NOT NULL,
     next_servicing_km DECIMAL(10, 2) NOT NULL,
     servicing_interval_km DECIMAL(10, 2) NOT NULL,
     is_servicing_due BOOLEAN DEFAULT FALSE,
