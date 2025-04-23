@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"renting/internal/models"
 	"renting/internal/repositories"
+	"time"
 )
 
 type VehicleServicingService struct {
@@ -34,11 +35,8 @@ func (s *VehicleServicingService) UpdateServicingStatus(vehicleID int, currentKm
 }
 
 // MarkAsServiced updates the servicing record after a vehicle has been serviced
-func (s *VehicleServicingService) MarkAsServiced(vehicleID int, currentKm float64, servicingType string, cost float64, notes string, servicedBy int) error {
-	if currentKm < 0 {
-		return fmt.Errorf("current km reading cannot be negative")
-	}
-	return s.servicingRepo.MarkAsServiced(vehicleID, currentKm, servicingType, cost, notes, servicedBy)
+func (s *VehicleServicingService) MarkAsServiced(vehicleID int, servicedAt time.Time) error {
+	return s.servicingRepo.MarkAsServiced(vehicleID, servicedAt)
 }
 
 // GetCurrentKmAndServicingStatus retrieves the current km reading and servicing status for a vehicle

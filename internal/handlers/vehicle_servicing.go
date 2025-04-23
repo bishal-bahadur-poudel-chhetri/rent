@@ -6,6 +6,7 @@ import (
 	"renting/internal/services"
 	"renting/internal/utils"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/mux"
@@ -98,49 +99,30 @@ func (h *VehicleServicingHandler) GetServicingHistory(c *gin.Context) {
 
 // MarkAsServicedRequest represents the request body for marking a vehicle as serviced
 type MarkAsServicedRequest struct {
-	CurrentKm float64 `json:"current_km" binding:"required"`
+	ServicedAt time.Time `json:"serviced_at" binding:"required"`
 }
 
 // MarkAsServiced marks a vehicle as serviced
 func (h *VehicleServicingHandler) MarkAsServiced(c *gin.Context) {
 	vehicleID, err := strconv.Atoi(c.Param("vehicle_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  http.StatusBadRequest,
-			"message": "Invalid vehicle ID",
-			"data":    nil,
-		})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid vehicle ID", nil))
 		return
 	}
 
 	var req MarkAsServicedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  http.StatusBadRequest,
-			"message": "Invalid request body",
-			"data":    nil,
-		})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", nil))
 		return
 	}
 
-	err = h.servicingService.MarkAsServiced(vehicleID, req.CurrentKm, "", 0, "", 0)
+	err = h.servicingService.MarkAsServiced(vehicleID, req.ServicedAt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  http.StatusInternalServerError,
-			"message": "Failed to mark vehicle as serviced",
-			"data":    nil,
-		})
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to mark vehicle as serviced", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  http.StatusOK,
-		"message": "Vehicle marked as serviced successfully",
-		"data": gin.H{
-			"vehicle_id": vehicleID,
-			"current_km": req.CurrentKm,
-		},
-	})
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Vehicle marked as serviced successfully", nil))
 }
 
 // GetServicingStatus handles retrieving the current servicing statusvehicalu

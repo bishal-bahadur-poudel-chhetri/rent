@@ -71,10 +71,23 @@ func (r *VehicleServicingRepository) UpdateServicingStatus(vehicleID int, curren
 }
 
 // MarkAsServiced creates a new servicing record after a vehicle has been serviced
-func (r *VehicleServicingRepository) MarkAsServiced(vehicleID int, currentKm float64, servicingType string, cost float64, notes string, servicedBy int) error {
+func (r *VehicleServicingRepository) MarkAsServiced(vehicleID int, servicedAt time.Time) error {
+	// Get the current km reading from vehicle_usage
+	var currentKm float64
+	err := r.db.QueryRow(`
+		SELECT km_reading 
+		FROM vehicle_usage 
+		WHERE vehicle_id = $1 
+		ORDER BY recorded_at DESC 
+		LIMIT 1
+	`, vehicleID).Scan(&currentKm)
+	if err != nil {
+		return fmt.Errorf("failed to get current km reading: %v", err)
+	}
+
 	// Get the current servicing record to get the interval
 	var servicing models.VehicleServicing
-	err := r.db.QueryRow(`
+	err = r.db.QueryRow(`
 		SELECT servicing_interval_km
 		FROM vehicle_servicing
 		WHERE vehicle_id = $1
@@ -97,10 +110,10 @@ func (r *VehicleServicingRepository) MarkAsServiced(vehicleID int, currentKm flo
 			last_serviced_at
 		) VALUES (
 			$1, $2, $3, $4, false, 'completed',
-			CURRENT_TIMESTAMP
+			$5
 		)
 	`, vehicleID, currentKm, currentKm+servicing.ServicingInterval,
-		servicing.ServicingInterval)
+		servicing.ServicingInterval, servicedAt)
 	return err
 }
 
