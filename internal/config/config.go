@@ -6,6 +6,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // Config holds application configuration
@@ -39,24 +41,34 @@ func LoadConfig() (*Config, error) {
 }
 
 // ConnectDB establishes a connection to the database
-func ConnectDB(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr)
+func ConnectDB(connStr string) (*gorm.DB, error) {
+	// First connect with standard lib to initialize schema
+	sqlDB, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check database connection
-	if err := db.Ping(); err != nil {
+	if err := sqlDB.Ping(); err != nil {
 		return nil, err
 	}
 
 	// Initialize database schema
-	err = initDB(db)
+	err = initDB(sqlDB)
 	if err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	// Close the sql.DB connection as we'll use GORM
+	sqlDB.Close()
+
+	// Now connect with GORM
+	gormDB, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	return gormDB, nil
 }
 
 // initDB creates necessary tables if they don't exist

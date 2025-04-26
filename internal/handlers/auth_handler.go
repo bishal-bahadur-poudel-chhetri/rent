@@ -16,6 +16,7 @@ type AuthHandler struct {
 func NewAuthHandler(authService services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
+
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		MobileNumber string `json:"mobile_number"`
@@ -36,16 +37,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Return success response with token and user data
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Login successful", map[string]interface{}{
+	// Prepare user data for response
+	userData := map[string]interface{}{
+		"username":      user.Username,
+		"is_admin":      user.IsAdmin,
+		"mobile_number": user.MobileNumber,
+	}
+	responseData := map[string]interface{}{
 		"token": token,
-		"user": map[string]interface{}{
-			"username":      user.Username,
-			"is_admin":      user.IsAdmin,
-			"mobile_number": user.MobileNumber,
-		},
-	}))
+		"user":  userData,
+	}
+
+	// Return success response with token and user data
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Login successful", responseData))
 }
+
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
 		Username     string `json:"username"`

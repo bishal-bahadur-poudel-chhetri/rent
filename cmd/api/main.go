@@ -10,6 +10,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -19,29 +21,34 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Connect to the database
-	db, err := config.ConnectDB(cfg.DBConnStr)
+	// Connect to database
+	db, err := gorm.Open(postgres.Open(cfg.DBConnStr), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Error connecting to database: %v", err)
 	}
-	defer db.Close()
+	// Get the underlying *sql.DB
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Error getting underlying *sql.DB: %v", err)
+	}
+	defer sqlDB.Close()
 
 	// Initialize repositories
-	userRepo := repositories.NewUserRepository(db)
-	vehicleRepo := repositories.NewVehicleRepository(db)
-	saleRepo := repositories.NewSaleRepository(db)
-	returnRepo := repositories.NewReturnRepository(db)
-	videoRepo := repositories.NewVideoRepository(db, cfg)
-	futurBookingRepo := repositories.NewFuturBookingRepository(db)
-	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(db)
-	paymentRepo := repositories.NewPaymentRepository(db)
-	saleDetailRepo := repositories.NewSaleDetailRepository(db)
-	dataRepo := repositories.NewDataAggregateRepository(db)
-	disableDateRepo := repositories.NewDisableDateRepository(db)
-	statementRepo := repositories.NewStatementRepository(db)
-	expenseRepo := repositories.NewExpenseRepository(db)
-	revenueRepo := repositories.NewRevenueRepository(db)
-	vehicleServicingRepo := repositories.NewVehicleServicingRepository(db)
+	userRepo := repositories.NewUserRepository(sqlDB)
+	vehicleRepo := repositories.NewVehicleRepository(sqlDB)
+	saleRepo := repositories.NewSaleRepository(sqlDB)
+	returnRepo := repositories.NewReturnRepository(sqlDB)
+	videoRepo := repositories.NewVideoRepository(sqlDB, cfg)
+	futurBookingRepo := repositories.NewFuturBookingRepository(sqlDB)
+	paymentVerificationRepo := repositories.NewPaymentVerificationRepository(sqlDB)
+	paymentRepo := repositories.NewPaymentRepository(sqlDB)
+	saleDetailRepo := repositories.NewSaleDetailRepository(sqlDB)
+	dataRepo := repositories.NewDataAggregateRepository(sqlDB)
+	disableDateRepo := repositories.NewDisableDateRepository(sqlDB)
+	statementRepo := repositories.NewStatementRepository(sqlDB)
+	expenseRepo := repositories.NewExpenseRepository(sqlDB)
+	revenueRepo := repositories.NewRevenueRepository(sqlDB)
+	reminderRepo := repositories.NewReminderRepository(db)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -58,7 +65,7 @@ func main() {
 	statementService := services.NewStatementService(statementRepo)
 	expenseService := services.NewExpenseService(expenseRepo)
 	revenueService := services.NewRevenueService(revenueRepo)
-	vehicleServicingService := services.NewVehicleServicingService(vehicleServicingRepo)
+	reminderService := services.NewReminderService(reminderRepo)
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
@@ -75,7 +82,7 @@ func main() {
 	statementHandler := handlers.NewStatementHandler(statementService)
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
-	vehicleServicingHandler := handlers.NewVehicleServicingHandler(vehicleServicingService)
+	reminderHandler := handlers.NewReminderHandler(reminderService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -154,10 +161,11 @@ func main() {
 			protected.GET("/revenue/monthly", revenueHandler.GetMonthlyRevenue)
 			protected.GET("/revenue/mobile-visualization", revenueHandler.GetMobileRevenueVisualization)
 
-			// Vehicle Servicing routes
-			protected.GET("/vehicles/servicing/due", vehicleServicingHandler.GetVehiclesDueForServicing)
-			protected.GET("/vehicles/:vehicle_id/servicing/history", vehicleServicingHandler.GetServicingHistory)
-			protected.POST("/vehicles/:vehicle_id/servicing/mark-serviced", vehicleServicingHandler.MarkAsServiced)
+			// Reminder routes
+			protected.POST("/reminders", reminderHandler.CreateReminder)
+			protected.POST("/reminders/:reminder_id/acknowledge", reminderHandler.AcknowledgeReminder)
+			protected.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
+			protected.GET("/reminders/due", reminderHandler.GetDueReminders)
 		}
 	}
 

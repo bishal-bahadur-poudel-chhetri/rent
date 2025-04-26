@@ -14,6 +14,7 @@ type ReturnRepository struct {
 func NewReturnRepository(db *sql.DB) *ReturnRepository {
 	return &ReturnRepository{db: db}
 }
+
 func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -64,6 +65,28 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 		fmt.Println(usage.RecordType)
 		// Only check servicing status for return records
 		if usage.RecordType == "return" {
+			// Get the matching delivery record to calculate trip distance
+			var deliveryKm float64
+			err = tx.QueryRow(`
+				SELECT km_reading
+				FROM vehicle_usage
+				WHERE vehicle_id = $1 AND sale_id = $2 AND record_type = 'delivery'
+				LIMIT 1
+			`, usage.VehicleID, sale.SaleID).Scan(&deliveryKm)
+
+			if err != nil && err != sql.ErrNoRows {
+				return 0, fmt.Errorf("failed to get delivery km reading: %v", err)
+			}
+
+			// Calculate trip distance if we have both readings
+			var tripKm float64
+			if err != sql.ErrNoRows {
+				tripKm = usage.KmReading - deliveryKm
+				if tripKm < 0 {
+					tripKm = 0 // Safeguard against negative values
+				}
+			}
+
 			// Check if servicing record exists for this vehicle
 			var servicingExists bool
 			err = tx.QueryRow(`
@@ -89,7 +112,10 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 				}
 			} else {
 				// Update servicing status based on new km reading
-				_, err = tx.Exec(`
+				var isServicingDue bool
+				var nextServicingKm float64
+
+				err = tx.QueryRow(`
 					UPDATE vehicle_servicing
 					SET current_km = $1,
 						is_servicing_due = CASE 
@@ -103,9 +129,46 @@ func (r *ReturnRepository) CreateReturn(sale models.Sale) (int, error) {
 						updated_at = CURRENT_TIMESTAMP
 					WHERE vehicle_id = $2
 					AND status IN ('pending', 'in_progress')
-				`, usage.KmReading, usage.VehicleID)
-				if err != nil {
+					RETURNING is_servicing_due, next_servicing_km
+				`, usage.KmReading, usage.VehicleID).Scan(&isServicingDue, &nextServicingKm)
+
+				if err != nil && err != sql.ErrNoRows {
 					return 0, fmt.Errorf("failed to update servicing status: %v", err)
+				}
+
+				// Check if we need to create a servicing reminder
+				if isServicingDue {
+					// Check if there's already an active servicing reminder
+					var reminderExists bool
+					err = tx.QueryRow(`
+						SELECT EXISTS (
+							SELECT 1 FROM reminders 
+							WHERE vehicle_id = $1 
+							AND type = 'servicing' 
+							AND next_due_date >= CURRENT_DATE
+						)
+					`, usage.VehicleID).Scan(&reminderExists)
+
+					if err != nil {
+						return 0, fmt.Errorf("failed to check existing reminders: %v", err)
+					}
+
+					// Create a new servicing reminder if one doesn't exist
+					if !reminderExists {
+						_, err = tx.Exec(`
+							INSERT INTO reminders (
+								vehicle_id, user_id, type, start_date, 
+								frequency, next_due_date
+							) VALUES (
+								$1, $2, 'servicing', CURRENT_TIMESTAMP, 
+								'custom', CURRENT_TIMESTAMP
+							)
+						`, usage.VehicleID, sale.UserID)
+
+						if err != nil {
+							return 0, fmt.Errorf("failed to create servicing reminder: %v", err)
+						}
+					}
 				}
 			}
 		}
