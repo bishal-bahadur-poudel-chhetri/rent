@@ -340,6 +340,29 @@ CREATE TABLE IF NOT EXISTS vehicle_servicing_history (
 	);
 	`
 	_, err = db.Exec(remindersQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create system settings table
+	systemSettingsQuery := `
+	CREATE TABLE IF NOT EXISTS system_settings (
+		setting_id SERIAL PRIMARY KEY,
+		setting_key VARCHAR(50) NOT NULL UNIQUE,
+		setting_value BOOLEAN NOT NULL DEFAULT true,
+		description TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+
+	-- Insert default settings
+	INSERT INTO system_settings (setting_key, setting_value, description)
+	VALUES 
+		('enable_registration', true, 'Controls whether new user registration is allowed'),
+		('enable_login', true, 'Controls whether user login is allowed')
+	ON CONFLICT (setting_key) DO NOTHING;
+	`
+	_, err = db.Exec(systemSettingsQuery)
 	return err
 }
 

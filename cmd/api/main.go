@@ -49,6 +49,7 @@ func main() {
 	expenseRepo := repositories.NewExpenseRepository(sqlDB)
 	revenueRepo := repositories.NewRevenueRepository(sqlDB)
 	reminderRepo := repositories.NewReminderRepository(db)
+	systemSettingsRepo := repositories.NewSystemSettingsRepository(sqlDB)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -66,10 +67,11 @@ func main() {
 	expenseService := services.NewExpenseService(expenseRepo)
 	revenueService := services.NewRevenueService(revenueRepo)
 	reminderService := services.NewReminderService(reminderRepo)
+	systemSettingsService := services.NewSystemSettingsService(systemSettingsRepo)
 
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService, systemSettingsService)
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService, "https://pub-8da91f66939f4cdc9e4206024a0e68e9.r2.dev")
@@ -83,6 +85,7 @@ func main() {
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
 	reminderHandler := handlers.NewReminderHandler(reminderService)
+	systemSettingsHandler := handlers.NewSystemSettingsHandler(systemSettingsService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -105,6 +108,7 @@ func main() {
 		// Public routes
 		v1.POST("/register", authHandler.Register)
 		v1.POST("/login", authHandler.Login)
+		v1.GET("/system-settings", systemSettingsHandler.GetSystemSettings)
 
 		// Protected routes, JWT authentication required
 		protected := v1.Group("")
@@ -149,12 +153,16 @@ func main() {
 			// Statement routes
 			protected.GET("/statements", statementHandler.GetOutstandingStatements)
 
-			// Expense routes
-			protected.POST("/expenses", expenseHandler.CreateExpense)
-			protected.PUT("/expenses/:id", expenseHandler.UpdateExpense)
-			protected.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
-			protected.GET("/expenses/:id", expenseHandler.GetExpenseByID)
-			protected.GET("/expenses", expenseHandler.GetAllExpenses)
+			// Expense routes with accounting permission check
+			expenses := protected.Group("/expenses")
+			expenses.Use(handlers.CheckAccountingPermission())
+			{
+				expenses.POST("", expenseHandler.CreateExpense)
+				expenses.PUT("/:id", expenseHandler.UpdateExpense)
+				expenses.DELETE("/:id", expenseHandler.DeleteExpense)
+				expenses.GET("/:id", expenseHandler.GetExpenseByID)
+				expenses.GET("", expenseHandler.GetAllExpenses)
+			}
 
 			// Revenue route
 			protected.GET("/revenue", revenueHandler.GetRevenue)
@@ -162,10 +170,27 @@ func main() {
 			protected.GET("/revenue/mobile-visualization", revenueHandler.GetMobileRevenueVisualization)
 
 			// Reminder routes
-			protected.POST("/reminders", reminderHandler.CreateReminder)
-			protected.POST("/reminders/:reminder_id/acknowledge", reminderHandler.AcknowledgeReminder)
-			protected.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
-			protected.GET("/reminders/due", reminderHandler.GetDueReminders)
+			reminders := protected.Group("/reminders")
+			{
+				// Admin-only routes for EMI, insurance, and billbook
+				adminReminders := reminders.Group("")
+				adminReminders.Use(handlers.CheckAdminPermission())
+				{
+					adminReminders.POST("", reminderHandler.CreateReminder)
+					adminReminders.POST("/:reminder_id/acknowledge", reminderHandler.AcknowledgeReminder)
+				}
+
+				// Routes accessible to all authenticated users
+				reminders.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
+				reminders.GET("/due", reminderHandler.GetDueReminders)
+			}
+
+			// System settings routes (admin only)
+			systemSettings := protected.Group("/system-settings")
+			systemSettings.Use(handlers.CheckAdminPermission())
+			{
+				systemSettings.PUT("/:key", systemSettingsHandler.UpdateSystemSetting)
+			}
 		}
 	}
 

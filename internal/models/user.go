@@ -3,15 +3,17 @@ package models
 import "time"
 
 type User struct {
-	ID           int       `json:"id"`
-	Username     string    `json:"username"`
-	Password     string    `json:"password"`
-	IsAdmin      bool      `json:"is_admin"`
-	CompanyID    int       `json:"company_id"` // Ensure this field exists
-	MobileNumber string    `json:"mobile_number"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            int       `json:"id"`
+	Username      string    `json:"username"`
+	Password      string    `json:"password"`
+	IsAdmin       bool      `json:"is_admin"`
+	HasAccounting bool      `json:"has_accounting"`
+	CompanyID     int       `json:"company_id"` // Ensure this field exists
+	MobileNumber  string    `json:"mobile_number"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
+
 type Company struct {
 	ID          int       `json:"id"`
 	Name        string    `json:"name"`
@@ -21,11 +23,12 @@ type Company struct {
 }
 
 type RegisterRequest struct {
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	IsAdmin      bool   `json:"is_admin"`
-	CompanyID    int    `json:"company_id"` // Use company_id instead of company_code
-	MobileNumber string `json:"mobile_number"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	IsAdmin       bool   `json:"is_admin"`
+	HasAccounting bool   `json:"has_accounting"`
+	CompanyID     int    `json:"company_id"` // Use company_id instead of company_code
+	MobileNumber  string `json:"mobile_number"`
 }
 
 type Vehicle struct {

@@ -20,6 +20,33 @@ func NewReminderHandler(reminderService *services.ReminderService) *ReminderHand
 	}
 }
 
+// CheckAdminPermission middleware to verify if user is an admin
+func CheckAdminPermission() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+			c.Abort()
+			return
+		}
+
+		userModel, ok := user.(*models.User)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Invalid user data", nil))
+			c.Abort()
+			return
+		}
+
+		if !userModel.IsAdmin {
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Admin permission required", nil))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // CreateReminder handles the creation of a new reminder
 func (h *ReminderHandler) CreateReminder(c *gin.Context) {
 	var reminder models.Reminder

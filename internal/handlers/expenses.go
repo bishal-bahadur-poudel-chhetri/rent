@@ -19,6 +19,33 @@ func NewExpenseHandler(service services.ExpenseService) *ExpenseHandler {
 	return &ExpenseHandler{service}
 }
 
+// CheckAccountingPermission middleware to verify if user has accounting permission
+func CheckAccountingPermission() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+			c.Abort()
+			return
+		}
+
+		userModel, ok := user.(*models.User)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Invalid user data", nil))
+			c.Abort()
+			return
+		}
+
+		if !userModel.HasAccounting && !userModel.IsAdmin {
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "User does not have accounting permission", nil))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 	var expense models.Expense
 	if err := c.ShouldBindJSON(&expense); err != nil {
