@@ -153,15 +153,21 @@ func main() {
 			// Statement routes
 			protected.GET("/statements", statementHandler.GetOutstandingStatements)
 
-			// Expense routes with accounting permission check
+			// Expense routes
 			expenses := protected.Group("/expenses")
-			expenses.Use(handlers.CheckAccountingPermission())
 			{
-				expenses.POST("", expenseHandler.CreateExpense)
-				expenses.PUT("/:id", expenseHandler.UpdateExpense)
-				expenses.DELETE("/:id", expenseHandler.DeleteExpense)
+				// Read operations accessible to all authenticated users
 				expenses.GET("/:id", expenseHandler.GetExpenseByID)
 				expenses.GET("", expenseHandler.GetAllExpenses)
+
+				// Write operations require accounting permission
+				expensesWithPermission := expenses.Group("")
+				expensesWithPermission.Use(handlers.CheckAccountingPermission())
+				{
+					expensesWithPermission.POST("", expenseHandler.CreateExpense)
+					expensesWithPermission.PUT("/:id", expenseHandler.UpdateExpense)
+					expensesWithPermission.DELETE("/:id", expenseHandler.DeleteExpense)
+				}
 			}
 
 			// Revenue route
@@ -172,17 +178,17 @@ func main() {
 			// Reminder routes
 			reminders := protected.Group("/reminders")
 			{
-				// Admin-only routes for EMI, insurance, and billbook
+				// Read operations accessible to all authenticated users
+				reminders.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
+				reminders.GET("/due", reminderHandler.GetDueReminders)
+
+				// Write operations require admin permission
 				adminReminders := reminders.Group("")
 				adminReminders.Use(handlers.CheckAdminPermission())
 				{
 					adminReminders.POST("", reminderHandler.CreateReminder)
 					adminReminders.POST("/:reminder_id/acknowledge", reminderHandler.AcknowledgeReminder)
 				}
-
-				// Routes accessible to all authenticated users
-				reminders.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
-				reminders.GET("/due", reminderHandler.GetDueReminders)
 			}
 
 			// System settings routes (admin only)
