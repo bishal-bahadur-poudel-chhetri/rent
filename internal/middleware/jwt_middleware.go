@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"renting/internal/utils"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
@@ -29,7 +28,7 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		}
 
 		// Parse and validate the token
-		token, err := jwt.ParseWithClaims(tokenString, &utils.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtSecret), nil
 		})
 		if err != nil {
@@ -39,11 +38,17 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		}
 
 		// Check if the token is valid and extract claims
-		if claims, ok := token.Claims.(*utils.Claims); ok && token.Valid {
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			// Set user information in the context
-			c.Set("userID", claims.UserID)
-			c.Set("companyID", claims.CompanyID)
-			c.Set("username", claims.Username)
+			if userID, ok := claims["user_id"].(float64); ok {
+				c.Set("userID", int(userID))
+			}
+			if companyID, ok := claims["company_id"].(float64); ok {
+				c.Set("companyID", int(companyID))
+			}
+			if username, ok := claims["username"].(string); ok {
+				c.Set("username", username)
+			}
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()

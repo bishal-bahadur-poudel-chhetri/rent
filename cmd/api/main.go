@@ -84,7 +84,7 @@ func main() {
 	statementHandler := handlers.NewStatementHandler(statementService)
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
-	reminderHandler := handlers.NewReminderHandler(reminderService)
+	reminderHandler := handlers.NewReminderHandler(reminderService, userRepo)
 	systemSettingsHandler := handlers.NewSystemSettingsHandler(systemSettingsService)
 
 	// Initialize Gin router
@@ -180,11 +180,12 @@ func main() {
 			{
 				// Read operations accessible to all authenticated users
 				reminders.GET("/vehicles/:vehicle_id/reminders", reminderHandler.GetRemindersByVehicle)
+				reminders.GET("/vehicles/:vehicle_id/reminders/filter", reminderHandler.GetRemindersByVehicleAndType)
 				reminders.GET("/due", reminderHandler.GetDueReminders)
 
 				// Write operations require admin permission
 				adminReminders := reminders.Group("")
-				adminReminders.Use(handlers.CheckAdminPermission())
+				adminReminders.Use(reminderHandler.CheckAdminPermission())
 				{
 					adminReminders.POST("", reminderHandler.CreateReminder)
 					adminReminders.POST("/:reminder_id/acknowledge", reminderHandler.AcknowledgeReminder)
@@ -193,7 +194,7 @@ func main() {
 
 			// System settings routes (admin only)
 			systemSettings := protected.Group("/system-settings")
-			systemSettings.Use(handlers.CheckAdminPermission())
+			systemSettings.Use(reminderHandler.CheckAdminPermission())
 			{
 				systemSettings.PUT("/:key", systemSettingsHandler.UpdateSystemSetting)
 			}

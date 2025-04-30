@@ -13,6 +13,7 @@ type UserRepository interface {
 	FindByMobileAndCompanyCode(ctx context.Context, mobileNumber, companyCode string) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
 	GetCompanyIDByCode(ctx context.Context, companyCode string) (int, error)
+	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 }
 type userRepository struct {
 	db *sql.DB
@@ -98,4 +99,33 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 	fmt.Printf("User created with ID: %d\n", user.ID)
 
 	return nil
+}
+
+func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
+	query := `
+		SELECT id, username, password, is_admin, company_id, mobile_number, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+	row := r.db.QueryRowContext(ctx, query, userID)
+
+	var user models.User
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Password,
+		&user.IsAdmin,
+		&user.CompanyID,
+		&user.MobileNumber,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }
