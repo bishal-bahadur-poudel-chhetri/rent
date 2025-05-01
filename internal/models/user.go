@@ -8,7 +8,8 @@ type User struct {
 	Password      string    `json:"password"`
 	IsAdmin       bool      `json:"is_admin"`
 	HasAccounting bool      `json:"has_accounting"`
-	CompanyID     int       `json:"company_id"` // Ensure this field exists
+	IsLocked      bool      `json:"is_locked"`
+	CompanyID     int       `json:"company_id"`
 	MobileNumber  string    `json:"mobile_number"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
@@ -27,7 +28,7 @@ type RegisterRequest struct {
 	Password      string `json:"password"`
 	IsAdmin       bool   `json:"is_admin"`
 	HasAccounting bool   `json:"has_accounting"`
-	CompanyID     int    `json:"company_id"` // Use company_id instead of company_code
+	CompanyID     int    `json:"company_id"`
 	MobileNumber  string `json:"mobile_number"`
 }
 

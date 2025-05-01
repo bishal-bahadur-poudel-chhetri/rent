@@ -5,6 +5,7 @@ import (
 	"renting/internal/models"
 	"renting/internal/services"
 	"renting/internal/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -102,4 +103,39 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Login successful", responseData))
+}
+
+// LockoutUser handles locking out a user's login access
+func (h *AuthHandler) LockoutUser(c *gin.Context) {
+	// Get user ID from path parameter
+	userID, err := strconv.Atoi(c.Param("user_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid user ID", nil))
+		return
+	}
+
+	// Get the current user's ID from context (set by JWT middleware)
+	currentUserID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+		return
+	}
+
+	// Allow self-lockout, but require admin permission for locking out others
+	if userID != currentUserID.(int) {
+		// Check if current user is admin
+		currentUser, err := h.authService.GetUserByID(c.Request.Context(), currentUserID.(int))
+		if err != nil || currentUser == nil || !currentUser.IsAdmin {
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Admin permission required to lock out other users", nil))
+			return
+		}
+	}
+
+	// Lock out the user
+	if err := h.authService.LockoutUser(c.Request.Context(), userID); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "User locked out successfully", nil))
 }

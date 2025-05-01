@@ -14,7 +14,9 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) error
 	GetCompanyIDByCode(ctx context.Context, companyCode string) (int, error)
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
+	LockoutUser(ctx context.Context, userID int) error
 }
+
 type userRepository struct {
 	db *sql.DB
 }
@@ -25,7 +27,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 func (r *userRepository) FindByMobileAndCompanyCode(ctx context.Context, mobileNumber, companyCode string) (*models.User, error) {
 	query := `
-		SELECT u.id, u.username, u.password, u.is_admin, u.company_id, u.mobile_number, u.created_at, u.updated_at
+		SELECT u.id, u.username, u.password, u.is_admin, u.is_locked, u.company_id, u.mobile_number, u.created_at, u.updated_at
 		FROM users u
 		JOIN companies c ON u.company_id = c.id
 		WHERE u.mobile_number = $1 AND c.company_code = $2
@@ -38,6 +40,7 @@ func (r *userRepository) FindByMobileAndCompanyCode(ctx context.Context, mobileN
 		&user.Username,
 		&user.Password,
 		&user.IsAdmin,
+		&user.IsLocked,
 		&user.CompanyID,
 		&user.MobileNumber,
 		&user.CreatedAt,
@@ -72,13 +75,12 @@ func (r *userRepository) GetCompanyIDByCode(ctx context.Context, companyCode str
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) error {
-
-	fmt.Printf("Executing query: INSERT INTO users (username, password, is_admin, company_id, mobile_number) "+
-		"VALUES ('%s', '%s', %v, %d, '%s')\n",
-		user.Username, user.Password, user.IsAdmin, user.CompanyID, user.MobileNumber)
+	fmt.Printf("Executing query: INSERT INTO users (username, password, is_admin, is_locked, company_id, mobile_number) "+
+		"VALUES ('%s', '%s', %v, %v, %d, '%s')\n",
+		user.Username, user.Password, user.IsAdmin, false, user.CompanyID, user.MobileNumber)
 	query := `
-		INSERT INTO users (username, password, is_admin, company_id, mobile_number)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users (username, password, is_admin, is_locked, company_id, mobile_number)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
 	`
 	err := r.db.QueryRowContext(
@@ -87,23 +89,22 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 		user.Username,
 		user.Password,
 		user.IsAdmin,
+		false,
 		user.CompanyID,
 		user.MobileNumber,
 	).Scan(&user.ID)
 	if err != nil {
-
 		log.Printf("Error executing query: %v\n", err)
 		return err
 	}
 
 	fmt.Printf("User created with ID: %d\n", user.ID)
-
 	return nil
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
 	query := `
-		SELECT id, username, password, is_admin, company_id, mobile_number, created_at, updated_at
+		SELECT id, username, password, is_admin, is_locked, company_id, mobile_number, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -115,6 +116,7 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.U
 		&user.Username,
 		&user.Password,
 		&user.IsAdmin,
+		&user.IsLocked,
 		&user.CompanyID,
 		&user.MobileNumber,
 		&user.CreatedAt,
@@ -128,4 +130,17 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.U
 	}
 
 	return &user, nil
+}
+
+func (r *userRepository) LockoutUser(ctx context.Context, userID int) error {
+	query := `
+		UPDATE users 
+		SET is_locked = true 
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to lock out user: %v", err)
+	}
+	return nil
 }

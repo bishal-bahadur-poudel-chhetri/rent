@@ -14,7 +14,10 @@ import (
 type AuthService interface {
 	Login(ctx context.Context, mobileNumber, password, companyCode string) (string, *models.User, error)
 	Register(ctx context.Context, user *models.User, companyCode string) error
+	LockoutUser(ctx context.Context, userID int) error
+	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 }
+
 type authService struct {
 	userRepo    repositories.UserRepository
 	jwtSecret   string
@@ -37,6 +40,11 @@ func (s *authService) Login(ctx context.Context, mobileNumber, password, company
 	}
 	if user == nil {
 		return "", nil, errors.New("invalid credentials")
+	}
+
+	// Check if user is locked out
+	if user.IsLocked {
+		return "", nil, errors.New("user not found")
 	}
 
 	// Verify the password
@@ -86,4 +94,14 @@ func (s *authService) Register(ctx context.Context, user *models.User, companyCo
 	}
 
 	return nil
+}
+
+// LockoutUser locks out a user's login access
+func (s *authService) LockoutUser(ctx context.Context, userID int) error {
+	return s.userRepo.LockoutUser(ctx, userID)
+}
+
+// GetUserByID retrieves a user by their ID
+func (s *authService) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
+	return s.userRepo.GetUserByID(ctx, userID)
 }

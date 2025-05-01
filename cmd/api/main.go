@@ -198,6 +198,13 @@ func main() {
 			{
 				systemSettings.PUT("/:key", systemSettingsHandler.UpdateSystemSetting)
 			}
+
+			// User management routes (admin only)
+			users := protected.Group("/users")
+			users.Use(reminderHandler.CheckAdminPermission())
+			{
+				users.POST("/:user_id/lockout", authHandler.LockoutUser)
+			}
 		}
 	}
 
