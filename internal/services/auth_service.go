@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"renting/internal/models"
 	"renting/internal/repositories"
 	"renting/internal/utils"
@@ -42,14 +43,14 @@ func (s *authService) Login(ctx context.Context, mobileNumber, password, company
 		return "", nil, errors.New("invalid credentials")
 	}
 
-	// Check if user is locked out
-	if user.IsLocked {
-		return "", nil, errors.New("user not found")
-	}
-
 	// Verify the password
 	if !utils.CheckPasswordHash(password, user.Password) {
 		return "", nil, errors.New("invalid credentials")
+	}
+
+	// Check if user is locked out (at the end of the flow)
+	if user.IsLocked {
+		return "", nil, errors.New("user not found")
 	}
 
 	// Generate JWT token
@@ -103,5 +104,18 @@ func (s *authService) LockoutUser(ctx context.Context, userID int) error {
 
 // GetUserByID retrieves a user by their ID
 func (s *authService) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
-	return s.userRepo.GetUserByID(ctx, userID)
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		log.Printf("[ERROR] Failed to get user by ID %d: %v", userID, err)
+		return nil, err
+	}
+
+	if user != nil {
+		log.Printf("[DEBUG] User info - ID: %d, IsAdmin: %v, HasAccounting: %v",
+			userID, user.IsAdmin, user.HasAccounting)
+	} else {
+		log.Printf("[DEBUG] User with ID %d not found", userID)
+	}
+
+	return user, nil
 }

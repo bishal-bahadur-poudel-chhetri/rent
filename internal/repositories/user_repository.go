@@ -27,7 +27,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 func (r *userRepository) FindByMobileAndCompanyCode(ctx context.Context, mobileNumber, companyCode string) (*models.User, error) {
 	query := `
-		SELECT u.id, u.username, u.password, u.is_admin, u.is_locked, u.company_id, u.mobile_number, u.created_at, u.updated_at
+		SELECT u.id, u.username, u.password, u.is_admin, u.has_accounting, u.is_locked, u.company_id, u.mobile_number, u.created_at, u.updated_at
 		FROM users u
 		JOIN companies c ON u.company_id = c.id
 		WHERE u.mobile_number = $1 AND c.company_code = $2
@@ -40,6 +40,7 @@ func (r *userRepository) FindByMobileAndCompanyCode(ctx context.Context, mobileN
 		&user.Username,
 		&user.Password,
 		&user.IsAdmin,
+		&user.HasAccounting,
 		&user.IsLocked,
 		&user.CompanyID,
 		&user.MobileNumber,
@@ -75,12 +76,12 @@ func (r *userRepository) GetCompanyIDByCode(ctx context.Context, companyCode str
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) error {
-	fmt.Printf("Executing query: INSERT INTO users (username, password, is_admin, is_locked, company_id, mobile_number) "+
-		"VALUES ('%s', '%s', %v, %v, %d, '%s')\n",
-		user.Username, user.Password, user.IsAdmin, false, user.CompanyID, user.MobileNumber)
+	fmt.Printf("Executing query: INSERT INTO users (username, password, is_admin, has_accounting, is_locked, company_id, mobile_number) "+
+		"VALUES ('%s', '%s', %v, %v, %v, %d, '%s')\n",
+		user.Username, user.Password, user.IsAdmin, user.HasAccounting, false, user.CompanyID, user.MobileNumber)
 	query := `
-		INSERT INTO users (username, password, is_admin, is_locked, company_id, mobile_number)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (username, password, is_admin, has_accounting, is_locked, company_id, mobile_number)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	err := r.db.QueryRowContext(
@@ -89,6 +90,7 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 		user.Username,
 		user.Password,
 		user.IsAdmin,
+		user.HasAccounting,
 		false,
 		user.CompanyID,
 		user.MobileNumber,
@@ -103,11 +105,15 @@ func (r *userRepository) CreateUser(ctx context.Context, user *models.User) erro
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
+	log.Printf("[DEBUG] GetUserByID querying database for user ID: %d", userID)
+
 	query := `
-		SELECT id, username, password, is_admin, is_locked, company_id, mobile_number, created_at, updated_at
+		SELECT id, username, password, is_admin, has_accounting, is_locked, company_id, mobile_number, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
+	log.Printf("[DEBUG] SQL Query: %s", query)
+
 	row := r.db.QueryRowContext(ctx, query, userID)
 
 	var user models.User
@@ -116,6 +122,7 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.U
 		&user.Username,
 		&user.Password,
 		&user.IsAdmin,
+		&user.HasAccounting,
 		&user.IsLocked,
 		&user.CompanyID,
 		&user.MobileNumber,
@@ -124,10 +131,15 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID int) (*models.U
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Printf("[DEBUG] No user found with ID: %d", userID)
 			return nil, nil
 		}
+		log.Printf("[ERROR] Database error retrieving user ID %d: %v", userID, err)
 		return nil, err
 	}
+
+	log.Printf("[DEBUG] Retrieved user ID: %d, Username: %s, IsAdmin: %v, HasAccounting: %v",
+		user.ID, user.Username, user.IsAdmin, user.HasAccounting)
 
 	return &user, nil
 }

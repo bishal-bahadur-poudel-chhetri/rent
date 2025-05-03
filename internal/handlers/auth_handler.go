@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
@@ -36,11 +37,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	var request struct {
-		Username     string `json:"username"`
-		Password     string `json:"password"`
-		IsAdmin      bool   `json:"is_admin"`
-		CompanyCode  string `json:"company_code"`
-		MobileNumber string `json:"mobile_number"`
+		Username      string `json:"username"`
+		Password      string `json:"password"`
+		IsAdmin       bool   `json:"is_admin"`
+		HasAccounting bool   `json:"has_accounting"`
+		CompanyCode   string `json:"company_code"`
+		MobileNumber  string `json:"mobile_number"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
@@ -48,10 +50,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	user := &models.User{
-		Username:     request.Username,
-		Password:     request.Password,
-		IsAdmin:      request.IsAdmin,
-		MobileNumber: request.MobileNumber,
+		Username:      request.Username,
+		Password:      request.Password,
+		IsAdmin:       request.IsAdmin,
+		HasAccounting: request.HasAccounting,
+		MobileNumber:  request.MobileNumber,
 	}
 
 	if err := h.authService.Register(c.Request.Context(), user, request.CompanyCode); err != nil {
@@ -156,4 +159,95 @@ func (h *AuthHandler) DeleteAccount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Account deleted successfully", nil))
+}
+
+// CheckAccountingPermission middleware to verify if user has accounting permission
+func (h *AuthHandler) CheckAccountingPermission() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Printf("[DEBUG] ============ START CheckAccountingPermission ============")
+		log.Printf("[DEBUG] Request path: %s %s", c.Request.Method, c.Request.URL.Path)
+
+		// Log all context values for debugging
+		for k, v := range c.Keys {
+			log.Printf("[DEBUG] Context key: %s, value type: %T", k, v)
+		}
+
+		// Get the current user's ID from context (set by JWT middleware)
+		userID, exists := c.Get("userID")
+		if !exists {
+			log.Printf("[ERROR] User ID not found in context")
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+			c.Abort()
+			return
+		}
+
+		log.Printf("[DEBUG] Using user ID: %d from context", userID.(int))
+
+		// Get user data
+		user, err := h.authService.GetUserByID(c.Request.Context(), userID.(int))
+		if err != nil {
+			log.Printf("[ERROR] Error fetching user data: %v", err)
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Error fetching user data", nil))
+			c.Abort()
+			return
+		}
+
+		if user == nil {
+			log.Printf("[ERROR] User not found with ID: %d", userID.(int))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not found", nil))
+			c.Abort()
+			return
+		}
+
+		log.Printf("[DEBUG] User ID: %d | Username: %s | IsAdmin: %v | HasAccounting: %v",
+			user.ID, user.Username, user.IsAdmin, user.HasAccounting)
+
+		// Check if the user has accounting permission
+		if !user.HasAccounting {
+			log.Printf("[ERROR] ACCESS DENIED - User %d has no accounting permission (IsAdmin: %v, HasAccounting: %v)",
+				userID.(int), user.IsAdmin, user.HasAccounting)
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "User does not have accounting permission", nil))
+			c.Abort()
+			return
+		}
+
+		log.Printf("[DEBUG] ✅ ACCESS GRANTED - User %d has accounting permission (IsAdmin: %v, HasAccounting: %v)",
+			userID.(int), user.IsAdmin, user.HasAccounting)
+		log.Printf("[DEBUG] ============ END CheckAccountingPermission ============")
+		c.Next()
+	}
+}
+
+// CheckUserPermissions is a debug handler to verify a user's permissions
+func (h *AuthHandler) CheckUserPermissions(c *gin.Context) {
+	// Get the current user's ID from context
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+		return
+	}
+
+	// Get user data
+	user, err := h.authService.GetUserByID(c.Request.Context(), userID.(int))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Error fetching user data", nil))
+		return
+	}
+
+	if user == nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not found", nil))
+		return
+	}
+
+	// Return all user permissions for debugging
+	permissionData := map[string]interface{}{
+		"user_id":        user.ID,
+		"username":       user.Username,
+		"is_admin":       user.IsAdmin,
+		"has_accounting": user.HasAccounting,
+		"is_locked":      user.IsLocked,
+		"company_id":     user.CompanyID,
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "User permissions retrieved", permissionData))
 }

@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 
 	"renting/internal/models"
+	"renting/internal/repositories"
 	"renting/internal/services"
 	"renting/internal/utils" // Import the utils package
 
@@ -22,26 +25,55 @@ func NewExpenseHandler(service services.ExpenseService) *ExpenseHandler {
 // CheckAccountingPermission middleware to verify if user has accounting permission
 func CheckAccountingPermission() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, exists := c.Get("user")
+		// Get userID from the context (set by JWT middleware)
+		userID, exists := c.Get("userID")
 		if !exists {
+			log.Printf("[ERROR] User ID not found in context")
 			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
 			c.Abort()
 			return
 		}
 
-		userModel, ok := user.(*models.User)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Invalid user data", nil))
+		log.Printf("[DEBUG] CheckAccountingPermission middleware - User ID: %d", userID.(int))
+
+		// Get userRepo from the app context or create a new one
+		db, exists := c.Get("sqlDB")
+		if !exists {
+			log.Printf("[ERROR] Database connection not found in context")
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Database connection not available", nil))
 			c.Abort()
 			return
 		}
 
-		if !userModel.HasAccounting && !userModel.IsAdmin {
+		// Get the user from the database
+		userRepo := repositories.NewUserRepository(db.(*sql.DB))
+		user, err := userRepo.GetUserByID(c.Request.Context(), userID.(int))
+		if err != nil {
+			log.Printf("[ERROR] Failed to get user by ID: %v", err)
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Error fetching user data", nil))
+			c.Abort()
+			return
+		}
+
+		if user == nil {
+			log.Printf("[ERROR] User not found with ID: %d", userID.(int))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not found", nil))
+			c.Abort()
+			return
+		}
+
+		log.Printf("[DEBUG] User permissions - IsAdmin: %v, HasAccounting: %v", user.IsAdmin, user.HasAccounting)
+
+		// Check permissions
+		if !user.HasAccounting && !user.IsAdmin {
+			log.Printf("[INFO] User %d denied access - no accounting permission", userID.(int))
 			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "User does not have accounting permission", nil))
 			c.Abort()
 			return
 		}
 
+		log.Printf("[INFO] User %d granted accounting access - IsAdmin: %v, HasAccounting: %v",
+			userID.(int), user.IsAdmin, user.HasAccounting)
 		c.Next()
 	}
 }

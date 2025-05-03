@@ -102,6 +102,14 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Add database to context
+	router.Use(func(c *gin.Context) {
+		// Use a descriptive key that's less likely to conflict
+		c.Set("sqlDB", sqlDB)
+		log.Printf("[DEBUG] Setting database in context for request: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+	})
+
 	// Define API routes under /api/v1
 	v1 := router.Group("/api/v1")
 	{
@@ -114,6 +122,9 @@ func main() {
 		protected := v1.Group("")
 		protected.Use(middleware.JWTAuth(cfg.JWTSecret))
 		{
+			// Debug routes
+			protected.GET("/debug/permissions", authHandler.CheckUserPermissions)
+
 			// User account management
 			protected.DELETE("/account", authHandler.DeleteAccount)
 
@@ -165,7 +176,7 @@ func main() {
 
 				// Write operations require accounting permission
 				expensesWithPermission := expenses.Group("")
-				expensesWithPermission.Use(handlers.CheckAccountingPermission())
+				expensesWithPermission.Use(authHandler.CheckAccountingPermission())
 				{
 					expensesWithPermission.POST("", expenseHandler.CreateExpense)
 					expensesWithPermission.PUT("/:id", expenseHandler.UpdateExpense)
