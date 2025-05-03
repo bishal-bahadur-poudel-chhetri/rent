@@ -114,6 +114,9 @@ func main() {
 		protected := v1.Group("")
 		protected.Use(middleware.JWTAuth(cfg.JWTSecret))
 		{
+			// User account management
+			protected.DELETE("/account", authHandler.DeleteAccount)
+
 			// Vehicle routes
 			protected.GET("/vehicle", vehicleHandler.ListVehicles)
 

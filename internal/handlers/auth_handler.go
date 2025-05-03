@@ -139,3 +139,21 @@ func (h *AuthHandler) LockoutUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "User locked out successfully", nil))
 }
+
+// DeleteAccount handles the deletion (soft-delete) of a user's own account
+func (h *AuthHandler) DeleteAccount(c *gin.Context) {
+	// Get the current user's ID from context (set by JWT middleware)
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+		return
+	}
+
+	// Lock out the user (soft delete)
+	if err := h.authService.LockoutUser(c.Request.Context(), userID.(int)); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Account deleted successfully", nil))
+}
