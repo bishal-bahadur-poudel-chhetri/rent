@@ -66,7 +66,7 @@ type SalePending struct {
 	BookingDate          time.Time      `json:"booking_date"`
 	DateOfDelivery       time.Time      `json:"date_of_delivery"`
 	ReturnDate           time.Time      `json:"return_date"`
-	NumberOfDays         int            `json:"number_of_days"`
+	NumberOfDays         float64        `json:"number_of_days"`
 	Remark               string         `json:"remark"`
 	PaymentStatus        string         `json:"payment_status"` // Change to PaymentStatus
 	Status               string         `json:"status"`
@@ -163,7 +163,7 @@ type UpdateSaleRequest struct {
 	ReturnDate           *string  `json:"return_date,omitempty"`
 	ActualDateOfDelivery *string  `json:"actual_date_of_delivery,omitempty"`
 	ActualDateOfReturn   *string  `json:"actual_date_of_return,omitempty"`
-	NumberOfDays         *int     `json:"number_of_days,omitempty"`
+	NumberOfDays         *float64 `json:"number_of_days,omitempty"`
 	VehicleID            *int     `json:"vehicle_id"`
 }
 

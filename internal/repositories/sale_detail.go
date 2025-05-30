@@ -19,7 +19,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 	// Base query
 	query := `
 		SELECT 
-			s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
+			s.sale_id, s.vehicle_id, s.user_id, u.username, s.customer_name, s.customer_destination, s.customer_phone, 
 			s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
 			s.number_of_days, s.remark, s.status, p.sale_type, s.payment_status,
 			s.created_at, s.updated_at,
@@ -41,6 +41,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		LEFT JOIN payments p ON s.sale_id = p.sale_id
 		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
 		LEFT JOIN vehicle_usage vu ON s.sale_id = vu.sale_id
+		LEFT JOIN users u ON s.user_id = u.user_id
 		WHERE 1=1
 	`
 

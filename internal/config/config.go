@@ -163,6 +163,7 @@ func initDB(db *sql.DB) error {
 		return_time_of_day VARCHAR(50) NOT NULL,
 		actual_delivery_time_of_day VARCHAR(50),
 		actual_return_time_of_day VARCHAR(50),
+		number_of_days DECIMAL(10, 2),
 		status VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
