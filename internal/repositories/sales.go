@@ -281,7 +281,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
                s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
                s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
-               s.actual_delivery_time_of_day, s.actual_return_time_of_day
+               COALESCE(s.actual_delivery_time_of_day, ''), COALESCE(s.actual_return_time_of_day, '')
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
