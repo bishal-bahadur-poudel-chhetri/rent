@@ -43,7 +43,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		VehicleID           int                   `json:"vehicle_id"`
 		TotalAmount         float64               `json:"total_amount"`
 		ChargePerDay        float64               `json:"charge_per_day"`
-		NumberOfDays        int                   `json:"number_of_days"`
+		ChargeHalfDay       float64               `json:"charge_half_day"`
 		CustomerPhone       string                `json:"customer_phone"`
 		AmountPaid          float64               `json:"amount_paid"`
 		PaymentStatus       string                `json:"payment_status"`
@@ -51,6 +51,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		CustomerDestination string                `json:"customer_destination"`
 		DateOfDelivery      string                `json:"date_of_delivery"`
 		ReturnDate          string                `json:"return_date"`
+		DeliveryTimeOfDay   string                `json:"delivery_time_of_day"`
+		ReturnTimeOfDay     string                `json:"return_time_of_day"`
 		Remark              string                `json:"remark"`
 		Status              string                `json:"status"`
 		SalesCharges        []models.SalesCharge  `json:"sales_charges"`
@@ -65,57 +67,92 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
-	dateOfDelivery, err := time.Parse(time.RFC3339, saleRequest.DateOfDelivery)
+	// Validate time of day values
+	if saleRequest.DeliveryTimeOfDay != "morning" && saleRequest.DeliveryTimeOfDay != "evening" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery time of day", "Must be either 'morning' or 'evening'"))
+		return
+	}
+
+	if saleRequest.ReturnTimeOfDay != "morning" && saleRequest.ReturnTimeOfDay != "evening" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return time of day", "Must be either 'morning' or 'evening'"))
+		return
+	}
+
+	// Parse dates
+	var dateOfDelivery, returnDate time.Time
+
+	// Try parsing as ISO 8601 first
+	dateOfDelivery, err = time.Parse(time.RFC3339, saleRequest.DateOfDelivery)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery date", err.Error()))
-		return
-	}
-	fmt.Println(saleRequest.DateOfDelivery)
-
-	if !isValidNepalesePhoneNumber(saleRequest.CustomerPhone) {
-		fmt.Print("hi")
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid phone number", "Phone number must be a valid Nepalese number (e.g., +9779841234567)"))
-		return
+		// If ISO 8601 fails, try YYYY-MM-DD format
+		dateOfDelivery, err = time.Parse("2006-01-02", saleRequest.DateOfDelivery)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid date of delivery format", "Use YYYY-MM-DD or ISO 8601 format"))
+			return
+		}
 	}
 
-	returnDate, err := time.Parse(time.RFC3339, saleRequest.ReturnDate)
+	returnDate, err = time.Parse(time.RFC3339, saleRequest.ReturnDate)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return date", err.Error()))
-		return
+		// If ISO 8601 fails, try YYYY-MM-DD format
+		returnDate, err = time.Parse("2006-01-02", saleRequest.ReturnDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return date format", "Use YYYY-MM-DD or ISO 8601 format"))
+			return
+		}
 	}
 
-	paymentDate := time.Now()
-	for i := range saleRequest.Payments {
-		saleRequest.Payments[i].PaymentDate = paymentDate
+	// Calculate rental days
+	days := returnDate.Sub(dateOfDelivery).Hours() / 24
+	fullDays := int(days)
+	halfDays := 0
+
+	// Check if we need to add half days based on time of day
+	if saleRequest.DeliveryTimeOfDay == "evening" {
+		halfDays++
+	}
+	if saleRequest.ReturnTimeOfDay == "morning" {
+		halfDays++
 	}
 
+	// Calculate total days including half days
+	totalDays := float64(fullDays) + (float64(halfDays) * models.HalfDayRateMultiplier)
+
+	// Create sale model
 	sale := models.Sale{
-		VehicleID:      saleRequest.VehicleID,
-		UserID:         userID,
-		CustomerName:   saleRequest.CustomerName,
-		Destination:    saleRequest.CustomerDestination,
-		CustomerPhone:  saleRequest.CustomerPhone,
-		TotalAmount:    saleRequest.TotalAmount,
-		ChargePerDay:   saleRequest.ChargePerDay,
-		DateOfDelivery: dateOfDelivery,
-		ReturnDate:     returnDate,
-		NumberOfDays:   saleRequest.NumberOfDays,
-		Remark:         saleRequest.Remark,
-		Status:         saleRequest.Status,
-		SalesCharges:   saleRequest.SalesCharges,
-		SalesImages:    saleRequest.SalesImages,
-		SalesVideos:    saleRequest.SalesVideos,
-		VehicleUsage:   saleRequest.VehicleUsage,
-		Payments:       saleRequest.Payments,
+		VehicleID:           saleRequest.VehicleID,
+		UserID:              userID,
+		CustomerName:        saleRequest.CustomerName,
+		Destination:         saleRequest.CustomerDestination,
+		CustomerPhone:       saleRequest.CustomerPhone,
+		TotalAmount:         saleRequest.TotalAmount,
+		ChargePerDay:        saleRequest.ChargePerDay,
+		ChargeHalfDay:       saleRequest.ChargeHalfDay,
+		DateOfDelivery:      dateOfDelivery,
+		ReturnDate:          returnDate,
+		DeliveryTimeOfDay:   saleRequest.DeliveryTimeOfDay,
+		ReturnTimeOfDay:     saleRequest.ReturnTimeOfDay,
+		NumberOfDays:        totalDays,
+		FullDays:            fullDays,
+		HalfDays:            halfDays,
+		IsShortTermRental:   totalDays < float64(models.MinDaysForFullDayRate),
+		Remark:              saleRequest.Remark,
+		Status:              saleRequest.Status,
+		SalesCharges:        saleRequest.SalesCharges,
+		VehicleUsage:        saleRequest.VehicleUsage,
+		Payments:            saleRequest.Payments,
+		SalesImages:         saleRequest.SalesImages,
+		SalesVideos:         saleRequest.SalesVideos,
 	}
 
-	saleID, err := h.saleService.CreateSale(sale)
+	// Create sale
+	response, err := h.saleService.CreateSale(sale)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to create sale", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", gin.H{"sale_id": saleID}))
+	c.JSON(http.StatusCreated, utils.SuccessResponse(http.StatusCreated, "Sale created successfully", response))
 }
 
 func isValidNepalesePhoneNumber(phone string) bool {

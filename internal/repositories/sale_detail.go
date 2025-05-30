@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"renting/internal/models"
 	"time"
@@ -20,18 +21,25 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		SELECT 
 			s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
 			s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-			 s.number_of_days, s.remark, s.status, p.sale_type,s.payment_status,s.other_charges,
+			s.number_of_days, s.remark, s.status, p.sale_type, s.payment_status,
 			s.created_at, s.updated_at,
 			p.payment_id, p.payment_type, p.amount_paid, p.payment_date, p.payment_status, 
 			p.verified_by_admin, p.remark AS payment_remark, p.user_id AS payment_user_id, 
 			p.created_at AS payment_created_at, p.updated_at AS payment_updated_at,
 			v.vehicle_name,
-			sc.charge_id, sc.charge_type, sc.amount AS charge_amount,
+			(
+				SELECT json_agg(json_build_object(
+					'charge_id', sc.charge_id,
+					'charge_type', sc.charge_type,
+					'amount', sc.amount
+				))
+				FROM sales_charges sc
+				WHERE sc.sale_id = s.sale_id
+			) as charges,
 			vu.usage_id, vu.record_type, vu.fuel_range, vu.km_reading, vu.recorded_at, vu.recorded_by
 		FROM sales s
 		LEFT JOIN payments p ON s.sale_id = p.sale_id
 		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
-		LEFT JOIN sales_charges sc ON s.sale_id = sc.sale_id
 		LEFT JOIN vehicle_usage vu ON s.sale_id = vu.sale_id
 		WHERE 1=1
 	`
@@ -97,9 +105,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		var paymentCreatedAt, paymentUpdatedAt *time.Time
 		var carNumber *string
 
-		var chargeID *int
-		var chargeType *string
-		var chargeAmount *float64
+		var charges *json.RawMessage
 
 		var usageID *int
 		var recordType *string
@@ -112,12 +118,12 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.UserName, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.NumberOfDays, &sale.Remark, &sale.Status, &payment.SaleType, &sale.PaymentStatus, &sale.OtherCharges,
+			&sale.NumberOfDays, &sale.Remark, &sale.Status, &payment.SaleType, &sale.PaymentStatus,
 			&sale.CreatedAt, &sale.UpdatedAt,
 			&paymentID, &paymentType, &amountPaid, &paymentDate, &paymentStatus,
 			&verifiedByAdmin, &paymentRemark, &paymentUserID, &paymentCreatedAt, &paymentUpdatedAt,
 			&carNumber,
-			&chargeID, &chargeType, &chargeAmount,
+			&charges,
 			&usageID, &recordType, &fuelRange, &kmReading, &recordedAt, &recordedBy,
 		)
 		if err != nil {
@@ -127,7 +133,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		// Debug: Print scanned values
 		fmt.Printf("Scanned Sale: %+v\n", sale)
 		fmt.Printf("Scanned Payment: %+v\n", payment)
-		fmt.Printf("Scanned SalesCharge - ChargeID: %v, ChargeType: %v, ChargeAmount: %v\n", chargeID, chargeType, chargeAmount)
+		fmt.Printf("Scanned Charges: %v\n", charges)
 		fmt.Printf("Scanned VehicleUsage: %+v\n", usageID)
 
 		// If payment data exists, populate the Payment struct
@@ -148,14 +154,24 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		}
 
 		// If sales charge data exists, populate the SalesCharge struct
-		if chargeID != nil {
-			salesCharge := models.SalesCharge{
-				ChargeID:   *chargeID,
-				ChargeType: *chargeType,
-				Amount:     *chargeAmount,
-				SaleID:     sale.SaleID,
+		if charges != nil {
+			var chargeArray []struct {
+				ChargeID   int     `json:"charge_id"`
+				ChargeType string  `json:"charge_type"`
+				Amount     float64 `json:"amount"`
 			}
-			sale.SalesCharges = append(sale.SalesCharges, salesCharge)
+			if err := json.Unmarshal(charges, &chargeArray); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal charges: %v", err)
+			}
+			for _, c := range chargeArray {
+				salesCharge := models.SalesCharge{
+					ChargeID:   c.ChargeID,
+					ChargeType: c.ChargeType,
+					Amount:     c.Amount,
+					SaleID:     sale.SaleID,
+				}
+				sale.SalesCharges = append(sale.SalesCharges, salesCharge)
+			}
 		}
 
 		// If vehicle usage data exists, populate the VehicleUsage struct
@@ -177,7 +193,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 			if paymentID != nil {
 				existingSale.Payments = append(existingSale.Payments, payment)
 			}
-			if chargeID != nil {
+			if charges != nil {
 				existingSale.SalesCharges = append(existingSale.SalesCharges, sale.SalesCharges...)
 			}
 			if usageID != nil {
@@ -192,13 +208,8 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 			if paymentID != nil {
 				sale.Payments = append(sale.Payments, payment)
 			}
-			if chargeID != nil {
-				sale.SalesCharges = append(sale.SalesCharges, models.SalesCharge{
-					ChargeID:   *chargeID,
-					ChargeType: *chargeType,
-					Amount:     *chargeAmount,
-					SaleID:     sale.SaleID,
-				})
+			if charges != nil {
+				sale.SalesCharges = append(sale.SalesCharges, sale.SalesCharges...)
 			}
 			if usageID != nil {
 				sale.VehicleUsage = append(sale.VehicleUsage, models.VehicleUsage{

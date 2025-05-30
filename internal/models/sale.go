@@ -11,13 +11,19 @@ type Sale struct {
 	CustomerPhone        string     `json:"customer_phone"`
 	TotalAmount          float64    `json:"total_amount"`
 	ChargePerDay         float64    `json:"charge_per_day"`
+	ChargeHalfDay        float64    `json:"charge_half_day"`
 	BookingDate          time.Time  `json:"booking_date"`
 	DateOfDelivery       time.Time  `json:"date_of_delivery"`
 	ReturnDate           time.Time  `json:"return_date"`
 	IsDamaged            bool       `json:"is_damaged"`
 	IsWashed             bool       `json:"is_washed"`
 	IsDelayed            bool       `json:"is_delayed"`
-	NumberOfDays         int        `json:"number_of_days"`
+	IsShortTermRental    bool       `json:"is_short_term_rental"`
+	NumberOfDays         float64    `json:"number_of_days"`
+	FullDays             int        `json:"full_days"`
+	HalfDays             int        `json:"half_days"`
+	DeliveryTimeOfDay    string     `json:"delivery_time_of_day"`
+	ReturnTimeOfDay      string     `json:"return_time_of_day"`
 	Remark               string     `json:"remark"`
 	Status               string     `json:"status"`
 	CreatedAt            time.Time  `json:"created_at"`
@@ -25,9 +31,8 @@ type Sale struct {
 	ActualDateOfDelivery *time.Time `json:"actual_date_of_delivery"`
 	ActualReturnDate     *time.Time `json:"actual_date_of_return"`
 	PaymentStatus        string     `json:"payment_status"`
-	OtherCharges         *float64   `json:"other_charges"`
-	ModifiedBy           int        `json:"modified_by"` // Assuming this is a user ID
-	// Related fields from your previous struct
+	ModifiedBy           int        `json:"modified_by"`
+	// Related fields
 	UserName     string         `json:"username"`
 	SalesCharges []SalesCharge  `json:"sales_charges"`
 	SalesImages  []SalesImage   `json:"sales_images"`
@@ -36,6 +41,12 @@ type Sale struct {
 	Payments     []Payment      `json:"payments"`
 	Vehicle      *Vehicle       `json:"vehicle,omitempty"`
 }
+
+// Constants for rental calculations
+const (
+	MinDaysForFullDayRate = 1
+	HalfDayRateMultiplier = 0.5
+)
 
 type SalePending struct {
 	SaleID               int            `json:"sale_id"`

@@ -69,7 +69,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	// Check vehicle availability
 	available, err := r.checkVehicleAvailability(sale.VehicleID, sale.DateOfDelivery, sale.ReturnDate)
 	if err != nil {
-		return models.SaleSubmitResponse{}, err
+		return models.SaleSubmitResponse{}, fmt.Errorf("failed to check vehicle availability: %v", err)
 	}
 	if !available {
 		return models.SaleSubmitResponse{}, errors.New("vehicle is not available for the selected dates")
@@ -80,6 +80,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	if bookingDate.Format("2006-01-02") == sale.DateOfDelivery.Format("2006-01-02") {
 		actualDeliveryDate = &bookingDate
 	}
+
 	// Calculate payment status
 	paymentStatus := "unpaid"
 	totalVerifiedPaid := 0.0
@@ -124,26 +125,43 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
 	}
 
-	// Insert related records
+	// Insert related records in a transaction
 	if err := r.insertSalesCharges(tx, saleID, sale.SalesCharges); err != nil {
-		return salesResponse, err
+		return salesResponse, fmt.Errorf("failed to insert sales charges: %v", err)
 	}
+
 	if err := r.insertSalesImages(tx, saleID, sale.SalesImages); err != nil {
-		return salesResponse, err
+		return salesResponse, fmt.Errorf("failed to insert sales images: %v", err)
 	}
+
 	if err := r.insertSalesVideos(tx, saleID, sale.SalesVideos); err != nil {
-		return salesResponse, err
+		return salesResponse, fmt.Errorf("failed to insert sales videos: %v", err)
 	}
+
 	if err := r.insertVehicleUsage(tx, saleID, sale.VehicleUsage, sale.UserID); err != nil {
-		return salesResponse, err
+		return salesResponse, fmt.Errorf("failed to insert vehicle usage: %v", err)
 	}
-	if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
-		return salesResponse, err
+
+	// Insert payments if any
+	if len(sale.Payments) > 0 {
+		if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
+			return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
+		}
+	}
+
+	// Update vehicle status to 'rented'
+	if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
+		return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return salesResponse, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	// Get vehicle name for response
 	var vehicleName string
-	err = tx.QueryRow(`
+	err = r.db.QueryRow(`
 		SELECT vehicle_name 
 		FROM vehicles 
 		WHERE vehicle_id = $1
@@ -152,22 +170,12 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		return salesResponse, fmt.Errorf("failed to fetch vehicle name: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
-		return salesResponse, fmt.Errorf("failed to commit transaction: %v", err)
+	// Prepare response
+	salesResponse = models.SaleSubmitResponse{
+		SaleID:      saleID,
+		VehicleName: vehicleName,
 	}
 
-	// Update statuses if delivered today
-	if actualDeliveryDate != nil {
-		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
-			return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
-		}
-		if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
-			return salesResponse, fmt.Errorf("failed to update sale status: %v", err)
-		}
-	}
-
-	salesResponse.SaleID = saleID
-	salesResponse.VehicleName = vehicleName
 	return salesResponse, nil
 }
 
@@ -266,7 +274,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
         SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination, 
                s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
-               s.remark, s.status, s.created_at, s.updated_at, s.other_charges
+               s.remark, s.status, s.created_at, s.updated_at
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
@@ -274,7 +282,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
 		&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
-		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.OtherCharges,
+		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -364,8 +372,8 @@ func (r *SaleRepository) getVehicle(vehicleID int) (*models.Vehicle, error) {
 func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 	rows, err := r.db.Query(`
 		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.total_amount, s.charge_per_day, 
-		       s.booking_date, s.date_of_delivery, s.return_date, s.number_of_days,s.other_charges,
-		       s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status,
+		       s.booking_date, s.date_of_delivery, s.return_date, s.number_of_days,
+		       s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
 		FROM sales s
 		LEFT JOIN users u ON s.user_id = u.id
 	`)
@@ -379,7 +387,7 @@ func (r *SaleRepository) GetAllSales(include []string) ([]models.Sale, error) {
 		var sale models.Sale
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.TotalAmount, &sale.ChargePerDay,
-			&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.NumberOfDays, &sale.OtherCharges, &sale.Remark,
+			&sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate, &sale.NumberOfDays, &sale.Remark,
 			&sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName, &sale.PaymentStatus,
 		)
 		if err != nil {
@@ -570,12 +578,12 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit, offset int, include []string) ([]models.Sale, int, error) {
 	currentDate := time.Now()
 
-	// Base query - removed vehicle fields
+	// Base query
 	query := `
         SELECT 
             s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination,
             s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-            s.actual_date_of_delivery, s.actual_date_of_return,s.other_charges,
+            s.actual_date_of_delivery, s.actual_date_of_return,
             s.number_of_days, s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
@@ -670,7 +678,7 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.OtherCharges,
+			&sale.ActualDateOfDelivery, &sale.ActualReturnDate,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName, &sale.PaymentStatus,
 		)
 		if err != nil {

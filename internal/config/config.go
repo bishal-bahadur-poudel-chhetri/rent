@@ -26,9 +26,9 @@ type Config struct {
 // LoadConfig loads application configuration from environment variables
 func LoadConfig() (*Config, error) {
 	return &Config{
-		DBConnStr:     getEnv("DATABASE_URL", "postgres://myuser:mypassword@localhost:5432/mydatabase?sslmode=disable"),
+		DBConnStr:     getEnv("DATABASE_URL", "postgres://myuser:mypassword@3.7.55.10:5432/mydatabase?sslmode=disable"),
 		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
-		TokenExpiry:   time.Hour * 24, // 24 hours
+		TokenExpiry: time.Hour * 24 * 365, // 24 hours
 		ServerAddress: getEnv("SERVER_ADDRESS", ":8080"),
 
 		// R2 Configuration
@@ -164,11 +164,12 @@ func initDB(db *sql.DB) error {
 		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		other_charges DECIMAL(10, 2) DEFAULT 0.00,
+		payment_status VARCHAR(50) DEFAULT 'unpaid',
 		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-		 
 	);
-`
+	`
 	_, err = db.Exec(salesQuery)
 	if err != nil {
 		return err
