@@ -806,3 +806,50 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 
 	return nil
 }
+
+func (r *SaleRepository) AddCharge(saleID int, chargeType string, amount float64, remark string) error {
+	// Start a transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Insert the charge
+	_, err = tx.Exec(`
+		INSERT INTO sales_charges (sale_id, charge_type, amount)
+		VALUES ($1, $2, $3)
+	`, saleID, chargeType, amount)
+	if err != nil {
+		return fmt.Errorf("failed to insert charge: %v", err)
+	}
+
+	// Update the sale's total amount based on charge type
+	var updateQuery string
+	switch chargeType {
+	case "discount":
+		updateQuery = `UPDATE sales SET discount = discount + $1 WHERE sale_id = $2`
+	case "wash":
+		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $2`
+	case "damage":
+		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $2`
+	default:
+		return fmt.Errorf("invalid charge type: %s", chargeType)
+	}
+
+	_, err = tx.Exec(updateQuery, amount, saleID)
+	if err != nil {
+		return fmt.Errorf("failed to update sale: %v", err)
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return nil
+}

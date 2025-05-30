@@ -166,3 +166,10 @@ type UpdateSaleRequest struct {
 	NumberOfDays         *int     `json:"number_of_days,omitempty"`
 	VehicleID            *int     `json:"vehicle_id"`
 }
+
+type AddChargeRequest struct {
+	SaleID      int     `json:"sale_id"`
+	ChargeType  string  `json:"charge_type"` // "discount", "wash", or "damage"
+	Amount      float64 `json:"amount"`
+	Remark      string  `json:"remark,omitempty"`
+}

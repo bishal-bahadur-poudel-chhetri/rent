@@ -12,10 +12,11 @@ import (
 
 type VehicleHandler struct {
 	vehicleService *services.VehicleService
+	saleService    *services.SaleService
 }
 
-func NewVehicleHandler(vehicleService *services.VehicleService) *VehicleHandler {
-	return &VehicleHandler{vehicleService: vehicleService}
+func NewVehicleHandler(vehicleService *services.VehicleService, saleService *services.SaleService) *VehicleHandler {
+	return &VehicleHandler{vehicleService: vehicleService, saleService: saleService}
 }
 
 // StandardResponse defines the structure of the API response
@@ -102,4 +103,32 @@ func (h *VehicleHandler) ListVehicles(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *VehicleHandler) AddCharge(c *gin.Context) {
+	var req models.AddChargeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  http.StatusBadRequest,
+			"message": "Invalid request body",
+			"data":    err.Error(),
+		})
+		return
+	}
+
+	err := h.saleService.AddCharge(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  http.StatusInternalServerError,
+			"message": "Failed to add charge",
+			"data":    err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Charge added successfully",
+		"data":    nil,
+	})
 }
