@@ -165,7 +165,8 @@ func initDB(db *sql.DB) error {
 		actual_return_time_of_day VARCHAR(50),
 		status VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		modified_by INTEGER REFERENCES users(id)
 	);
 `
 	_, err = db.Exec(salesQuery)
