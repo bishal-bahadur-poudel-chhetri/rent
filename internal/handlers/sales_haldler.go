@@ -111,7 +111,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		returnDate, err = time.Parse("2006-01-02", saleRequest.ReturnDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return date format", "Use YYYY-MM-DD or ISO 8601 format"))
-			return
+		return
 		}
 	}
 

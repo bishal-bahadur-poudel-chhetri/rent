@@ -115,8 +115,8 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 			date_of_delivery, return_date, number_of_days, remark, status, customer_destination, 
 			customer_phone, actual_date_of_delivery, payment_status, delivery_time_of_day, return_time_of_day,
 			actual_delivery_time_of_day, actual_return_time_of_day, is_short_term_rental, full_days, half_days,
-			is_damaged, is_washed, is_delayed
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+			is_damaged, is_washed, is_delayed, discount, other_charges
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
 		RETURNING sale_id
 	`,
 		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.ChargeHalfDay, bookingDate,
@@ -126,6 +126,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		sql.NullString{String: sale.ActualReturnTimeOfDay, Valid: sale.ActualReturnTimeOfDay != ""},
 		sale.IsShortTermRental, sale.FullDays, sale.HalfDays,
 		sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
+		sale.Discount, sale.OtherCharges,
 	).Scan(&saleID)
 	if err != nil {
 		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
@@ -150,7 +151,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Insert payments if any
 	if len(sale.Payments) > 0 {
-		if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
+	if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
 			return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
 		}
 	}
@@ -281,8 +282,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
                s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
                s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
-               COALESCE(s.actual_delivery_time_of_day, ''), COALESCE(s.actual_return_time_of_day, ''),
-               s.full_days, s.half_days, s.is_damaged, s.is_washed, s.is_delayed, s.is_short_term_rental
+               s.actual_delivery_time_of_day, s.actual_return_time_of_day
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
@@ -292,7 +292,6 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
 		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
 		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay,
-		&sale.FullDays, &sale.HalfDays, &sale.IsDamaged, &sale.IsWashed, &sale.IsDelayed, &sale.IsShortTermRental,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -585,101 +584,74 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 	}
 	return payments, nil
 }
-func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit, offset int, include []string) ([]models.Sale, int, error) {
-	currentDate := time.Now()
-
-	// Base query
-	query := `
-        SELECT 
-            s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination,
-            s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
-            s.actual_date_of_delivery, s.actual_date_of_return, s.delivery_time_of_day, s.return_time_of_day,
-            COALESCE(s.actual_delivery_time_of_day, ''), COALESCE(s.actual_return_time_of_day, ''),
-            s.number_of_days, s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
-        FROM sales s
-        LEFT JOIN users u ON s.user_id = u.id
-    `
-	countQuery := `
-        SELECT COUNT(*)
-        FROM sales s
-        LEFT JOIN users u ON s.user_id = u.id
-    `
+func (r *SaleRepository) GetSales(filters models.SaleFilter) ([]models.Sale, error) {
+	baseQuery := `
+		SELECT 
+			s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, 
+			s.customer_phone, s.total_amount, s.discount, s.other_charges, s.payment_status, 
+			s.payment_method, s.booking_date, s.delivery_date, s.return_date, 
+			s.delivery_time_of_day, s.return_time_of_day, s.actual_delivery_time_of_day, 
+			s.actual_return_time_of_day, s.status, s.created_at, s.updated_at
+		FROM sales s
+		WHERE 1=1
+	`
 
 	// Build WHERE clause from filters
 	var whereClauses []string
 	var args []interface{}
 	argIndex := 1
 
-	for key, value := range filters {
-		switch key {
-		case "status":
-			if value == "not_completed_or_cancelled" {
-				whereClauses = append(whereClauses, "s.status NOT IN ('completed', 'cancelled')")
-			} else {
-				whereClauses = append(whereClauses, fmt.Sprintf("s.status = $%d", argIndex))
-				args = append(args, value)
-				argIndex++
-			}
-		case "actual_date_of_delivery":
-			if value == "null" {
-				whereClauses = append(whereClauses, "s.actual_date_of_delivery IS NULL")
-			} else {
-				whereClauses = append(whereClauses, fmt.Sprintf("s.actual_date_of_delivery = $%d", argIndex))
-				args = append(args, value)
-				argIndex++
-			}
-		case "date_of_delivery_before":
-			whereClauses = append(whereClauses, fmt.Sprintf("s.date_of_delivery < $%d", argIndex))
-			if value == "now" {
-				args = append(args, currentDate)
-			} else {
-				args = append(args, value)
-			}
-			argIndex++
-		case "customer_name":
-			whereClauses = append(whereClauses, fmt.Sprintf("s.customer_name ILIKE $%d", argIndex))
-			args = append(args, "%"+value+"%")
-			argIndex++
-		case "vehicle_id":
-			whereClauses = append(whereClauses, fmt.Sprintf("s.vehicle_id = $%d", argIndex))
-			args = append(args, value)
-			argIndex++
-		}
+	if filters.Status != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("s.status = $%d", argIndex))
+		args = append(args, filters.Status)
+		argIndex++
+	}
+
+	if filters.ActualDateOfDelivery != nil {
+		whereClauses = append(whereClauses, fmt.Sprintf("s.actual_date_of_delivery = $%d", argIndex))
+		args = append(args, filters.ActualDateOfDelivery)
+		argIndex++
+	}
+
+	if filters.DateOfDeliveryBefore != nil {
+		whereClauses = append(whereClauses, fmt.Sprintf("s.date_of_delivery < $%d", argIndex))
+		args = append(args, filters.DateOfDeliveryBefore)
+		argIndex++
+	}
+
+	if filters.CustomerName != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("s.customer_name ILIKE $%d", argIndex))
+		args = append(args, "%"+filters.CustomerName+"%")
+		argIndex++
+	}
+
+	if filters.VehicleID != 0 {
+		whereClauses = append(whereClauses, fmt.Sprintf("s.vehicle_id = $%d", argIndex))
+		args = append(args, filters.VehicleID)
+		argIndex++
 	}
 
 	if len(whereClauses) > 0 {
-		query += " WHERE " + strings.Join(whereClauses, " AND ")
-		countQuery += " WHERE " + strings.Join(whereClauses, " AND ")
+		baseQuery += " AND " + strings.Join(whereClauses, " AND ")
 	}
 
 	// Add sorting
-	if sort != "" {
-		query += fmt.Sprintf(" ORDER BY %s", sort)
+	if filters.Sort != "" {
+		baseQuery += fmt.Sprintf(" ORDER BY %s", filters.Sort)
 	} else {
-		query += " ORDER BY s.created_at DESC" // Default sort
+		baseQuery += " ORDER BY s.created_at DESC" // Default sort
 	}
 
 	// Add limit and offset only if limit > 0
-	if limit > 0 {
-		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
-		args = append(args, limit, offset)
-	}
-
-	// Get total count
-	var totalCount int
-	countArgs := args
-	if limit > 0 {
-		countArgs = args[:len(args)-2] // Exclude limit and offset from count query
-	}
-	err := r.db.QueryRow(countQuery, countArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count sales: %v", err)
+	if filters.Limit > 0 {
+		baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+		args = append(args, filters.Limit, filters.Offset)
 	}
 
 	// Execute the main query
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.Query(baseQuery, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to fetch sales: %v", err)
+		return nil, fmt.Errorf("failed to fetch sales: %v", err)
 	}
 	defer rows.Close()
 
@@ -687,55 +659,23 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
 	for rows.Next() {
 		var sale models.Sale
 		err := rows.Scan(
-			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
-			&sale.TotalAmount, &sale.ChargePerDay, &sale.ChargeHalfDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
-			&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay,
-			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName, &sale.PaymentStatus,
+			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.Destination,
+			&sale.CustomerPhone, &sale.TotalAmount, &sale.Discount, &sale.OtherCharges, &sale.PaymentStatus,
+			&sale.PaymentMethod, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
+			&sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay, &sale.ActualDeliveryTimeOfDay,
+			&sale.ActualReturnTimeOfDay, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
 		)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed to scan sale: %v", err)
+			return nil, fmt.Errorf("failed to scan sale: %v", err)
 		}
 		sales = append(sales, sale)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, 0, fmt.Errorf("error iterating sales: %v", err)
+		return nil, fmt.Errorf("error iterating sales: %v", err)
 	}
 
-	// Fetch related data based on include parameter
-	for i := range sales {
-		for _, inc := range include {
-			switch inc {
-			case "sales_videos":
-				videos, err := r.getSalesVideos(sales[i].SaleID)
-				if err != nil {
-					return nil, 0, err
-				}
-				sales[i].SalesVideos = videos
-			case "payments":
-				payments, err := r.getPayments(sales[i].SaleID)
-				if err != nil {
-					return nil, 0, err
-				}
-				sales[i].Payments = payments
-			case "sales_charges":
-				charges, err := r.getSalesCharges(sales[i].SaleID)
-				if err != nil {
-					return nil, 0, err
-				}
-				sales[i].SalesCharges = charges
-			case "vehicle":
-				vehicle, err := r.getVehicle(sales[i].VehicleID)
-				if err != nil {
-					return nil, 0, err
-				}
-				sales[i].Vehicle = vehicle
-			}
-		}
-	}
-
-	return sales, totalCount, nil
+	return sales, nil
 }
 
 // isAdmin checks if the user is an admin

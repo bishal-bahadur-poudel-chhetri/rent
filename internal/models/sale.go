@@ -10,6 +10,8 @@ type Sale struct {
 	Destination          string     `json:"customer_destination"`
 	CustomerPhone        string     `json:"customer_phone"`
 	TotalAmount          float64    `json:"total_amount"`
+	Discount             float64    `json:"discount"`
+	OtherCharges         float64    `json:"other_charges"`
 	ChargePerDay         float64    `json:"charge_per_day"`
 	ChargeHalfDay        float64    `json:"charge_half_day"`
 	BookingDate          time.Time  `json:"booking_date"`
@@ -33,6 +35,7 @@ type Sale struct {
 	ActualDateOfDelivery *time.Time `json:"actual_date_of_delivery"`
 	ActualReturnDate     *time.Time `json:"actual_date_of_return"`
 	PaymentStatus        string     `json:"payment_status"`
+	PaymentMethod        string     `json:"payment_method"`
 	ModifiedBy           int        `json:"modified_by"`
 	// Related fields
 	UserName     string         `json:"username"`

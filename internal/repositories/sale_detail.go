@@ -164,13 +164,13 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 				return nil, fmt.Errorf("failed to unmarshal charges: %v", err)
 			}
 			for _, c := range chargeArray {
-				salesCharge := models.SalesCharge{
+			salesCharge := models.SalesCharge{
 					ChargeID:   c.ChargeID,
 					ChargeType: c.ChargeType,
 					Amount:     c.Amount,
-					SaleID:     sale.SaleID,
-				}
-				sale.SalesCharges = append(sale.SalesCharges, salesCharge)
+				SaleID:     sale.SaleID,
+			}
+			sale.SalesCharges = append(sale.SalesCharges, salesCharge)
 			}
 		}
 

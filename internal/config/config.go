@@ -145,35 +145,29 @@ func initDB(db *sql.DB) error {
 
 	salesQuery := `
 	CREATE TABLE IF NOT EXISTS sales (
-		sale_id SERIAL PRIMARY KEY,  
-		vehicle_id INT,
-		user_id INT NOT NULL, 
-		customer_name VARCHAR(255),
-		customer_destination VARCHAR(255),
-		customer_phone VARCHAR(255),
-		total_amount DECIMAL(10, 2),
-		charge_per_day DECIMAL(10, 2),
-		charge_half_day DECIMAL(10, 2),
-		booking_date DATE,
-		date_of_delivery DATE,
-		return_date DATE,
-		delivery_time_of_day VARCHAR(50),
-		return_time_of_day VARCHAR(50),
-		actual_delivery_time_of_day VARCHAR(50) CHECK (actual_delivery_time_of_day IS NULL OR actual_delivery_time_of_day IN ('morning', 'evening')),
-		actual_return_time_of_day VARCHAR(50) CHECK (actual_return_time_of_day IS NULL OR actual_return_time_of_day IN ('morning', 'evening')),
-		is_damaged BOOLEAN,
-		is_washed BOOLEAN,
-		is_delayed BOOLEAN,
-		number_of_days INT,
-		remark TEXT,
-		status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'active', 'completed', 'cancelled')),
+		sale_id SERIAL PRIMARY KEY,
+		vehicle_id INTEGER REFERENCES vehicles(vehicle_id),
+		user_id INTEGER REFERENCES users(user_id),
+		customer_name VARCHAR(255) NOT NULL,
+		customer_destination VARCHAR(255) NOT NULL,
+		customer_phone VARCHAR(20) NOT NULL,
+		total_amount DECIMAL(10,2) NOT NULL,
+		discount DECIMAL(10,2) DEFAULT 0,
+		other_charges DECIMAL(10,2) DEFAULT 0,
+		payment_status VARCHAR(50) NOT NULL,
+		payment_method VARCHAR(50) NOT NULL,
+		booking_date TIMESTAMP NOT NULL,
+		delivery_date TIMESTAMP NOT NULL,
+		return_date TIMESTAMP NOT NULL,
+		delivery_time_of_day VARCHAR(50) NOT NULL,
+		return_time_of_day VARCHAR(50) NOT NULL,
+		actual_delivery_time_of_day VARCHAR(50),
+		actual_return_time_of_day VARCHAR(50),
+		status VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		payment_status VARCHAR(50) DEFAULT 'unpaid',
-		FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
-	`
+`
 	_, err = db.Exec(salesQuery)
 	if err != nil {
 		return err
