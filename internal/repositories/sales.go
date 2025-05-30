@@ -586,15 +586,15 @@ func (r *SaleRepository) getPayments(saleID int) ([]models.Payment, error) {
 }
 func (r *SaleRepository) GetSales(filters models.SaleFilter) ([]models.Sale, error) {
 	baseQuery := `
-		SELECT 
+        SELECT 
 			s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, 
 			s.customer_phone, s.total_amount, s.discount, s.other_charges, s.payment_status, 
 			s.payment_method, s.booking_date, s.delivery_date, s.return_date, 
 			s.delivery_time_of_day, s.return_time_of_day, s.actual_delivery_time_of_day, 
 			s.actual_return_time_of_day, s.status, s.created_at, s.updated_at
-		FROM sales s
+        FROM sales s
 		WHERE 1=1
-	`
+    `
 
 	// Build WHERE clause from filters
 	var whereClauses []string
@@ -602,33 +602,33 @@ func (r *SaleRepository) GetSales(filters models.SaleFilter) ([]models.Sale, err
 	argIndex := 1
 
 	if filters.Status != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf("s.status = $%d", argIndex))
+				whereClauses = append(whereClauses, fmt.Sprintf("s.status = $%d", argIndex))
 		args = append(args, filters.Status)
-		argIndex++
-	}
+				argIndex++
+			}
 
 	if filters.ActualDateOfDelivery != nil {
-		whereClauses = append(whereClauses, fmt.Sprintf("s.actual_date_of_delivery = $%d", argIndex))
+				whereClauses = append(whereClauses, fmt.Sprintf("s.actual_date_of_delivery = $%d", argIndex))
 		args = append(args, filters.ActualDateOfDelivery)
-		argIndex++
-	}
+				argIndex++
+			}
 
 	if filters.DateOfDeliveryBefore != nil {
-		whereClauses = append(whereClauses, fmt.Sprintf("s.date_of_delivery < $%d", argIndex))
+			whereClauses = append(whereClauses, fmt.Sprintf("s.date_of_delivery < $%d", argIndex))
 		args = append(args, filters.DateOfDeliveryBefore)
-		argIndex++
+			argIndex++
 	}
 
 	if filters.CustomerName != "" {
-		whereClauses = append(whereClauses, fmt.Sprintf("s.customer_name ILIKE $%d", argIndex))
+			whereClauses = append(whereClauses, fmt.Sprintf("s.customer_name ILIKE $%d", argIndex))
 		args = append(args, "%"+filters.CustomerName+"%")
-		argIndex++
+			argIndex++
 	}
 
 	if filters.VehicleID != 0 {
-		whereClauses = append(whereClauses, fmt.Sprintf("s.vehicle_id = $%d", argIndex))
+			whereClauses = append(whereClauses, fmt.Sprintf("s.vehicle_id = $%d", argIndex))
 		args = append(args, filters.VehicleID)
-		argIndex++
+			argIndex++
 	}
 
 	if len(whereClauses) > 0 {

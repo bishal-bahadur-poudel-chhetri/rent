@@ -145,7 +145,7 @@ func initDB(db *sql.DB) error {
 
 	salesQuery := `
 	CREATE TABLE IF NOT EXISTS sales (
-		sale_id SERIAL PRIMARY KEY,
+		sale_id SERIAL PRIMARY KEY,  
 		vehicle_id INTEGER REFERENCES vehicles(vehicle_id),
 		user_id INTEGER REFERENCES users(user_id),
 		customer_name VARCHAR(255) NOT NULL,

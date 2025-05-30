@@ -126,7 +126,7 @@ type SaleWithPayment struct {
 	IsDamaged           bool      `json:"is_damaged"`
 	IsWashed            bool      `json:"is_washed"`
 	IsDelayed           bool      `json:"is_delayed"`
-	NumberOfDays        int       `json:"number_of_days"`
+	NumberOfDays        float64   `json:"number_of_days"`
 	Remark              string    `json:"remark"`
 	Status              string    `json:"status"`
 	CreatedAt           time.Time `json:"created_at"`
