@@ -53,6 +53,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		ReturnDate          string                `json:"return_date"`
 		DeliveryTimeOfDay   string                `json:"delivery_time_of_day"`
 		ReturnTimeOfDay     string                `json:"return_time_of_day"`
+		ActualDeliveryTimeOfDay string                `json:"actual_delivery_time_of_day"`
+		ActualReturnTimeOfDay string                `json:"actual_return_time_of_day"`
 		Remark              string                `json:"remark"`
 		Status              string                `json:"status"`
 		SalesCharges        []models.SalesCharge  `json:"sales_charges"`
@@ -75,6 +77,17 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 
 	if saleRequest.ReturnTimeOfDay != "morning" && saleRequest.ReturnTimeOfDay != "evening" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return time of day", "Must be either 'morning' or 'evening'"))
+		return
+	}
+
+	// Validate actual time of day values if provided
+	if saleRequest.ActualDeliveryTimeOfDay != "" && saleRequest.ActualDeliveryTimeOfDay != "morning" && saleRequest.ActualDeliveryTimeOfDay != "evening" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid actual delivery time of day", "Must be either 'morning' or 'evening'"))
+		return
+	}
+
+	if saleRequest.ActualReturnTimeOfDay != "" && saleRequest.ActualReturnTimeOfDay != "morning" && saleRequest.ActualReturnTimeOfDay != "evening" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid actual return time of day", "Must be either 'morning' or 'evening'"))
 		return
 	}
 
@@ -132,6 +145,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		ReturnDate:          returnDate,
 		DeliveryTimeOfDay:   saleRequest.DeliveryTimeOfDay,
 		ReturnTimeOfDay:     saleRequest.ReturnTimeOfDay,
+		ActualDeliveryTimeOfDay: saleRequest.ActualDeliveryTimeOfDay,
+		ActualReturnTimeOfDay: saleRequest.ActualReturnTimeOfDay,
 		NumberOfDays:        totalDays,
 		FullDays:            fullDays,
 		HalfDays:            halfDays,

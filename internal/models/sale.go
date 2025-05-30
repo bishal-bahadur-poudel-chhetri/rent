@@ -24,6 +24,8 @@ type Sale struct {
 	HalfDays             int        `json:"half_days"`
 	DeliveryTimeOfDay    string     `json:"delivery_time_of_day"`
 	ReturnTimeOfDay      string     `json:"return_time_of_day"`
+	ActualDeliveryTimeOfDay string     `json:"actual_delivery_time_of_day"`
+	ActualReturnTimeOfDay string     `json:"actual_return_time_of_day"`
 	Remark               string     `json:"remark"`
 	Status               string     `json:"status"`
 	CreatedAt            time.Time  `json:"created_at"`

@@ -111,15 +111,21 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	var saleID int
 	err = tx.QueryRow(`
 		INSERT INTO sales (
-			vehicle_id, user_id, customer_name, total_amount, charge_per_day, booking_date, 
+			vehicle_id, user_id, customer_name, total_amount, charge_per_day, charge_half_day, booking_date, 
 			date_of_delivery, return_date, number_of_days, remark, status, customer_destination, 
-			customer_phone, actual_date_of_delivery, payment_status
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+			customer_phone, actual_date_of_delivery, payment_status, delivery_time_of_day, return_time_of_day,
+			actual_delivery_time_of_day, actual_return_time_of_day, is_short_term_rental, full_days, half_days,
+			is_damaged, is_washed, is_delayed
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
 		RETURNING sale_id
 	`,
-		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, bookingDate,
+		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.ChargeHalfDay, bookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination,
-		sale.CustomerPhone, actualDeliveryDate, paymentStatus,
+		sale.CustomerPhone, actualDeliveryDate, paymentStatus, sale.DeliveryTimeOfDay, sale.ReturnTimeOfDay,
+		sql.NullString{String: sale.ActualDeliveryTimeOfDay, Valid: sale.ActualDeliveryTimeOfDay != ""},
+		sql.NullString{String: sale.ActualReturnTimeOfDay, Valid: sale.ActualReturnTimeOfDay != ""},
+		sale.IsShortTermRental, sale.FullDays, sale.HalfDays,
+		sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
 	).Scan(&saleID)
 	if err != nil {
 		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
@@ -272,17 +278,19 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 	sale := &models.Sale{}
 	err := r.db.QueryRow(`
         SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination, 
-               s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
+               s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
-               s.remark, s.status, s.created_at, s.updated_at
+               s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
+               s.actual_delivery_time_of_day, s.actual_return_time_of_day
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
     `, saleID).Scan(
 		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
-		&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
+		&sale.TotalAmount, &sale.ChargePerDay, &sale.ChargeHalfDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
-		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt,
+		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
+		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -582,8 +590,9 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
 	query := `
         SELECT 
             s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination,
-            s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
-            s.actual_date_of_delivery, s.actual_date_of_return,
+            s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
+            s.actual_date_of_delivery, s.actual_date_of_return, s.delivery_time_of_day, s.return_time_of_day,
+            s.actual_delivery_time_of_day, s.actual_return_time_of_day,
             s.number_of_days, s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
@@ -677,8 +686,9 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
 		var sale models.Sale
 		err := rows.Scan(
 			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
-			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-			&sale.ActualDateOfDelivery, &sale.ActualReturnDate,
+			&sale.TotalAmount, &sale.ChargePerDay, &sale.ChargeHalfDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
+			&sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
+			&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.UserName, &sale.PaymentStatus,
 		)
 		if err != nil {
