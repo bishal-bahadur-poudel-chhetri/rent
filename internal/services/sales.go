@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"renting/internal/models"
 	"renting/internal/repositories"
+	"strconv"
 	"time"
 )
 
@@ -31,10 +32,44 @@ func (s *SaleService) GetSaleByID(saleID int, include []string) (*models.Sale, e
 }
 
 func (s *SaleService) GetSales(filters map[string]string, sort string, limit, offset int, include []string) (models.PendingSalesResponse, error) {
-	sales, totalCount, err := s.saleRepo.GetSales(filters, sort, limit, offset, include)
+	// Convert map filters to SaleFilter struct
+	saleFilter := models.SaleFilter{
+		Sort:   sort,
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	// Map the string filters to the appropriate fields
+	if status, ok := filters["status"]; ok {
+		saleFilter.Status = status
+	}
+	if customerName, ok := filters["customer_name"]; ok {
+		saleFilter.CustomerName = customerName
+	}
+	if vehicleID, ok := filters["vehicle_id"]; ok {
+		if id, err := strconv.Atoi(vehicleID); err == nil {
+			saleFilter.VehicleID = id
+		}
+	}
+	if deliveryDate, ok := filters["date_of_delivery"]; ok {
+		if date, err := time.Parse("2006-01-02", deliveryDate); err == nil {
+			saleFilter.DateOfDeliveryBefore = &date
+		}
+	}
+	if actualDeliveryDate, ok := filters["actual_date_of_delivery"]; ok {
+		if date, err := time.Parse("2006-01-02", actualDeliveryDate); err == nil {
+			saleFilter.ActualDateOfDelivery = &date
+		}
+	}
+
+	// Get sales from repository
+	sales, err := s.saleRepo.GetSales(saleFilter)
 	if err != nil {
 		return models.PendingSalesResponse{}, fmt.Errorf("failed to fetch sales: %v", err)
 	}
+
+	// Calculate total count from the length of sales
+	totalCount := len(sales)
 
 	// Handle pagination calculations safely
 	currentPage := 1

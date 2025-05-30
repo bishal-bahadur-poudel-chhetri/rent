@@ -72,7 +72,7 @@ func main() {
 	// Initialize handlers
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
 	authHandler := handlers.NewAuthHandler(authService, systemSettingsService)
-	vehicleHandler := handlers.NewVehicleHandler(vehicleService)
+	vehicleHandler := handlers.NewVehicleHandler(vehicleService, saleService)
 	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService, "https://pub-8da91f66939f4cdc9e4206024a0e68e9.r2.dev")
 	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)

@@ -173,3 +173,14 @@ type AddChargeRequest struct {
 	Amount      float64 `json:"amount"`
 	Remark      string  `json:"remark,omitempty"`
 }
+
+type SaleFilter struct {
+	Status             string
+	ActualDateOfDelivery *time.Time
+	DateOfDeliveryBefore *time.Time
+	CustomerName       string
+	VehicleID          int
+	Sort               string
+	Limit              int
+	Offset             int
+}
