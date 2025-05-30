@@ -160,7 +160,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 				ChargeType string  `json:"charge_type"`
 				Amount     float64 `json:"amount"`
 			}
-			if err := json.Unmarshal(charges, &chargeArray); err != nil {
+			if err := json.Unmarshal([]byte(*charges), &chargeArray); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal charges: %v", err)
 			}
 			for _, c := range chargeArray {
