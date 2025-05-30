@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Sale struct {
 	SaleID               int        `json:"sale_id"`
@@ -26,8 +29,8 @@ type Sale struct {
 	HalfDays             int        `json:"half_days"`
 	DeliveryTimeOfDay    string     `json:"delivery_time_of_day"`
 	ReturnTimeOfDay      string     `json:"return_time_of_day"`
-	ActualDeliveryTimeOfDay string     `json:"actual_delivery_time_of_day"`
-	ActualReturnTimeOfDay string     `json:"actual_return_time_of_day"`
+	ActualDeliveryTimeOfDay sql.NullString `json:"actual_delivery_time_of_day,omitempty"`
+	ActualReturnTimeOfDay sql.NullString `json:"actual_return_time_of_day,omitempty"`
 	Remark               string     `json:"remark"`
 	Status               string     `json:"status"`
 	CreatedAt            time.Time  `json:"created_at"`
@@ -126,7 +129,7 @@ type SaleWithPayment struct {
 	IsDamaged           bool      `json:"is_damaged"`
 	IsWashed            bool      `json:"is_washed"`
 	IsDelayed           bool      `json:"is_delayed"`
-	NumberOfDays        float64   `json:"number_of_days"`
+	NumberOfDays        int       `json:"number_of_days"`
 	Remark              string    `json:"remark"`
 	Status              string    `json:"status"`
 	CreatedAt           time.Time `json:"created_at"`

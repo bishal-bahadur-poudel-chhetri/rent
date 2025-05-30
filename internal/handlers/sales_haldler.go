@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ttacon/libphonenumber"
+	"database/sql"
 )
 
 type SaleHandler struct {
@@ -145,8 +146,8 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		ReturnDate:          returnDate,
 		DeliveryTimeOfDay:   saleRequest.DeliveryTimeOfDay,
 		ReturnTimeOfDay:     saleRequest.ReturnTimeOfDay,
-		ActualDeliveryTimeOfDay: saleRequest.ActualDeliveryTimeOfDay,
-		ActualReturnTimeOfDay: saleRequest.ActualReturnTimeOfDay,
+		ActualDeliveryTimeOfDay: sql.NullString{String: saleRequest.ActualDeliveryTimeOfDay, Valid: saleRequest.ActualDeliveryTimeOfDay != ""},
+		ActualReturnTimeOfDay: sql.NullString{String: saleRequest.ActualReturnTimeOfDay, Valid: saleRequest.ActualReturnTimeOfDay != ""},
 		NumberOfDays:        totalDays,
 		FullDays:            fullDays,
 		HalfDays:            halfDays,
