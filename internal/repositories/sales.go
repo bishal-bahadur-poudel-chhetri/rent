@@ -592,7 +592,7 @@ func (r *SaleRepository) GetSales(filters map[string]string, sort string, limit,
             s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination,
             s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
             s.actual_date_of_delivery, s.actual_date_of_return, s.delivery_time_of_day, s.return_time_of_day,
-            s.actual_delivery_time_of_day, s.actual_return_time_of_day,
+            COALESCE(s.actual_delivery_time_of_day, ''), COALESCE(s.actual_return_time_of_day, ''),
             s.number_of_days, s.remark, s.status, s.created_at, s.updated_at, u.username, s.payment_status
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
