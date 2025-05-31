@@ -113,7 +113,7 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid return date format", "Use YYYY-MM-DD or ISO 8601 format"))
 		return
-		}
+	}
 	}
 
 	// Calculate rental days
