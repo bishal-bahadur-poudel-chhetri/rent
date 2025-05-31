@@ -18,7 +18,7 @@ type PaymentWithSale struct {
 	UpdatedAt       time.Time    `json:"updated_at"`
 	PaymentUserID   *int         `json:"payment_user_id"`
 	PaymentUsername *string      `json:"payment_username"`
-	Sale            SalesPayment `json:"sale"`
+	Sale            *SalesPayment `json:"sale"`
 }
 
 type SalesPayment struct {
@@ -47,7 +47,7 @@ type SalesPayment struct {
 
 type Payment struct {
 	PaymentID       int       `json:"payment_id"`
-	SaleID          int       `json:"sale_id"`
+	SaleID          *int      `json:"sale_id"`  // Changed to pointer to handle NULL values
 	AmountPaid      float64   `json:"amount_paid"`
 	PaymentDate     time.Time `json:"payment_date"`
 	VerifiedByAdmin bool      `json:"verified_by_admin"`

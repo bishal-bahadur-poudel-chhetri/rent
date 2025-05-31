@@ -46,6 +46,7 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
             s.sale_id, 
             s.vehicle_id, 
             s.user_id AS sale_user_id,
+            su.username AS sale_username,
             s.customer_name, 
             s.customer_destination, 
             s.customer_phone,
@@ -56,9 +57,9 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
             s.return_date, 
             s.number_of_days, 
             s.remark, 
-			s.actual_date_of_delivery,
-			s.actual_date_of_return,
-			s.payment_status,
+            s.actual_date_of_delivery,
+            s.actual_date_of_return,
+            s.payment_status,
             s.status, 
             s.created_at AS sale_created_at, 
             s.updated_at AS sale_updated_at,
@@ -142,6 +143,42 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 	var payments []models.PaymentWithSale
 	for rows.Next() {
 		var payment models.PaymentWithSale
+		var saleID sql.NullInt32
+		var vehicleID sql.NullInt32
+		var userID sql.NullInt32
+		var username sql.NullString
+		var customerName sql.NullString
+		var destination sql.NullString
+		var customerPhone sql.NullString
+		var totalAmount sql.NullFloat64
+		var chargePerDay sql.NullFloat64
+		var bookingDate sql.NullTime
+		var dateOfDelivery sql.NullTime
+		var returnDate sql.NullTime
+		var numberOfDays sql.NullFloat64
+		var remark sql.NullString
+		var status sql.NullString
+		var createdAt sql.NullTime
+		var updatedAt sql.NullTime
+		var actualDateOfDelivery sql.NullTime
+		var actualReturnDate sql.NullTime
+		var paymentStatus sql.NullString
+
+		// Add nullable fields for vehicle
+		var vehicleID2 sql.NullInt32
+		var vehicleTypeID sql.NullInt32
+		var vehicleName sql.NullString
+		var vehicleModel sql.NullString
+		var vehicleRegistrationNumber sql.NullString
+		var isAvailable sql.NullBool
+		var salesImage sql.NullString
+		var vehicleStatus sql.NullString
+
+		// Initialize Vehicle struct
+		payment.Sale = &models.SalesPayment{
+			Vehicle: models.VehicleResponse{},
+		}
+
 		err := rows.Scan(
 			&payment.PaymentID,
 			&payment.PaymentType,
@@ -155,37 +192,98 @@ func (r *PaymentRepository) GetPaymentsWithSales(filter SaleFilter, limit int, o
 			&payment.UpdatedAt,
 			&payment.PaymentUserID,
 			&payment.PaymentUsername,
-			&payment.Sale.SaleID,
-			&payment.Sale.VehicleID,
-			&payment.Sale.UserID,
-			&payment.Sale.CustomerName,
-			&payment.Sale.Destination,
-			&payment.Sale.CustomerPhone,
-			&payment.Sale.TotalAmount,
-			&payment.Sale.ChargePerDay,
-			&payment.Sale.BookingDate,
-			&payment.Sale.DateOfDelivery,
-			&payment.Sale.ReturnDate,
-			&payment.Sale.NumberOfDays,
-			&payment.Sale.Remark,
-			&payment.Sale.ActualDateofDelivery,
-			&payment.Sale.ActualReturnDate,
-			&payment.Sale.PaymentStatus,
-			&payment.Sale.Status,
-			&payment.Sale.CreatedAt,
-			&payment.Sale.UpdatedAt,
-			&payment.Sale.Vehicle.VehicleID,
-			&payment.Sale.Vehicle.VehicleTypeID,
-			&payment.Sale.Vehicle.VehicleName,
-			&payment.Sale.Vehicle.VehicleModel,
-			&payment.Sale.Vehicle.VehicleRegistrationNumber,
-			&payment.Sale.Vehicle.IsAvailable,
-			&payment.Sale.Vehicle.SalesImage,
-			&payment.Sale.Vehicle.Status,
+			&saleID,
+			&vehicleID,
+			&userID,
+			&username,
+			&customerName,
+			&destination,
+			&customerPhone,
+			&totalAmount,
+			&chargePerDay,
+			&bookingDate,
+			&dateOfDelivery,
+			&returnDate,
+			&numberOfDays,
+			&remark,
+			&actualDateOfDelivery,
+			&actualReturnDate,
+			&paymentStatus,
+			&status,
+			&createdAt,
+			&updatedAt,
+			&vehicleID2,
+			&vehicleTypeID,
+			&vehicleName,
+			&vehicleModel,
+			&vehicleRegistrationNumber,
+			&isAvailable,
+			&salesImage,
+			&vehicleStatus,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Only populate Sale object if we have valid sale data
+		if saleID.Valid {
+			payment.Sale.SaleID = int(saleID.Int32)
+			payment.Sale.VehicleID = int(vehicleID.Int32)
+			payment.Sale.UserID = int(userID.Int32)
+			payment.Sale.Username = &username.String
+			payment.Sale.CustomerName = customerName.String
+			payment.Sale.Destination = destination.String
+			payment.Sale.CustomerPhone = customerPhone.String
+			payment.Sale.TotalAmount = totalAmount.Float64
+			payment.Sale.ChargePerDay = chargePerDay.Float64
+			payment.Sale.BookingDate = bookingDate.Time
+			payment.Sale.DateOfDelivery = dateOfDelivery.Time
+			payment.Sale.ReturnDate = returnDate.Time
+			if numberOfDays.Valid {
+				payment.Sale.NumberOfDays = int(numberOfDays.Float64)
+			}
+			payment.Sale.Remark = remark.String
+			payment.Sale.Status = status.String
+			payment.Sale.CreatedAt = createdAt.Time
+			payment.Sale.UpdatedAt = updatedAt.Time
+			if actualDateOfDelivery.Valid {
+				payment.Sale.ActualDateofDelivery = &actualDateOfDelivery.Time
+			}
+			if actualReturnDate.Valid {
+				payment.Sale.ActualReturnDate = &actualReturnDate.Time
+			}
+			payment.Sale.PaymentStatus = paymentStatus.String
+
+			// Populate vehicle data if available
+			if vehicleID2.Valid {
+				payment.Sale.Vehicle.VehicleID = int(vehicleID2.Int32)
+				if vehicleTypeID.Valid {
+					payment.Sale.Vehicle.VehicleTypeID = int(vehicleTypeID.Int32)
+				}
+				if vehicleName.Valid {
+					payment.Sale.Vehicle.VehicleName = vehicleName.String
+				}
+				if vehicleModel.Valid {
+					payment.Sale.Vehicle.VehicleModel = vehicleModel.String
+				}
+				if vehicleRegistrationNumber.Valid {
+					payment.Sale.Vehicle.VehicleRegistrationNumber = vehicleRegistrationNumber.String
+				}
+				if isAvailable.Valid {
+					payment.Sale.Vehicle.IsAvailable = isAvailable.Bool
+				}
+				if salesImage.Valid {
+					payment.Sale.Vehicle.SalesImage = salesImage.String
+				}
+				if vehicleStatus.Valid {
+					payment.Sale.Vehicle.Status = vehicleStatus.String
+				}
+			}
+		} else {
+			// If no sale data, set Sale to nil
+			payment.Sale = nil
+		}
+
 		payments = append(payments, payment)
 	}
 

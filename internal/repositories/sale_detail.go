@@ -117,8 +117,9 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 		var recordedBy *int
 
 		// Scan the row into variables
+		var saleID sql.NullInt32  // Use sql.NullInt32 for nullable integer
 		err := rows.Scan(
-			&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.UserName, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
+			&saleID, &sale.VehicleID, &sale.UserID, &sale.UserName, &sale.CustomerName, &sale.Destination, &sale.CustomerPhone,
 			&sale.TotalAmount, &sale.ChargePerDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 			&sale.NumberOfDays, &sale.Remark, &sale.Status, &payment.SaleType, &sale.PaymentStatus,
 			&sale.CreatedAt, &sale.UpdatedAt,
@@ -133,6 +134,11 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 			return nil, fmt.Errorf("failed to scan sale: %v", err)
 		}
 
+		// Set the SaleID from the NullInt32
+		if saleID.Valid {
+			sale.SaleID = int(saleID.Int32)
+		}
+
 		// Debug: Print scanned values
 		fmt.Printf("Scanned Sale: %+v\n", sale)
 		fmt.Printf("Scanned Payment: %+v\n", payment)
@@ -141,6 +147,11 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 
 		// If payment data exists, populate the Payment struct
 		if paymentID != nil {
+			var saleIDPtr *int
+			if saleID.Valid {
+				saleIDValue := int(saleID.Int32)
+				saleIDPtr = &saleIDValue
+			}
 			payment = models.Payment{
 				PaymentID:       *paymentID,
 				PaymentType:     *paymentType,
@@ -152,7 +163,7 @@ func (r *SaleDetailRepository) GetSalesWithFilters(filters map[string]string) ([
 				UserID:          paymentUserID,
 				CreatedAt:       *paymentCreatedAt,
 				UpdatedAt:       *paymentUpdatedAt,
-				SaleID:          sale.SaleID,
+				SaleID:          saleIDPtr,
 			}
 		}
 
