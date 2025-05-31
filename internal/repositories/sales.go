@@ -122,8 +122,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.ChargeHalfDay, bookingDate,
 		sale.DateOfDelivery, sale.ReturnDate, sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination,
 		sale.CustomerPhone, actualDeliveryDate, paymentStatus, sale.DeliveryTimeOfDay, sale.ReturnTimeOfDay,
-		sale.ActualDeliveryTimeOfDay,
-		sale.ActualReturnTimeOfDay,
+		sale.ActualDeliveryTimeOfDay.String, sale.ActualReturnTimeOfDay.String,
 		sale.IsShortTermRental, sale.FullDays, sale.HalfDays,
 		sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
 		sale.Discount, sale.OtherCharges,
@@ -282,7 +281,8 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
                s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
                s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
-               s.actual_delivery_time_of_day, s.actual_return_time_of_day
+               s.actual_delivery_time_of_day, s.actual_return_time_of_day, s.other_charges, s.is_damaged, s.is_washed,
+               s.is_delayed, s.is_short_term_rental, s.full_days, s.half_days, s.discount, s.modified_by
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
@@ -291,7 +291,8 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 		&sale.TotalAmount, &sale.ChargePerDay, &sale.ChargeHalfDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
 		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
 		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
-		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay,
+		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay, &sale.OtherCharges, &sale.IsDamaged, &sale.IsWashed,
+		&sale.IsDelayed, &sale.IsShortTermRental, &sale.FullDays, &sale.HalfDays, &sale.Discount, &sale.ModifiedBy,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

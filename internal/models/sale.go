@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -186,4 +187,30 @@ type SaleFilter struct {
 	Sort               string
 	Limit              int
 	Offset             int
+}
+
+// MarshalJSON customizes JSON output for nullable fields
+func (s Sale) MarshalJSON() ([]byte, error) {
+	type Alias Sale
+
+	// Handle nullable fields
+	var actualDeliveryTimeOfDay *string
+	if s.ActualDeliveryTimeOfDay.Valid {
+		actualDeliveryTimeOfDay = &s.ActualDeliveryTimeOfDay.String
+	}
+
+	var actualReturnTimeOfDay *string
+	if s.ActualReturnTimeOfDay.Valid {
+		actualReturnTimeOfDay = &s.ActualReturnTimeOfDay.String
+	}
+
+	return json.Marshal(&struct {
+		ActualDeliveryTimeOfDay *string `json:"actual_delivery_time_of_day"`
+		ActualReturnTimeOfDay   *string `json:"actual_return_time_of_day"`
+		*Alias
+	}{
+		ActualDeliveryTimeOfDay: actualDeliveryTimeOfDay,
+		ActualReturnTimeOfDay:   actualReturnTimeOfDay,
+		Alias:                   (*Alias)(&s),
+	})
 }
