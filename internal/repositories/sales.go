@@ -46,27 +46,8 @@ func (r *SaleRepository) UpdateSaleStatus(saleID int, status string) error {
 }
 
 func (r *SaleRepository) checkVehicleAvailability(vehicleID int, startDate, endDate time.Time) (bool, error) {
-	// First check if vehicle exists and is available
-	var status string
-	err := r.db.QueryRow(`
-		SELECT status 
-		FROM vehicles 
-		WHERE vehicle_id = $1
-	`, vehicleID).Scan(&status)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, fmt.Errorf("vehicle with ID %d does not exist", vehicleID)
-		}
-		return false, fmt.Errorf("failed to check vehicle status: %v", err)
-	}
-
-	if status != "available" {
-		return false, fmt.Errorf("vehicle is not available (current status: %s)", status)
-	}
-
-	// Then check for overlapping bookings
 	var count int
-	err = r.db.QueryRow(`
+	err := r.db.QueryRow(`
 		SELECT COUNT(*) 
 		FROM sales 
 		WHERE vehicle_id = $1 
@@ -75,7 +56,7 @@ func (r *SaleRepository) checkVehicleAvailability(vehicleID int, startDate, endD
 			(date_of_delivery BETWEEN $2 AND $3) OR
 			(return_date BETWEEN $2 AND $3)
 		) AND status IN ('active', 'pending')
-	`, vehicleID, startDate, endDate).Scan(&count)
+	`, vehicleID, endDate, startDate).Scan(&count)
 	if err != nil {
 		return false, fmt.Errorf("failed to check vehicle availability: %v", err)
 	}
@@ -84,20 +65,6 @@ func (r *SaleRepository) checkVehicleAvailability(vehicleID int, startDate, endD
 
 func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse, error) {
 	bookingDate := time.Now()
-
-	// Check if vehicle exists
-	var vehicleExists bool
-	err := r.db.QueryRow(`
-		SELECT EXISTS (
-			SELECT 1 FROM vehicles WHERE vehicle_id = $1
-		)
-	`, sale.VehicleID).Scan(&vehicleExists)
-	if err != nil {
-		return models.SaleSubmitResponse{}, fmt.Errorf("failed to check vehicle existence: %v", err)
-	}
-	if !vehicleExists {
-		return models.SaleSubmitResponse{}, fmt.Errorf("vehicle with ID %d does not exist", sale.VehicleID)
-	}
 
 	// Check vehicle availability
 	available, err := r.checkVehicleAvailability(sale.VehicleID, sale.DateOfDelivery, sale.ReturnDate)
@@ -183,7 +150,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Insert payments if any
 	if len(sale.Payments) > 0 {
-		if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
+	if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
 			return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
 		}
 	}

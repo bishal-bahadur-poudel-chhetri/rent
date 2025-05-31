@@ -144,48 +144,31 @@ func initDB(db *sql.DB) error {
 	}
 
 	salesQuery := `
-	DROP TABLE IF EXISTS sales CASCADE;
-	CREATE TABLE sales (
+	CREATE TABLE IF NOT EXISTS sales (
 		sale_id SERIAL PRIMARY KEY,  
 		vehicle_id INTEGER REFERENCES vehicles(vehicle_id),
-		user_id INTEGER REFERENCES users(id),
+		user_id INTEGER REFERENCES users(user_id),
 		customer_name VARCHAR(255) NOT NULL,
 		customer_destination VARCHAR(255) NOT NULL,
 		customer_phone VARCHAR(20) NOT NULL,
 		total_amount DECIMAL(10,2) NOT NULL,
-		charge_per_day DECIMAL(10,2) NOT NULL,
-		charge_half_day DECIMAL(10,2) NOT NULL,
-		is_short_term_rental BOOLEAN DEFAULT FALSE,
+		discount DECIMAL(10,2) DEFAULT 0,
+		other_charges DECIMAL(10,2) DEFAULT 0,
+		payment_status VARCHAR(50) NOT NULL,
+		payment_method VARCHAR(50) NOT NULL,
 		booking_date TIMESTAMP NOT NULL,
-		date_of_delivery TIMESTAMP NOT NULL,
+		delivery_date TIMESTAMP NOT NULL,
 		return_date TIMESTAMP NOT NULL,
-		delivery_time_of_day VARCHAR(50) NOT NULL CHECK (delivery_time_of_day IN ('morning', 'evening')),
-		return_time_of_day VARCHAR(50) NOT NULL CHECK (return_time_of_day IN ('morning', 'evening')),
-		actual_date_of_delivery TIMESTAMP,
-		actual_date_of_return TIMESTAMP,
+		delivery_time_of_day VARCHAR(50) NOT NULL,
+		return_time_of_day VARCHAR(50) NOT NULL,
 		actual_delivery_time_of_day VARCHAR(50),
 		actual_return_time_of_day VARCHAR(50),
 		number_of_days DECIMAL(10, 2),
-		full_days INTEGER DEFAULT 0,
-		half_days INTEGER DEFAULT 0,
-		is_damaged BOOLEAN DEFAULT FALSE,
-		is_washed BOOLEAN DEFAULT FALSE,
-		is_delayed BOOLEAN DEFAULT FALSE,
-		remark TEXT,
 		status VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		payment_status VARCHAR(50) NOT NULL,
-		other_charges DECIMAL(10,2) DEFAULT 0,
-		modified_by INTEGER REFERENCES users(id),
-		discount DECIMAL(10,2) DEFAULT 0
+		modified_by INTEGER REFERENCES users(id)
 	);
-
-	ALTER TABLE sales ADD CONSTRAINT sales_actual_delivery_time_of_day_check 
-		CHECK (actual_delivery_time_of_day IS NULL OR actual_delivery_time_of_day IN ('morning', 'evening'));
-	
-	ALTER TABLE sales ADD CONSTRAINT sales_actual_return_time_of_day_check 
-		CHECK (actual_return_time_of_day IS NULL OR actual_return_time_of_day IN ('morning', 'evening'));
 `
 	_, err = db.Exec(salesQuery)
 	if err != nil {
