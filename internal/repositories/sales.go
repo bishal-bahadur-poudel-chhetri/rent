@@ -148,38 +148,29 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		return salesResponse, fmt.Errorf("failed to insert vehicle usage: %v", err)
 	}
 
-	// Insert payments if any
-	if len(sale.Payments) > 0 {
-	if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
-			return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
-		}
+	// Insert payments
+	if err := r.insertPayments(tx, saleID, sale.Payments); err != nil {
+		return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
 	}
 
-	// Update vehicle status to 'rented'
-	if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
+	// Update vehicle status
+	if err := r.updateVehicleStatus(tx, sale.VehicleID, "rented"); err != nil {
 		return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
 	}
 
 	// Commit the transaction
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		return salesResponse, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
-	// Get vehicle name for response
-	var vehicleName string
-	err = r.db.QueryRow(`
-		SELECT vehicle_name 
-		FROM vehicles 
-		WHERE vehicle_id = $1
-	`, sale.VehicleID).Scan(&vehicleName)
+	// Get the created sale
+	createdSale, err := r.GetSaleByID(saleID, []string{"charges", "images", "videos", "usage", "payments", "vehicle"})
 	if err != nil {
-		return salesResponse, fmt.Errorf("failed to fetch vehicle name: %v", err)
+		return salesResponse, fmt.Errorf("failed to fetch created sale: %v", err)
 	}
 
-	// Prepare response
 	salesResponse = models.SaleSubmitResponse{
-		SaleID:      saleID,
-		VehicleName: vehicleName,
+		Sale: *createdSale,
 	}
 
 	return salesResponse, nil
@@ -240,12 +231,8 @@ func (r *SaleRepository) insertVehicleUsage(tx *sql.Tx, saleID int, usageRecords
 	return nil
 }
 
-func (r *SaleRepository) insertPayments(tx *sql.Tx, saleID int, payments []models.Payment, userID int, usageRecords []models.VehicleUsage) error {
+func (r *SaleRepository) insertPayments(tx *sql.Tx, saleID int, payments []models.Payment) error {
 	for _, payment := range payments {
-		if payment.SaleType == "" {
-			payment.SaleType = determineSaleType(usageRecords)
-		}
-
 		if err := payment.Validate(); err != nil {
 			return fmt.Errorf("invalid payment: %v", err)
 		}
@@ -264,87 +251,6 @@ func (r *SaleRepository) insertPayments(tx *sql.Tx, saleID int, payments []model
 	return nil
 }
 
-func determineSaleType(usageRecords []models.VehicleUsage) string {
-	for _, usage := range usageRecords {
-		if usage.RecordType == "delivery" {
-			return models.TypeDelivery
-		} else if usage.RecordType == "return" {
-			return models.TypeReturn
-		}
-	}
-	return models.TypeBooking
-}
-func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale, error) {
-	sale := &models.Sale{}
-	err := r.db.QueryRow(`
-        SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_phone, s.customer_destination, 
-               s.total_amount, s.charge_per_day, s.charge_half_day, s.booking_date, s.date_of_delivery, s.return_date, 
-               s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
-               s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
-               s.actual_delivery_time_of_day, s.actual_return_time_of_day, s.other_charges, s.is_damaged, s.is_washed,
-               s.is_delayed, s.is_short_term_rental, s.full_days, s.half_days, s.discount, s.modified_by
-        FROM sales s
-        LEFT JOIN users u ON s.user_id = u.id
-        WHERE s.sale_id = $1
-    `, saleID).Scan(
-		&sale.SaleID, &sale.VehicleID, &sale.UserID, &sale.CustomerName, &sale.CustomerPhone, &sale.Destination,
-		&sale.TotalAmount, &sale.ChargePerDay, &sale.ChargeHalfDay, &sale.BookingDate, &sale.DateOfDelivery, &sale.ReturnDate,
-		&sale.NumberOfDays, &sale.ActualDateOfDelivery, &sale.ActualReturnDate, &sale.UserName, &sale.PaymentStatus,
-		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
-		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay, &sale.OtherCharges, &sale.IsDamaged, &sale.IsWashed,
-		&sale.IsDelayed, &sale.IsShortTermRental, &sale.FullDays, &sale.HalfDays, &sale.Discount, &sale.ModifiedBy,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Return nil if sale not found
-		}
-		return nil, fmt.Errorf("failed to fetch sale: %v", err)
-	}
-
-	// Load related data based on include parameter
-	for _, inc := range include {
-		switch inc {
-		case "SalesCharge":
-			charges, err := r.getSalesCharges(saleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.SalesCharges = charges
-		case "SalesImages":
-			images, err := r.getSalesImages(saleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.SalesImages = images
-		case "SalesVideos":
-			videos, err := r.getSalesVideos(saleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.SalesVideos = videos
-		case "VehicleUsage":
-			usage, err := r.getVehicleUsage(sale.VehicleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.VehicleUsage = usage
-		case "Payments":
-			payments, err := r.getPayments(saleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.Payments = payments
-		case "vehicle":
-			vehicle, err := r.getVehicle(sale.VehicleID)
-			if err != nil {
-				return nil, err
-			}
-			sale.Vehicle = vehicle
-		}
-	}
-
-	return sale, nil
-}
 func (r *SaleRepository) getVehicle(vehicleID int) (*models.Vehicle, error) {
 	query := `
         SELECT 
