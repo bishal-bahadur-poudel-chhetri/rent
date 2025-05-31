@@ -169,6 +169,8 @@ type UpdateSaleRequest struct {
 	ActualDateOfReturn   *string  `json:"actual_date_of_return,omitempty"`
 	NumberOfDays         *float64 `json:"number_of_days,omitempty"`
 	VehicleID            *int     `json:"vehicle_id"`
+	ActualDeliveryTimeOfDay *string `json:"actual_delivery_time_of_day,omitempty"`
+	ActualReturnTimeOfDay   *string `json:"actual_return_time_of_day,omitempty"`
 }
 
 type AddChargeRequest struct {

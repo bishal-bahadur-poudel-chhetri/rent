@@ -719,39 +719,55 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 }
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
-	// Check if the user is an admin
+	// First check if the user is an admin
 	isAdmin, err := r.isAdmin(userID)
 	if err != nil {
 		return err
 	}
 
-	// If user is not an admin, they cannot update
-	if !isAdmin {
-		return fmt.Errorf("cannot update sale with ID %d: user %d is not an admin", saleID, userID)
+	// Check if the sale exists
+	var saleUserID int
+	err = r.db.QueryRow(`
+		SELECT user_id 
+		FROM sales 
+		WHERE sale_id = $1
+	`, saleID).Scan(&saleUserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("sale with ID %d not found", saleID)
+		}
+		return fmt.Errorf("failed to check sale: %v", err)
+	}
+
+	// If user is not an admin, they can only update their own sales
+	if !isAdmin && saleUserID != userID {
+		return fmt.Errorf("cannot update sale with ID %d: user %d is not an admin and does not own this sale", saleID, userID)
+	}
+
+	// Define allowed fields for update
+	allowedFields := map[string]bool{
+		"status":                    true,
+		"payment_status":            true,
+		"remark":                    true,
+		"customer_name":             true,
+		"customer_phone":            true,
+		"customer_destination":      true,
+		"total_amount":              true,
+		"charge_per_day":            true,
+		"date_of_delivery":          true,
+		"return_date":               true,
+		"actual_date_of_delivery":   true,
+		"actual_date_of_return":     true,
+		"number_of_days":            true,
+		"vehicle_id":                true,
+		"actual_delivery_time_of_day": true,
+		"actual_return_time_of_day":   true,
 	}
 
 	// Build the dynamic UPDATE query
 	var setClauses []string
 	args := []interface{}{saleID}
 	argIndex := 2 // Start from 2 since saleID is $1
-
-	// Define all fields that can be updated
-	allowedFields := map[string]struct{}{
-		"status":                  {},
-		"payment_status":          {},
-		"remark":                  {},
-		"customer_name":           {},
-		"customer_phone":          {},
-		"customer_destination":    {},
-		"total_amount":            {},
-		"charge_per_day":          {},
-		"date_of_delivery":        {},
-		"return_date":             {},
-		"actual_date_of_delivery": {},
-		"actual_date_of_return":   {},
-		"number_of_days":          {},
-		"vehicle_id":              {},
-	}
 
 	// Process updates
 	for field, value := range updates {
@@ -760,7 +776,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		}
 
 		switch field {
-		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination":
+		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination", "actual_delivery_time_of_day", "actual_return_time_of_day":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value)
 			argIndex++

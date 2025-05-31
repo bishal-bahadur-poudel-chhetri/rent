@@ -129,7 +129,7 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	if req.ChargePerDay != nil {
 		updates["charge_per_day"] = *req.ChargePerDay
 	}
-	if req.VehicleID != nil { // Added this block
+	if req.VehicleID != nil {
 		updates["vehicle_id"] = *req.VehicleID
 		fmt.Println("Adding vehicle_id to updates:", *req.VehicleID) // Debug
 	}
@@ -163,6 +163,12 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	}
 	if req.NumberOfDays != nil {
 		updates["number_of_days"] = *req.NumberOfDays
+	}
+	if req.ActualDeliveryTimeOfDay != nil {
+		updates["actual_delivery_time_of_day"] = *req.ActualDeliveryTimeOfDay
+	}
+	if req.ActualReturnTimeOfDay != nil {
+		updates["actual_return_time_of_day"] = *req.ActualReturnTimeOfDay
 	}
 
 	// Check if any fields were provided

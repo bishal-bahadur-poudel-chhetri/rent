@@ -121,6 +121,11 @@ func buildSalesQuery(start, end string, filters map[string]string) (string, []in
 	}
 
 	query += " ORDER BY s.date_of_delivery ASC"
+
+	// Debug: Print the query and arguments
+	fmt.Println("Generated Query:", query)
+	fmt.Println("Query Arguments:", args)
+
 	return query, args
 }
 

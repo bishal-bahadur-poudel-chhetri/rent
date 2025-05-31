@@ -260,7 +260,7 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 		return
 	}
 
-	saleIDStr := c.Param("saleID")
+	saleIDStr := c.Param("id")
 	saleID, err := strconv.Atoi(saleIDStr)
 	if err != nil || saleID <= 0 {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", err))

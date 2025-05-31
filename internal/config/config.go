@@ -494,7 +494,13 @@ CREATE TABLE IF NOT EXISTS vehicle_servicing_history (
 		u.username AS modified_by_username,
 		-- Payments
 		COALESCE(SUM(p.amount_paid), 0) AS total_paid,
-		(s.total_amount + s.other_charges - s.discount - COALESCE(SUM(p.amount_paid), 0)) AS outstanding_balance,
+		(
+		  s.total_amount
+		  + COALESCE(SUM(CASE WHEN sc.charge_type = 'damage' THEN sc.amount ELSE 0 END), 0)
+		  + COALESCE(SUM(CASE WHEN sc.charge_type = 'wash' THEN sc.amount ELSE 0 END), 0)
+		  - s.discount
+		  - COALESCE(SUM(p.amount_paid), 0)
+		) AS outstanding_balance,
 		-- Charges
 		COALESCE(SUM(CASE WHEN sc.charge_type = 'damage' THEN sc.amount ELSE 0 END), 0) AS damage_charges,
 		COALESCE(SUM(CASE WHEN sc.charge_type = 'wash' THEN sc.amount ELSE 0 END), 0) AS wash_charges,

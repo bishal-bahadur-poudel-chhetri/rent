@@ -148,11 +148,12 @@ func (r *VehicleRepository) getMostRecentSaleID(vehicleID int) (int, error) {
 	err := r.db.QueryRow(`
 		SELECT sale_id
 		FROM sales
-		WHERE vehicle_id = $1 and status='active'
+		WHERE vehicle_id = $1 and status IN ('active', 'pending')
+		ORDER BY booking_date DESC
+		LIMIT 1
 	`, vehicleID).Scan(&saleID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-
 			return 0, nil
 		}
 		return 0, err
