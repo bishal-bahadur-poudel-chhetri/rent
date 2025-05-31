@@ -40,7 +40,7 @@ type Sale struct {
 	ActualReturnDate     *time.Time `json:"actual_date_of_return"`
 	PaymentStatus        string     `json:"payment_status"`
 	PaymentMethod        string     `json:"payment_method"`
-	ModifiedBy           int        `json:"modified_by"`
+	ModifiedBy           sql.NullInt64 `json:"modified_by"`
 	// Related fields
 	UserName     string         `json:"username"`
 	SalesCharges []SalesCharge  `json:"sales_charges"`
