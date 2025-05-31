@@ -23,13 +23,23 @@ func NewSaleChargeHandler(saleService *services.SaleChargeService, jwtSecret str
 }
 
 func (h *SaleChargeHandler) AddSalesCharge(c *gin.Context) {
+	// Get saleID from the URL parameter
+	saleID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
+		return
+	}
+
 	var req models.SalesCharge
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
 		return
 	}
 
-	if err := h.saleService.AddSalesCharge(req.SaleID, req); err != nil {
+	// Set the sale_id from the URL parameter
+	req.SaleID = saleID
+
+	if err := h.saleService.AddSalesCharge(saleID, req); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to add sales charge", err.Error()))
 		return
 	}

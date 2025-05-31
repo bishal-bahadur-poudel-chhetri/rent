@@ -217,3 +217,51 @@ func (r *SaleChargeRepository) DeleteSalesCharge(chargeID int, saleID int) error
 
 	return nil
 }
+
+func (r *SaleChargeRepository) AddSalesCharge(charge models.SalesCharge) error {
+	// Start a transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Insert the charge
+	_, err = tx.Exec(`
+		INSERT INTO sales_charges (sale_id, charge_type, amount)
+		VALUES ($1, $2, $3)
+	`, charge.SaleID, charge.ChargeType, charge.Amount)
+	if err != nil {
+		return fmt.Errorf("failed to add sales charge: %v", err)
+	}
+
+	// Update the sales table based on the charge type
+	switch charge.ChargeType {
+	case "discount":
+		_, err = tx.Exec(`
+			UPDATE sales 
+			SET discount = COALESCE(discount, 0) + $1
+			WHERE sale_id = $2
+		`, charge.Amount, charge.SaleID)
+	case "wash", "damage":
+		_, err = tx.Exec(`
+			UPDATE sales 
+			SET other_charges = COALESCE(other_charges, 0) + $1
+			WHERE sale_id = $2
+		`, charge.Amount, charge.SaleID)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to update sales table: %v", err)
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return nil
+}
