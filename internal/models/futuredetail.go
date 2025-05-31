@@ -21,7 +21,7 @@ type Sale_Future struct {
 	BookingDate    time.Time `json:"booking_date"`
 	DateOfDelivery time.Time `json:"date_of_delivery"`
 	ReturnDate     time.Time `json:"return_date"`
-	NumberOfDays   int       `json:"number_of_days"`
+	NumberOfDays   float64   `json:"number_of_days"`
 	Remark         string    `json:"remark"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
