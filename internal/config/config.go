@@ -364,6 +364,174 @@ CREATE TABLE IF NOT EXISTS vehicle_servicing_history (
 	ON CONFLICT (setting_key) DO NOTHING;
 	`
 	_, err = db.Exec(systemSettingsQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create sales statement view
+	salesStatementView := `
+	CREATE OR REPLACE VIEW sales_statement AS
+	SELECT 
+		s.sale_id,
+		s.customer_name,
+		s.customer_phone,
+		s.customer_destination,
+		v.vehicle_name,
+		v.vehicle_model,
+		v.vehicle_registration_number,
+		v.status as vehicle_status,
+		s.booking_date,
+		s.date_of_delivery,
+		s.return_date,
+		s.delivery_time_of_day,
+		s.return_time_of_day,
+		s.actual_date_of_delivery,
+		s.actual_date_of_return,
+		s.actual_delivery_time_of_day,
+		s.actual_return_time_of_day,
+		s.number_of_days,
+		s.full_days,
+		s.half_days,
+		s.charge_per_day,
+		s.charge_half_day,
+		s.is_short_term_rental,
+		s.is_damaged,
+		s.is_washed,
+		s.is_delayed,
+		s.remark,
+		s.total_amount,
+		s.discount,
+		s.other_charges,
+		s.payment_status,
+		s.status as sale_status,
+		COALESCE(SUM(p.amount_paid), 0) as total_paid,
+		(s.total_amount - COALESCE(SUM(p.amount_paid), 0)) as remaining_amount,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'damage' THEN sc.amount ELSE 0 END), 0) as damage_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'wash' THEN sc.amount ELSE 0 END), 0) as wash_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'delay' THEN sc.amount ELSE 0 END), 0) as delay_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'discount' THEN sc.amount ELSE 0 END), 0) as additional_discounts,
+		u.username as modified_by_username,
+		vu_delivery.km_reading as delivery_km_reading,
+		vu_delivery.fuel_range as delivery_fuel_range,
+		vu_return.km_reading as return_km_reading,
+		vu_return.fuel_range as return_fuel_range,
+		(SELECT COUNT(*) FROM sales_images WHERE sale_id = s.sale_id) as total_images,
+		(SELECT COUNT(*) FROM sales_videos WHERE sale_id = s.sale_id) as total_videos,
+		s.created_at,
+		s.updated_at
+	FROM sales s
+	LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+	LEFT JOIN payments p ON s.sale_id = p.sale_id
+	LEFT JOIN sales_charges sc ON s.sale_id = sc.sale_id
+	LEFT JOIN users u ON s.modified_by = u.id
+	LEFT JOIN vehicle_usage vu_delivery ON s.sale_id = vu_delivery.sale_id AND vu_delivery.record_type = 'delivery'
+	LEFT JOIN vehicle_usage vu_return ON s.sale_id = vu_return.sale_id AND vu_return.record_type = 'return'
+	GROUP BY 
+		s.sale_id, s.customer_name, s.customer_phone, s.customer_destination,
+		v.vehicle_name, v.vehicle_model, v.vehicle_registration_number, v.status,
+		s.booking_date, s.date_of_delivery, s.return_date,
+		s.delivery_time_of_day, s.return_time_of_day,
+		s.actual_date_of_delivery, s.actual_date_of_return,
+		s.actual_delivery_time_of_day, s.actual_return_time_of_day,
+		s.number_of_days, s.full_days, s.half_days,
+		s.charge_per_day, s.charge_half_day, s.is_short_term_rental,
+		s.is_damaged, s.is_washed, s.is_delayed, s.remark,
+		s.total_amount, s.discount, s.other_charges,
+		s.payment_status, s.status, u.username,
+		vu_delivery.km_reading, vu_delivery.fuel_range,
+		vu_return.km_reading, vu_return.fuel_range,
+		s.created_at, s.updated_at;
+	`
+	_, err = db.Exec(salesStatementView)
+	if err != nil {
+		return err
+	}
+
+	// Create sales statement view for detailed reporting
+	salesStatementDetailedView := `
+	CREATE OR REPLACE VIEW sales_statement_view AS
+	SELECT 
+		s.sale_id,
+		s.vehicle_id,
+		s.user_id,
+		s.customer_name,
+		s.customer_destination,
+		s.customer_phone,
+		s.total_amount,
+		s.charge_per_day,
+		s.charge_half_day,
+		s.is_short_term_rental,
+		s.booking_date,
+		s.date_of_delivery,
+		s.return_date,
+		s.delivery_time_of_day,
+		s.return_time_of_day,
+		s.actual_date_of_delivery,
+		s.actual_date_of_return,
+		s.actual_delivery_time_of_day,
+		s.actual_return_time_of_day,
+		s.number_of_days,
+		s.full_days,
+		s.half_days,
+		s.is_damaged,
+		s.is_washed,
+		s.is_delayed,
+		s.remark,
+		s.status,
+		s.created_at,
+		s.updated_at,
+		s.payment_status,
+		s.other_charges,
+		s.modified_by,
+		s.discount,
+		-- Vehicle Info
+		v.vehicle_name,
+		v.vehicle_model,
+		v.vehicle_registration_number,
+		v.status AS vehicle_status,
+		v.image_name,
+		-- User Info
+		u.username AS modified_by_username,
+		-- Payments
+		COALESCE(SUM(p.amount_paid), 0) AS total_paid,
+		(s.total_amount + s.other_charges - s.discount - COALESCE(SUM(p.amount_paid), 0)) AS outstanding_balance,
+		-- Charges
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'damage' THEN sc.amount ELSE 0 END), 0) AS damage_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'wash' THEN sc.amount ELSE 0 END), 0) AS wash_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'delay' THEN sc.amount ELSE 0 END), 0) AS delay_charges,
+		COALESCE(SUM(CASE WHEN sc.charge_type = 'discount' THEN sc.amount ELSE 0 END), 0) AS additional_discounts,
+		-- Vehicle Usage
+		vu_delivery.km_reading AS delivery_km_reading,
+		vu_delivery.fuel_range AS delivery_fuel_range,
+		vu_return.km_reading AS return_km_reading,
+		vu_return.fuel_range AS return_fuel_range,
+		-- Media
+		(SELECT COUNT(*) FROM sales_images WHERE sale_id = s.sale_id) AS total_images,
+		(SELECT COUNT(*) FROM sales_videos WHERE sale_id = s.sale_id) AS total_videos
+	FROM sales s
+	LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+	LEFT JOIN users u ON s.modified_by = u.id
+	LEFT JOIN payments p ON s.sale_id = p.sale_id
+	LEFT JOIN sales_charges sc ON s.sale_id = sc.sale_id
+	LEFT JOIN vehicle_usage vu_delivery ON s.sale_id = vu_delivery.sale_id AND vu_delivery.record_type = 'delivery'
+	LEFT JOIN vehicle_usage vu_return ON s.sale_id = vu_return.sale_id AND vu_return.record_type = 'return'
+	GROUP BY
+		s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone,
+		s.total_amount, s.charge_per_day, s.charge_half_day, s.is_short_term_rental, s.booking_date,
+		s.date_of_delivery, s.return_date, s.delivery_time_of_day, s.return_time_of_day,
+		s.actual_date_of_delivery, s.actual_date_of_return, s.actual_delivery_time_of_day, s.actual_return_time_of_day,
+		s.number_of_days, s.full_days, s.half_days, s.is_damaged, s.is_washed, s.is_delayed, s.remark,
+		s.status, s.created_at, s.updated_at, s.payment_status, s.other_charges, s.modified_by, s.discount,
+		v.vehicle_name, v.vehicle_model, v.vehicle_registration_number, v.status, v.image_name,
+		u.username,
+		vu_delivery.km_reading, vu_delivery.fuel_range,
+		vu_return.km_reading, vu_return.fuel_range;
+	`
+	_, err = db.Exec(salesStatementDetailedView)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 

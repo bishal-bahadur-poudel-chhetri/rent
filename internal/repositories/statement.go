@@ -61,6 +61,10 @@ func (r *statementRepository) GetOutstandingStatements(ctx context.Context, filt
         argIndex++
     }
     if endDate, ok := filters["end_date"]; ok && endDate != "" {
+        // If endDate is just a date, append end of day time
+        if len(endDate) == 10 {
+            endDate = endDate + " 23:59:59.999999"
+        }
         conditions = append(conditions, "booking_date <= $"+strconv.Itoa(argIndex))
         args = append(args, endDate)
         argIndex++
