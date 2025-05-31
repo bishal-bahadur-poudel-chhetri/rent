@@ -132,7 +132,7 @@ func main() {
 			protected.DELETE("/account", authHandler.DeleteAccount)
 
 			// Vehicle routes
-			protected.GET("/vehicle", vehicleHandler.ListVehicles)
+			protected.GET("/vehicles", vehicleHandler.ListVehicles)
 
 			// Return routes
 			protected.POST("/sales/:id/return", returnHandler.CreateReturn)

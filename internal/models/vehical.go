@@ -16,8 +16,8 @@ type VehicleResponse struct {
 
 // FutureBookingDetail represents future booking details
 type FutureBookingDetail struct {
-	DeliveryDate string `json:"date_of_delivery"`
-	NumberOfDays int    `json:"number_of_days"` // Number of days until the booking date
+	DeliveryDate string  `json:"date_of_delivery"`
+	NumberOfDays float64 `json:"number_of_days"` // Number of days until the booking date
 }
 
 // VehicleRequest is the request model for a vehicle
