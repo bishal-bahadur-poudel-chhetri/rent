@@ -754,7 +754,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"customer_destination":      true,
 		"total_amount":              true,
 		"charge_per_day":            true,
-		"charge_per_half_day":       true,
+		"charge_half_day":           true,
 		"date_of_delivery":          true,
 		"return_date":               true,
 		"actual_date_of_delivery":   true,
@@ -785,7 +785,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value)
 			argIndex++
-		case "total_amount", "charge_per_day", "charge_per_half_day", "number_of_days":
+		case "total_amount", "charge_per_day", "charge_half_day", "number_of_days":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(float64))
 			argIndex++

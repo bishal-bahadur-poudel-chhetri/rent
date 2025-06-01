@@ -163,6 +163,7 @@ type UpdateSaleRequest struct {
 	CustomerDestination  *string  `json:"customer_destination,omitempty"`
 	TotalAmount          *float64 `json:"total_amount,omitempty"`
 	ChargePerDay         *float64 `json:"charge_per_day,omitempty"`
+	ChargeHalfDay        *float64 `json:"charge_half_day,omitempty"`
 	DateOfDelivery       *string  `json:"date_of_delivery,omitempty"`
 	ReturnDate           *string  `json:"return_date,omitempty"`
 	ActualDateOfDelivery *string  `json:"actual_date_of_delivery,omitempty"`

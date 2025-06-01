@@ -129,6 +129,9 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	if req.ChargePerDay != nil {
 		updates["charge_per_day"] = *req.ChargePerDay
 	}
+	if req.ChargeHalfDay != nil {
+		updates["charge_half_day"] = *req.ChargeHalfDay
+	}
 	if req.VehicleID != nil {
 		updates["vehicle_id"] = *req.VehicleID
 		fmt.Println("Adding vehicle_id to updates:", *req.VehicleID) // Debug
