@@ -754,6 +754,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"customer_destination":      true,
 		"total_amount":              true,
 		"charge_per_day":            true,
+		"charge_per_half_day":       true,
 		"date_of_delivery":          true,
 		"return_date":               true,
 		"actual_date_of_delivery":   true,
@@ -762,6 +763,9 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"vehicle_id":                true,
 		"actual_delivery_time_of_day": true,
 		"actual_return_time_of_day":   true,
+		"delivery_time_of_day":        true,
+		"return_time_of_day":          true,
+		"booking_date":                true,
 	}
 
 	// Build the dynamic UPDATE query
@@ -776,19 +780,20 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		}
 
 		switch field {
-		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination", "actual_delivery_time_of_day", "actual_return_time_of_day":
+		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination", 
+			"actual_delivery_time_of_day", "actual_return_time_of_day", "delivery_time_of_day", "return_time_of_day":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value)
 			argIndex++
-		case "total_amount", "charge_per_day":
+		case "total_amount", "charge_per_day", "charge_per_half_day", "number_of_days":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(float64))
 			argIndex++
-		case "date_of_delivery", "return_date", "actual_date_of_delivery", "actual_date_of_return":
+		case "date_of_delivery", "return_date", "actual_date_of_delivery", "actual_date_of_return", "booking_date":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(time.Time))
 			argIndex++
-		case "number_of_days", "vehicle_id":
+		case "vehicle_id":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(int))
 			argIndex++
