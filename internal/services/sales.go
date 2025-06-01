@@ -111,6 +111,9 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	if req.PaymentStatus != nil {
 		updates["payment_status"] = *req.PaymentStatus
 	}
+	if req.PaymentMethod != nil {
+		updates["payment_method"] = *req.PaymentMethod
+	}
 	if req.Remark != nil {
 		updates["remark"] = *req.Remark
 	}
@@ -126,6 +129,12 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	if req.TotalAmount != nil {
 		updates["total_amount"] = *req.TotalAmount
 	}
+	if req.Discount != nil {
+		updates["discount"] = *req.Discount
+	}
+	if req.OtherCharges != nil {
+		updates["other_charges"] = *req.OtherCharges
+	}
 	if req.ChargePerDay != nil {
 		updates["charge_per_day"] = *req.ChargePerDay
 	}
@@ -134,7 +143,33 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 	}
 	if req.VehicleID != nil {
 		updates["vehicle_id"] = *req.VehicleID
-		fmt.Println("Adding vehicle_id to updates:", *req.VehicleID) // Debug
+	}
+	if req.IsDamaged != nil {
+		updates["is_damaged"] = *req.IsDamaged
+	}
+	if req.IsWashed != nil {
+		updates["is_washed"] = *req.IsWashed
+	}
+	if req.IsDelayed != nil {
+		updates["is_delayed"] = *req.IsDelayed
+	}
+	if req.IsShortTermRental != nil {
+		updates["is_short_term_rental"] = *req.IsShortTermRental
+	}
+	if req.NumberOfDays != nil {
+		updates["number_of_days"] = *req.NumberOfDays
+	}
+	if req.FullDays != nil {
+		updates["full_days"] = *req.FullDays
+	}
+	if req.HalfDays != nil {
+		updates["half_days"] = *req.HalfDays
+	}
+	if req.DeliveryTimeOfDay != nil {
+		updates["delivery_time_of_day"] = *req.DeliveryTimeOfDay
+	}
+	if req.ReturnTimeOfDay != nil {
+		updates["return_time_of_day"] = *req.ReturnTimeOfDay
 	}
 	if req.DateOfDelivery != nil {
 		date, err := time.Parse("2006-01-02", *req.DateOfDelivery)
@@ -164,14 +199,14 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 		}
 		updates["actual_date_of_return"] = date
 	}
-	if req.NumberOfDays != nil {
-		updates["number_of_days"] = *req.NumberOfDays
-	}
 	if req.ActualDeliveryTimeOfDay != nil {
 		updates["actual_delivery_time_of_day"] = *req.ActualDeliveryTimeOfDay
 	}
 	if req.ActualReturnTimeOfDay != nil {
 		updates["actual_return_time_of_day"] = *req.ActualReturnTimeOfDay
+	}
+	if req.ModifiedBy != nil {
+		updates["modified_by"] = *req.ModifiedBy
 	}
 
 	// Check if any fields were provided

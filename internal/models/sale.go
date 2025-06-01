@@ -157,11 +157,14 @@ type UpdateSaleRequest struct {
 	UserID               *int     `json:"user_id,omitempty"`
 	Status               *string  `json:"status,omitempty"`
 	PaymentStatus        *string  `json:"payment_status,omitempty"`
+	PaymentMethod        *string  `json:"payment_method,omitempty"`
 	Remark               *string  `json:"remark,omitempty"`
 	CustomerName         *string  `json:"customer_name,omitempty"`
 	CustomerPhone        *string  `json:"customer_phone,omitempty"`
 	CustomerDestination  *string  `json:"customer_destination,omitempty"`
 	TotalAmount          *float64 `json:"total_amount,omitempty"`
+	Discount             *float64 `json:"discount,omitempty"`
+	OtherCharges         *float64 `json:"other_charges,omitempty"`
 	ChargePerDay         *float64 `json:"charge_per_day,omitempty"`
 	ChargeHalfDay        *float64 `json:"charge_half_day,omitempty"`
 	DateOfDelivery       *string  `json:"date_of_delivery,omitempty"`
@@ -169,9 +172,18 @@ type UpdateSaleRequest struct {
 	ActualDateOfDelivery *string  `json:"actual_date_of_delivery,omitempty"`
 	ActualDateOfReturn   *string  `json:"actual_date_of_return,omitempty"`
 	NumberOfDays         *float64 `json:"number_of_days,omitempty"`
-	VehicleID            *int     `json:"vehicle_id"`
+	FullDays             *int     `json:"full_days,omitempty"`
+	HalfDays             *int     `json:"half_days,omitempty"`
+	VehicleID            *int     `json:"vehicle_id,omitempty"`
+	IsDamaged            *bool    `json:"is_damaged,omitempty"`
+	IsWashed             *bool    `json:"is_washed,omitempty"`
+	IsDelayed            *bool    `json:"is_delayed,omitempty"`
+	IsShortTermRental    *bool    `json:"is_short_term_rental,omitempty"`
+	DeliveryTimeOfDay    *string  `json:"delivery_time_of_day,omitempty"`
+	ReturnTimeOfDay      *string  `json:"return_time_of_day,omitempty"`
 	ActualDeliveryTimeOfDay *string `json:"actual_delivery_time_of_day,omitempty"`
 	ActualReturnTimeOfDay   *string `json:"actual_return_time_of_day,omitempty"`
+	ModifiedBy           *int     `json:"modified_by,omitempty"`
 }
 
 type AddChargeRequest struct {
