@@ -77,7 +77,8 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Set actual delivery date if same day
 	var actualDeliveryDate *time.Time
-	if bookingDate.Format("2006-01-02") == sale.DateOfDelivery.Format("2006-01-02") {
+	isFutureBooking := bookingDate.Format("2006-01-02") != sale.DateOfDelivery.Format("2006-01-02")
+	if !isFutureBooking {
 		actualDeliveryDate = &bookingDate
 	}
 
@@ -115,8 +116,8 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 			date_of_delivery, return_date, number_of_days, remark, status, customer_destination, 
 			customer_phone, actual_date_of_delivery, payment_status, delivery_time_of_day, return_time_of_day,
 			actual_delivery_time_of_day, actual_return_time_of_day, is_short_term_rental, full_days, half_days,
-			is_damaged, is_washed, is_delayed, discount, other_charges
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+			is_damaged, is_washed, is_delayed, discount, other_charges, is_future_booking
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
 		RETURNING sale_id
 	`,
 		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, sale.ChargeHalfDay, bookingDate,
@@ -125,7 +126,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		sale.ActualDeliveryTimeOfDay.String, sale.ActualReturnTimeOfDay.String,
 		sale.IsShortTermRental, sale.FullDays, sale.HalfDays,
 		sale.IsDamaged, sale.IsWashed, sale.IsDelayed,
-		sale.Discount, sale.OtherCharges,
+		sale.Discount, sale.OtherCharges, isFutureBooking,
 	).Scan(&saleID)
 	if err != nil {
 		return salesResponse, fmt.Errorf("failed to insert sale: %v", err)
@@ -155,8 +156,8 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		}
 	}
 
-	// Only update vehicle status to 'rented' if delivery is today
-	if actualDeliveryDate != nil {
+	// Only update vehicle status to 'rented' if it's not a future booking
+	if !isFutureBooking {
 		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
 			return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
 		}
@@ -284,7 +285,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
                s.number_of_days, s.actual_date_of_delivery, s.actual_date_of_return, u.username, s.payment_status, 
                s.remark, s.status, s.created_at, s.updated_at, s.delivery_time_of_day, s.return_time_of_day,
                s.actual_delivery_time_of_day, s.actual_return_time_of_day, s.other_charges, s.is_damaged, s.is_washed,
-               s.is_delayed, s.is_short_term_rental, s.full_days, s.half_days, s.discount, s.modified_by
+               s.is_delayed, s.is_short_term_rental, s.full_days, s.half_days, s.discount, s.modified_by, s.is_future_booking
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.sale_id = $1
@@ -295,6 +296,7 @@ func (r *SaleRepository) GetSaleByID(saleID int, include []string) (*models.Sale
 		&sale.Remark, &sale.Status, &sale.CreatedAt, &sale.UpdatedAt, &sale.DeliveryTimeOfDay, &sale.ReturnTimeOfDay,
 		&sale.ActualDeliveryTimeOfDay, &sale.ActualReturnTimeOfDay, &sale.OtherCharges, &sale.IsDamaged, &sale.IsWashed,
 		&sale.IsDelayed, &sale.IsShortTermRental, &sale.FullDays, &sale.HalfDays, &sale.Discount, &sale.ModifiedBy,
+		&sale.IsFutureBooking,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -768,6 +770,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"delivery_time_of_day":        true,
 		"return_time_of_day":          true,
 		"booking_date":                true,
+		"is_future_booking":           true,
 	}
 
 	// Build the dynamic UPDATE query
@@ -798,6 +801,10 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		case "vehicle_id":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(int))
+			argIndex++
+		case "is_future_booking":
+			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
+			args = append(args, value.(bool))
 			argIndex++
 		}
 	}

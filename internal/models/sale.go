@@ -49,6 +49,7 @@ type Sale struct {
 	VehicleUsage []VehicleUsage `json:"vehicle_usage"`
 	Payments     []Payment      `json:"payments"`
 	Vehicle      *Vehicle       `json:"vehicle,omitempty"`
+	IsFutureBooking bool         `json:"is_future_booking"`
 }
 
 // Constants for rental calculations
