@@ -150,14 +150,16 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Insert payments if any
 	if len(sale.Payments) > 0 {
-	if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
+		if err := r.insertPayments(tx, saleID, sale.Payments, sale.UserID, sale.VehicleUsage); err != nil {
 			return salesResponse, fmt.Errorf("failed to insert payments: %v", err)
 		}
 	}
 
-	// Update vehicle status to 'rented'
-	if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
-		return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
+	// Only update vehicle status to 'rented' if delivery is today
+	if actualDeliveryDate != nil {
+		if err := r.UpdateVehicleStatus(sale.VehicleID, "rented"); err != nil {
+			return salesResponse, fmt.Errorf("failed to update vehicle status: %v", err)
+		}
 	}
 
 	// Commit the transaction
