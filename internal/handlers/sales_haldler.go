@@ -319,8 +319,8 @@ func (h *SaleHandler) MarkSaleAsComplete(c *gin.Context) {
 	}
 
 	updateReq := models.UpdateSaleRequest{
-		Status:      utils.StringPtr("completed"),
-		IsComplete:  utils.BoolPtr(true),
+		Status:      func(s string) *string { return &s }("completed"),
+		IsComplete:  func(b bool) *bool { return &b }(true),
 	}
 
 	err = h.saleService.UpdateSaleByUserID(saleID, userID, updateReq)
