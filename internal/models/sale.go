@@ -50,6 +50,7 @@ type Sale struct {
 	Payments     []Payment      `json:"payments"`
 	Vehicle      *Vehicle       `json:"vehicle,omitempty"`
 	IsFutureBooking bool         `json:"is_future_booking"`
+	IsComplete      bool         `json:"is_complete"`
 }
 
 // Constants for rental calculations
@@ -185,6 +186,7 @@ type UpdateSaleRequest struct {
 	ActualDeliveryTimeOfDay *string `json:"actual_delivery_time_of_day,omitempty"`
 	ActualReturnTimeOfDay   *string `json:"actual_return_time_of_day,omitempty"`
 	ModifiedBy           *int     `json:"modified_by,omitempty"`
+	IsComplete           *bool    `json:"is_complete,omitempty"`
 }
 
 type AddChargeRequest struct {

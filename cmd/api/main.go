@@ -142,6 +142,7 @@ func main() {
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)
 			protected.GET("/sales", saleHandler.GetSales)
 			protected.PUT("/sales/:id", saleHandler.UpdateSaleByUserID)
+			protected.PUT("/sales/:id/complete", saleHandler.MarkSaleAsComplete)
 
 			// Sale charges routes
 			protected.POST("/sales/:id/charges", saleChargeHandler.AddSalesCharge)

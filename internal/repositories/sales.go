@@ -771,6 +771,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"return_time_of_day":          true,
 		"booking_date":                true,
 		"is_future_booking":           true,
+		"is_complete":                 true,
 	}
 
 	// Build the dynamic UPDATE query
@@ -802,7 +803,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(int))
 			argIndex++
-		case "is_future_booking":
+		case "is_future_booking", "is_complete":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(bool))
 			argIndex++

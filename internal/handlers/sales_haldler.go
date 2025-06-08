@@ -305,3 +305,30 @@ func validateUpdateSaleRequest(req models.UpdateSaleRequest) error {
 	return nil
 }
 
+func (h *SaleHandler) MarkSaleAsComplete(c *gin.Context) {
+	saleID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
+		return
+	}
+
+	userID, err := utils.ExtractUserIDFromToken(c, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err.Error()))
+		return
+	}
+
+	updateReq := models.UpdateSaleRequest{
+		Status:      utils.StringPtr("completed"),
+		IsComplete:  utils.BoolPtr(true),
+	}
+
+	err = h.saleService.UpdateSaleByUserID(saleID, userID, updateReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to mark sale as complete", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale marked as complete", nil))
+}
+
