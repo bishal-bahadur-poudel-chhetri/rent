@@ -77,7 +77,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 
 	// Set actual delivery date if same day
 	var actualDeliveryDate *time.Time
-	isFutureBooking := bookingDate.Format("2006-01-02") != sale.DateOfDelivery.Format("2006-01-02")
+	isFutureBooking := sale.DateOfDelivery.After(bookingDate)
 	if !isFutureBooking {
 		actualDeliveryDate = &bookingDate
 	}
