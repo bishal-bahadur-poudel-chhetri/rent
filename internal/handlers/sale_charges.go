@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"renting/internal/models"
 	"renting/internal/services"
@@ -36,7 +37,11 @@ func (h *SaleChargeHandler) UpdateSalesCharge(c *gin.Context) {
 		return
 	}
 
+	// Debug logging
+	fmt.Printf("Updating charge ID: %d, Type: %s, Amount: %f\n", chargeID, req.ChargeType, req.Amount)
+
 	if err := h.saleService.UpdateSalesCharge(chargeID, req); err != nil {
+		fmt.Printf("Error updating sales charge: %v\n", err)
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to update sales charge", err.Error()))
 		return
 	}
