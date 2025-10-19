@@ -68,7 +68,7 @@ func (s *SaleService) GetSales(filters map[string]string, sort string, limit, of
 
 func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSaleRequest) error {
 	fmt.Println("=== SALE SERVICE UPDATE DEBUG ===")
-	fmt.Println("saleID:", saleID, "userID:", userID, "req:", req)
+	fmt.Println("SERVICE CALLED - saleID:", saleID, "userID:", userID, "req:", req)
 	
 	updates := make(map[string]interface{})
 

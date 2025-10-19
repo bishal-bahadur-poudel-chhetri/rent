@@ -270,6 +270,12 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 
 	// Debug: Check if VehicleID is bound correctly
 	fmt.Printf("req.VehicleID: %v\n", req.VehicleID)
+	
+	// Add debug output right after the existing debug
+	fmt.Println("=== HANDLER UPDATE DEBUG ===")
+	fmt.Println("Extracted userID:", userID)
+	fmt.Println("Extracted saleID:", saleID)
+	fmt.Println("Request Status:", req.Status)
 
 	if err := validateUpdateSaleRequest(req); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
@@ -278,6 +284,7 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 
 	// Pass the req directly to the service
 	fmt.Println("Calling service UpdateSaleByUserID")
+	fmt.Println("About to call service with saleID:", saleID, "userID:", userID, "req:", req)
 	if err := h.saleService.UpdateSaleByUserID(saleID, userID, req); err != nil {
 		fmt.Println("Service returned error:", err)
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
@@ -286,6 +293,7 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 
 	fmt.Println("Service completed successfully")
 	fmt.Println("=== END HANDLER UPDATE DEBUG ===")
+	fmt.Println("Returning success response")
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale updated successfully", nil))
 }
 

@@ -799,7 +799,7 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
 	fmt.Println("=== UPDATE SALE BY USER ID DEBUG ===")
-	fmt.Println("saleID:", saleID, "userID:", userID, "updates:", updates)
+	fmt.Println("REPOSITORY CALLED - saleID:", saleID, "userID:", userID, "updates:", updates)
 	
 	// Check if the user is an admin
 	isAdmin, err := r.isAdmin(userID)
