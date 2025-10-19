@@ -723,8 +723,11 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 }
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
+        fmt.Println("=== UPDATE SALE BY USER ID DEBUG ===")
+        fmt.Println("REPOSITORY CALLED - saleID:", saleID, "userID:", userID, "updates:", updates)
 	// First check if the user is an admin
 	isAdmin, err := r.isAdmin(userID)
+        fmt.Println("User", userID, "is admin:", isAdmin)
 	if err != nil {
 		return err
 	}
@@ -835,6 +838,38 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 	if rowsAffected == 0 {
 		return fmt.Errorf("no sale updated for sale_id %d: sale may not exist or values unchanged", saleID)
 	}
+        // Handle vehicle status updates
+        fmt.Println("=== VEHICLE STATUS UPDATE DEBUG ===")
+        fmt.Println("Processing updates:", updates)
+        for field, value := range updates {
+                fmt.Println("Processing field:", field, "value:", value)
+                if field == "status" {
+                        fmt.Println("Status field detected, value:", value)
+                        var vehicleID int
+                        err = r.db.QueryRow(`
+                                SELECT vehicle_id
+                                FROM sales
+                                WHERE sale_id = $1
+                        `, saleID).Scan(&vehicleID)
+                        if err != nil {
+                                return fmt.Errorf("failed to fetch vehicle_id: %v", err)
+                        }
+                        fmt.Println("Found vehicle_id:", vehicleID, "for sale_id:", saleID)
+                        switch value.(string) {
+                        case "active":
+                                fmt.Println("Setting vehicle", vehicleID, "status to 'rented'")
+                                if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
+                                        return err
+                                }
+                        case "completed", "cancelled":
+                                fmt.Println("Setting vehicle", vehicleID, "status to 'available'")
+                                if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
+                                        return err
+                                }
+                        }
+                }
+        }
+        fmt.Println("=== END VEHICLE STATUS UPDATE DEBUG ===")
 
 	return nil
 }
@@ -864,11 +899,11 @@ func (r *SaleRepository) AddCharge(saleID int, chargeType string, amount float64
 	var updateQuery string
 	switch chargeType {
 	case "discount":
-		updateQuery = `UPDATE sales SET discount = discount + $1 WHERE sale_id = $2`
+		updateQuery = `UPDATE sales SET discount = discount + $1 WHERE sale_id = $1$2`
 	case "wash":
-		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $2`
+		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $1$2`
 	case "damage":
-		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $2`
+		updateQuery = `UPDATE sales SET other_charges = other_charges + $1 WHERE sale_id = $1$2`
 	default:
 		return fmt.Errorf("invalid charge type: %s", chargeType)
 	}

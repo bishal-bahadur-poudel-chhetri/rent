@@ -24,7 +24,6 @@ func NewSaleChargeHandler(saleService *services.SaleChargeService, jwtSecret str
 
 func (h *SaleChargeHandler) AddSalesCharge(c *gin.Context) {
 	// Get saleID from the URL parameter
-	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
 		return
@@ -48,7 +47,6 @@ func (h *SaleChargeHandler) AddSalesCharge(c *gin.Context) {
 }
 
 func (h *SaleChargeHandler) GetSalesChargesBySaleID(c *gin.Context) {
-	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
 		return
@@ -77,7 +75,6 @@ func (h *SaleChargeHandler) UpdateSalesCharge(c *gin.Context) {
 	}
 
 	// Get saleID from the URL parameter
-	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
 		return
@@ -99,13 +96,17 @@ func (h *SaleChargeHandler) DeleteSalesCharge(c *gin.Context) {
 		return
 	}
 
-	saleID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
 		return
+        saleID, err := strconv.Atoi(c.Param("id"))
+        if err != nil {
+                c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", "Sale ID must be a number"))
+                return
+        }
 	}
 
-	if err := h.saleService.DeleteSalesCharge(chargeID, saleID); err != nil {
+	if err := h.saleService.DeleteSalesCharge(chargeID); err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to delete sales charge", err.Error()))
 		return
 	}

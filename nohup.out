@@ -1,0 +1,1970 @@
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/v1/register          --> renting/internal/handlers.(*AuthHandler).Register-fm (5 handlers)
+[GIN-debug] POST   /api/v1/login             --> renting/internal/handlers.(*AuthHandler).Login-fm (5 handlers)
+[GIN-debug] GET    /api/v1/system-settings   --> renting/internal/handlers.(*SystemSettingsHandler).GetSystemSettings-fm (5 handlers)
+[GIN-debug] GET    /api/v1/debug/permissions --> renting/internal/handlers.(*AuthHandler).CheckUserPermissions-fm (6 handlers)
+[GIN-debug] DELETE /api/v1/account           --> renting/internal/handlers.(*AuthHandler).DeleteAccount-fm (6 handlers)
+[GIN-debug] GET    /api/v1/vehicles          --> renting/internal/handlers.(*VehicleHandler).ListVehicles-fm (6 handlers)
+[GIN-debug] POST   /api/v1/sales/:id/return  --> renting/internal/handlers.(*ReturnHandler).CreateReturn-fm (6 handlers)
+[GIN-debug] POST   /api/v1/sales             --> renting/internal/handlers.(*SaleHandler).CreateSale-fm (6 handlers)
+[GIN-debug] GET    /api/v1/sales/:id         --> renting/internal/handlers.(*SaleHandler).GetSaleByID-fm (6 handlers)
+[GIN-debug] GET    /api/v1/sales             --> renting/internal/handlers.(*SaleHandler).GetSales-fm (6 handlers)
+[GIN-debug] PUT    /api/v1/sales/:id         --> renting/internal/handlers.(*SaleHandler).UpdateSaleByUserID-fm (6 handlers)
+[GIN-debug] PUT    /api/v1/sales/:id/complete --> renting/internal/handlers.(*SaleHandler).MarkSaleAsComplete-fm (6 handlers)
+[GIN-debug] POST   /api/v1/sales/upload/video --> renting/internal/handlers.(*VideoHandler).UploadVideo-fm (6 handlers)
+[GIN-debug] GET    /api/v1/payment           --> renting/internal/handlers.(*PaymentHandler).GetPaymentsWithSales-fm (6 handlers)
+[GIN-debug] PUT    /api/v1/payment/:payment_id/sales/:sale_id/verify --> renting/internal/handlers.(*PaymentVerification).VerifyPayment-fm (6 handlers)
+[GIN-debug] GET    /api/v1/payment/:payment_id --> renting/internal/handlers.(*PaymentVerification).GetPaymentDetails-fm (6 handlers)
+[GIN-debug] POST   /api/v1/payment/:payment_id/cancel --> renting/internal/handlers.(*PaymentVerification).CancelPayment-fm (6 handlers)
+[GIN-debug] PUT    /api/v1/payment/:payment_id --> renting/internal/handlers.(*PaymentHandler).UpdatePayment-fm (6 handlers)
+[GIN-debug] POST   /api/v1/sales/:id/payment --> renting/internal/handlers.(*PaymentHandler).InsertPayment-fm (6 handlers)
+[GIN-debug] GET    /api/v1/futur-bookings    --> renting/internal/handlers.(*FuturBookingHandler).GetFuturBookingsByMonth-fm (6 handlers)
+[GIN-debug] POST   /api/v1/futur-bookings/:saleID/cancel --> renting/internal/handlers.(*FuturBookingHandler).CancelFuturBooking-fm (6 handlers)
+[GIN-debug] GET    /api/v1/sales/filter      --> renting/internal/handlers.(*SaleDetailHandler).GetSalesWithFilters-fm (6 handlers)
+[GIN-debug] GET    /api/v1/aggregate         --> renting/internal/handlers.(*DataAggregateHandler).GetAggregatedData-fm (6 handlers)
+[GIN-debug] GET    /api/v1/disabled-dates    --> renting/internal/handlers.(*DisableDateHandler).GetDisabledDates-fm (6 handlers)
+[GIN-debug] GET    /api/v1/statements        --> renting/internal/handlers.(*StatementHandler).GetOutstandingStatements-fm (6 handlers)
+[GIN-debug] GET    /api/v1/expenses/:id      --> renting/internal/handlers.(*ExpenseHandler).GetExpenseByID-fm (6 handlers)
+[GIN-debug] GET    /api/v1/expenses          --> renting/internal/handlers.(*ExpenseHandler).GetAllExpenses-fm (6 handlers)
+[GIN-debug] POST   /api/v1/expenses          --> renting/internal/handlers.(*ExpenseHandler).CreateExpense-fm (7 handlers)
+[GIN-debug] PUT    /api/v1/expenses/:id      --> renting/internal/handlers.(*ExpenseHandler).UpdateExpense-fm (7 handlers)
+[GIN-debug] DELETE /api/v1/expenses/:id      --> renting/internal/handlers.(*ExpenseHandler).DeleteExpense-fm (7 handlers)
+[GIN-debug] GET    /api/v1/revenue           --> renting/internal/handlers.(*RevenueHandler).GetRevenue-fm (6 handlers)
+[GIN-debug] GET    /api/v1/revenue/monthly   --> renting/internal/handlers.(*RevenueHandler).GetMonthlyRevenue-fm (6 handlers)
+[GIN-debug] GET    /api/v1/revenue/mobile-visualization --> renting/internal/handlers.(*RevenueHandler).GetMobileRevenueVisualization-fm (6 handlers)
+[GIN-debug] GET    /api/v1/reminders/vehicles/:vehicle_id/reminders --> renting/internal/handlers.(*ReminderHandler).GetRemindersByVehicle-fm (6 handlers)
+[GIN-debug] GET    /api/v1/reminders/vehicles/:vehicle_id/reminders/filter --> renting/internal/handlers.(*ReminderHandler).GetRemindersByVehicleAndType-fm (6 handlers)
+[GIN-debug] GET    /api/v1/reminders/due     --> renting/internal/handlers.(*ReminderHandler).GetDueReminders-fm (6 handlers)
+[GIN-debug] POST   /api/v1/reminders         --> renting/internal/handlers.(*ReminderHandler).CreateReminder-fm (7 handlers)
+[GIN-debug] POST   /api/v1/reminders/:reminder_id/acknowledge --> renting/internal/handlers.(*ReminderHandler).AcknowledgeReminder-fm (7 handlers)
+[GIN-debug] PUT    /api/v1/system-settings/:key --> renting/internal/handlers.(*SystemSettingsHandler).UpdateSystemSetting-fm (7 handlers)
+[GIN-debug] POST   /api/v1/users/:user_id/lockout --> renting/internal/handlers.(*AuthHandler).LockoutUser-fm (7 handlers)
+[GIN-debug] GET    /health                   --> main.main.func2 (5 handlers)
+2025/10/20 00:31:04 Server running on :8080
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8080
+2025/10/20 00:31:07 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:31:08 | 200 |   21.382359ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:31:08 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:31:08 | 200 |    4.820932ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:08 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:31:08 | 200 |     1.88969ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:08 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:31:08 Query Parameters: map[data:[true]]
+2025/10/20 00:31:08 Include Booking Details: false
+2025/10/20 00:31:08 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:31:08 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:31:09 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:31:09 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:31:09 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:31:09 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:31:09 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:31:09 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:31:09 | 200 |   15.464971ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:31:12 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:31:12 | 200 |    2.241156ms |       127.0.0.1 | GET      "/api/v1/payment?start_date=2025-10-20&verified_by_admin=true&payment_status=Completed"
+2025/10/20 00:31:18 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:31:18 | 200 |    1.810195ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:31:18 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:31:18 | 200 |    2.184179ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:18 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:31:18 | 200 |    1.329043ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:19 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:31:19 | 200 |    8.897001ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:31:20 [DEBUG] Setting database in context for request: GET /api/v1/sales/102
+[GIN] 2025/10/20 - 00:31:20 | 200 |    7.780725ms |       127.0.0.1 | GET      "/api/v1/sales/102?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:31:32 [DEBUG] Setting database in context for request: PUT /api/v1/sales/102
+Received body: {"status":"cancelled"}
+=== HANDLER UPDATE DEBUG ===
+Extracted userID: 1
+Extracted saleID: 102
+req.VehicleID: <nil>
+=== HANDLER UPDATE DEBUG ===
+Extracted userID: 1
+Extracted saleID: 102
+Request Status: 0xc000681ec0
+Calling service UpdateSaleByUserID
+About to call service with saleID: 102 userID: 1 req: {<nil> 0xc000681ec0 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>}
+=== SALE SERVICE UPDATE DEBUG ===
+SERVICE CALLED - saleID: 102 userID: 1 req: {<nil> 0xc000681ec0 <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil> <nil>}
+Added status to updates: cancelled
+Final updates map: map[status:cancelled]
+Calling repository UpdateSaleByUserID
+=== UPDATE SALE BY USER ID DEBUG ===
+REPOSITORY CALLED - saleID: 102 userID: 1 updates: map[status:cancelled]
+User 1 is admin: true
+=== VEHICLE STATUS UPDATE DEBUG ===
+Processing updates: map[status:cancelled]
+Processing field: status value: cancelled
+Status field detected, value: cancelled
+Found vehicle_id: 10 for sale_id: 102
+Setting vehicle 10 status to 'available'
+=== END VEHICLE STATUS UPDATE DEBUG ===
+Repository update completed successfully
+=== END SALE SERVICE UPDATE DEBUG ===
+Service completed successfully
+=== END HANDLER UPDATE DEBUG ===
+Returning success response
+[GIN] 2025/10/20 - 00:31:32 | 200 |    8.034019ms |       127.0.0.1 | PUT      "/api/v1/sales/102"
+2025/10/20 00:31:40 [DEBUG] Setting database in context for request: GET /api/v1/sales/102
+[GIN] 2025/10/20 - 00:31:40 | 200 |    3.590806ms |       127.0.0.1 | GET      "/api/v1/sales/102?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:31:42 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:31:42 | 200 |    4.425394ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:31:44 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:31:44 | 200 |    1.574851ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:31:44 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:31:44 Query Parameters: map[data:[true]]
+2025/10/20 00:31:44 Include Booking Details: false
+2025/10/20 00:31:44 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:31:44 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:31:44 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:31:44 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:31:44 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:31:44 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:31:44 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:31:44 | 200 |    5.946899ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:31:44 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:31:44 | 200 |    2.029148ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:44 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:31:44 | 200 |    1.601151ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:31:45 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:31:45 Query Parameters: map[data:[true]]
+2025/10/20 00:31:45 Include Booking Details: false
+2025/10/20 00:31:45 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:31:45 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:31:45 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:31:45 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:31:45 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:31:45 | 200 |    5.574653ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:31:45 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:31:45 Query Parameters: map[data:[true]]
+2025/10/20 00:31:45 Include Booking Details: false
+2025/10/20 00:31:45 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:31:45 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:31:45 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:31:45 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:31:45 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:31:45 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:31:45 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:31:45 | 200 |    5.758889ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:25 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:25 Query Parameters: map[data:[true]]
+2025/10/20 00:42:25 Include Booking Details: false
+2025/10/20 00:42:25 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:25 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:42:25 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:42:25 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:25 Query Parameters: map[data:[true]]
+2025/10/20 00:42:25 Include Booking Details: false
+2025/10/20 00:42:25 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 5
+[GIN] 2025/10/20 - 00:42:25 | 200 |   10.941964ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:42:25 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 2
+[GIN] 2025/10/20 - 00:42:25 | 200 |   25.463136ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:25 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:25 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:25 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:25 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:25 | 200 |    31.27971ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:25 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:25 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:25 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:25 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:25 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:25 | 200 |   37.211122ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:26 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+2025/10/20 00:42:26 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:42:26 | 200 |    4.643689ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+[GIN] 2025/10/20 - 00:42:26 | 200 |    5.153763ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:42:26 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+2025/10/20 00:42:26 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:42:26 | 200 |    3.311162ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+[GIN] 2025/10/20 - 00:42:26 | 200 |    3.185419ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:42:28 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:42:28 | 200 |    5.190022ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:42:31 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:42:31 | 200 |    2.900015ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:42:37 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:37 Query Parameters: map[data:[true]]
+2025/10/20 00:42:37 Include Booking Details: false
+2025/10/20 00:42:37 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:42:37 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:37 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:37 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:37 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:37 | 200 |    6.241553ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:37 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:37 Query Parameters: map[data:[true]]
+2025/10/20 00:42:37 Include Booking Details: false
+2025/10/20 00:42:37 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:42:37 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:37 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:37 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:37 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:37 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:37 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:37 | 200 |     6.27726ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:38 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:42:38 | 200 |    1.588202ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:42:38 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:42:38 | 200 |    3.117124ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:42:38 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:42:38 | 200 |     887.183µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:42:39 [DEBUG] Setting database in context for request: GET /api/v1/sales/102
+[GIN] 2025/10/20 - 00:42:39 | 200 |     4.93369ms |       127.0.0.1 | GET      "/api/v1/sales/102?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:42:41 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:42:41 | 200 |    3.507739ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:42:43 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:43 Query Parameters: map[data:[true]]
+2025/10/20 00:42:43 Include Booking Details: false
+2025/10/20 00:42:43 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:43 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:42:43 Query Parameters: map[data:[true]]
+2025/10/20 00:42:43 Include Booking Details: false
+2025/10/20 00:42:43 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:42:43 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:43 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:42:43 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:42:43 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:42:43 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:43 | 200 |   22.644389ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:43 Fetched 2 future bookings for vehicle ID: 10
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:42:43 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:42:43 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:42:43 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:42:43 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:42:43 | 200 |    25.01371ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:42:48 [DEBUG] Setting database in context for request: GET /api/v1/disabled-dates
+[GIN] 2025/10/20 - 00:42:48 | 200 |     2.07474ms |       127.0.0.1 | GET      "/api/v1/disabled-dates?date_of_delivery=2025-10-20&vehicle_id=10"
+2025/10/20 00:43:19 [DEBUG] Setting database in context for request: POST /api/v1/sales
+=== BACKEND RECEIVED REQUEST ===
+Status from request: active
+Date of delivery: 2025-10-20T00:00:00.000Z
+Is future booking: false
+================================
+[GIN] 2025/10/20 - 00:43:19 | 201 |   11.106782ms |       127.0.0.1 | POST     "/api/v1/sales"
+2025/10/20 00:43:20 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:43:20 | 200 |    1.616115ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:43:20 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:43:20 | 200 |    2.873874ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:43:20 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:43:20 | 200 |     863.224µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:43:23 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:43:23 | 200 |    2.837392ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:43:25 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:43:25 | 200 |    3.839091ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:43:28 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:43:28 | 200 |    3.373568ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:43:30 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:43:30 | 200 |     5.86939ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:44:08 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:44:08 | 200 |    6.198169ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:44:09 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:44:09 | 200 |    2.708467ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:44:14 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:44:14 | 200 |    3.543014ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:44:16 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:44:16 | 200 |    4.115736ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:44:18 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:44:18 | 200 |    3.014438ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:44:20 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:44:20 | 200 |    3.140887ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:44:28 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:44:28 | 200 |    2.922448ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:44:50 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:44:50 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:44:50 Query Parameters: map[data:[true]]
+2025/10/20 00:44:50 Include Booking Details: false
+2025/10/20 00:44:50 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:44:50 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:44:50 Query Parameters: map[data:[true]]
+2025/10/20 00:44:50 Include Booking Details: false
+2025/10/20 00:44:50 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+[GIN] 2025/10/20 - 00:44:50 | 200 |    1.965359ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:44:50 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:44:50 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:44:50 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:44:50 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:44:50 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:50 | 200 |   14.297363ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:44:50 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:44:50 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:44:50 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:44:50 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:44:50 Fetching future booking details for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:50 | 200 |   14.367934ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:44:50 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:50 | 200 |   25.402331ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:44:51 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:44:51 | 200 |    3.642164ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:51 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:44:51 | 200 |    1.513642ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:51 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:44:51 | 200 |    1.727156ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:51 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:44:51 | 200 |      848.22µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:56 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:44:56 | 200 |    6.266884ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:44:57 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:44:57 Query Parameters: map[data:[true]]
+2025/10/20 00:44:57 Include Booking Details: false
+2025/10/20 00:44:57 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:44:57 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:44:57 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:44:57 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:44:57 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:44:57 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:44:57 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:57 | 200 |    5.814351ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:44:58 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:44:58 | 200 |    1.289903ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:44:58 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:44:58 | 200 |    2.597271ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:58 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:44:58 | 200 |     930.308µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:44:59 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:44:59 Query Parameters: map[data:[true]]
+2025/10/20 00:44:59 Include Booking Details: false
+2025/10/20 00:44:59 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:44:59 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:44:59 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:44:59 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:44:59 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:59 | 200 |    5.334049ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:44:59 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:44:59 Query Parameters: map[data:[true]]
+2025/10/20 00:44:59 Include Booking Details: false
+2025/10/20 00:44:59 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:44:59 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:44:59 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:44:59 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:44:59 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:44:59 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:44:59 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:44:59 | 200 |     6.50139ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:45:03 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:45:03 Query Parameters: map[rentedSaleId:[true] status:[rented]]
+2025/10/20 00:45:03 Include Booking Details: true
+2025/10/20 00:45:03 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status:rented Limit:0 Offset:0}, includeBookingDetails: false
+2025/10/20 00:45:03 Fetching sale ID for vehicle ID: 5
+52025/10/20 00:45:03 Fetching sale ID for vehicle ID: 7
+72025/10/20 00:45:03 Fetching sale ID for vehicle ID: 6
+62025/10/20 00:45:03 Fetching sale ID for vehicle ID: 1
+12025/10/20 00:45:03 Fetching sale ID for vehicle ID: 2
+22025/10/20 00:45:03 Fetching sale ID for vehicle ID: 12
+122025/10/20 00:45:03 Fetching sale ID for vehicle ID: 4
+42025/10/20 00:45:03 Fetching sale ID for vehicle ID: 3
+3[GIN] 2025/10/20 - 00:45:03 | 200 |    7.493197ms |       127.0.0.1 | GET      "/api/v1/vehicles?rentedSaleId=true&status=rented"
+2025/10/20 00:45:04 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:45:04 Query Parameters: map[data:[true] status:[available]]
+2025/10/20 00:45:04 Include Booking Details: false
+2025/10/20 00:45:04 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status:available Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:45:04 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:45:04 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:45:04 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:45:04 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:45:04 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:45:04 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:45:04 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:45:04 Fetched 1 future bookings for vehicle ID: 9
+[GIN] 2025/10/20 - 00:45:04 | 200 |     2.55127ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true&status=available"
+2025/10/20 00:45:06 [DEBUG] Setting database in context for request: GET /api/v1/futur-bookings
+Generated Query: 
+		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
+		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
+		s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
+		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status, v.vehicle_name, v.image_name
+		FROM sales s
+		LEFT JOIN payments p ON s.sale_id = p.sale_id
+		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+		WHERE date(s.date_of_delivery) >= date($1)
+		AND date(s.date_of_delivery) <= date($2)
+		AND date(s.booking_date) != date(s.date_of_delivery)
+	 AND s.status = $3 ORDER BY s.date_of_delivery ASC
+Query Arguments: [2025-10-01 2025-10-31 pending]
+[GIN] 2025/10/20 - 00:45:06 | 200 |    3.146852ms |       127.0.0.1 | GET      "/api/v1/futur-bookings?year=2025&month=10&status=pending"
+2025/10/20 00:45:08 [DEBUG] Setting database in context for request: GET /api/v1/futur-bookings
+Generated Query: 
+		SELECT s.sale_id, s.vehicle_id, s.user_id, s.customer_name, s.customer_destination, s.customer_phone, 
+		s.total_amount, s.charge_per_day, s.booking_date, s.date_of_delivery, s.return_date, 
+		s.number_of_days, s.remark, s.status, s.created_at, s.updated_at,
+		p.payment_id, p.amount_paid, p.payment_date, p.payment_type, p.payment_status, v.vehicle_name, v.image_name
+		FROM sales s
+		LEFT JOIN payments p ON s.sale_id = p.sale_id
+		LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
+		WHERE date(s.date_of_delivery) >= date($1)
+		AND date(s.date_of_delivery) <= date($2)
+		AND date(s.booking_date) != date(s.date_of_delivery)
+	 AND s.status = $3 ORDER BY s.date_of_delivery ASC
+Query Arguments: [2025-10-01 2025-10-31 pending]
+[GIN] 2025/10/20 - 00:45:08 | 200 |    1.794072ms |       127.0.0.1 | GET      "/api/v1/futur-bookings?year=2025&month=10&status=pending"
+2025/10/20 00:45:09 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:45:09 | 200 |    1.370506ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:45:10 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:45:10 | 200 |    2.071045ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:45:10 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:45:10 | 200 |     841.749µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:45:11 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 00:45:11 | 404 |      38.968µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 00:45:11 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 00:45:11 | 200 |    1.604685ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 00:45:13 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:45:13 | 200 |    2.881423ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:45:13 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:45:13 | 200 |      849.81µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:45:15 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:45:15 | 200 |     1.13129ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:45:17 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:45:17 | 200 |    1.033167ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:45:17 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:45:17 | 200 |     844.613µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:46:17 [DEBUG] Setting database in context for request: GET /robots.txt
+[GIN] 2025/10/20 - 00:46:17 | 404 |      40.472µs |       127.0.0.1 | GET      "/robots.txt"
+2025/10/20 00:46:24 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:46:24 Query Parameters: map[data:[true]]
+2025/10/20 00:46:24 Include Booking Details: false
+2025/10/20 00:46:24 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:46:24 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:46:24 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:46:24 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:46:24 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:46:24 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:46:24 | 200 |    12.25139ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+[GIN] 2025/10/20 - 00:46:24 | 200 |   12.411148ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:46:24 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:46:24 | 200 |    1.875278ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:46:24 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:46:24 | 200 |    1.707263ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:46:24 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:46:24 Query Parameters: map[data:[true]]
+2025/10/20 00:46:24 Include Booking Details: false
+2025/10/20 00:46:24 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:46:24 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:46:24 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:46:24 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:46:24 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:46:24 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:46:24 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:46:24 | 200 |    5.375919ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:46:25 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:46:25 Query Parameters: map[data:[true]]
+2025/10/20 00:46:25 Include Booking Details: false
+2025/10/20 00:46:25 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:46:25 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:46:25 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:46:25 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:46:25 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:46:25 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:46:25 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:46:25 | 200 |    5.149107ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:46:27 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/7/reminders/filter
+[GIN] 2025/10/20 - 00:46:27 | 200 |    1.327168ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/7/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 00:46:30 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/7/reminders/filter
+[GIN] 2025/10/20 - 00:46:30 | 200 |     1.12848ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/7/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 00:46:45 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/7/reminders/filter
+[GIN] 2025/10/20 - 00:46:45 | 200 |    1.326813ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/7/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 00:47:34 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 00:47:34 | 200 |    1.408062ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:47:34 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:47:34 | 200 |    1.819081ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:47:34 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:47:34 | 200 |    1.101043ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:47:35 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 00:47:35 | 404 |      45.979µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 00:47:35 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 00:47:35 | 200 |      916.25µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 00:47:38 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:47:38 | 200 |    1.138311ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:48:37 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:37 | 200 |    2.894605ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:48:39 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:39 | 200 |    1.475688ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=billbook"
+2025/10/20 00:48:39 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:39 | 200 |     1.16706ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=billbook"
+2025/10/20 00:48:40 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:40 | 200 |     959.646µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:48:42 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:42 | 200 |     952.244µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:48:43 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:43 | 200 |     666.614µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:48:44 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:48:44 | 200 |     982.596µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:48:59 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:48:59 | 200 |    3.167105ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:49:04 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 00:49:04 | 404 |      38.072µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 00:49:04 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 00:49:04 | 200 |    1.054461ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 00:49:05 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:49:05 | 200 |    2.820577ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:49:13 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 00:49:13 | 404 |      38.397µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 00:49:13 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 00:49:13 | 200 |     920.209µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 00:49:38 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:49:38 | 200 |     953.206µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:49:40 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:49:40 | 200 |     1.86737ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:52:35 [DEBUG] Setting database in context for request: GET /
+[GIN] 2025/10/20 - 00:52:35 | 404 |     619.356µs |  204.76.203.219 | GET      "/"
+2025/10/20 00:54:43 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:54:43 Query Parameters: map[data:[true]]
+2025/10/20 00:54:43 Include Booking Details: false
+2025/10/20 00:54:43 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 5
+2025/10/20 00:54:43 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:54:43 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:54:43 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 11
+2025/10/20 00:54:43 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:54:43 | 200 |    4.809955ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:54:43 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 00:54:43 Query Parameters: map[data:[true]]
+2025/10/20 00:54:43 Include Booking Details: false
+2025/10/20 00:54:43 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 00:54:43 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 5
+[GIN] 2025/10/20 - 00:54:43 | 200 |    1.466525ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:54:43 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 7
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 6
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 1
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 2
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 12
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 4
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 10
+2025/10/20 00:54:43 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 8
+2025/10/20 00:54:43 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 00:54:43 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 11
+[GIN] 2025/10/20 - 00:54:43 | 200 |     917.111µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 00:54:43 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 9
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 00:54:43 Fetching future booking details for vehicle ID: 3
+2025/10/20 00:54:43 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 00:54:43 | 200 |   14.039403ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 00:54:44 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:54:44 | 200 |    6.177793ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:54:44 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 00:54:44 | 200 |    1.366314ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 00:54:44 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:54:44 | 200 |    2.810212ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:54:44 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 00:54:44 | 200 |     627.863µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 00:54:47 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:54:47 | 200 |    9.801414ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 00:54:49 [DEBUG] Setting database in context for request: GET /api/v1/sales/103
+[GIN] 2025/10/20 - 00:54:49 | 200 |    5.856733ms |       127.0.0.1 | GET      "/api/v1/sales/103?include=Payments%2CVehicleUsage%2CSalesVideos%2CSalesCharge%2Cvehicle"
+2025/10/20 00:54:51 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 00:54:51 | 200 |    4.141414ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10"
+2025/10/20 00:54:52 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 00:54:52 | 404 |      35.963µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 00:54:52 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 00:54:52 | 200 |    1.413434ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 00:54:56 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:54:56 | 200 |    2.125074ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:55:03 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:55:03 | 200 |    1.079512ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:55:04 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:55:04 | 200 |    2.027379ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:55:11 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:55:11 | 200 |     2.92396ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 00:55:12 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:55:12 | 200 |     830.126µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 00:55:18 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 00:55:18 | 200 |     1.04168ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:01:50 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:01:50 Query Parameters: map[data:[true]]
+2025/10/20 01:01:50 Include Booking Details: false
+2025/10/20 01:01:50 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:01:50 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:01:50 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:01:50 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:01:50 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:01:50 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:01:50 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:01:50 | 200 |    5.759668ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:01:50 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:01:50 | 200 |    3.256799ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:01:50 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:01:50 | 200 |    3.628182ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:01:50 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:01:50 | 200 |     857.864µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:01:51 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:01:51 Query Parameters: map[data:[true]]
+2025/10/20 01:01:51 Include Booking Details: false
+2025/10/20 01:01:51 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:01:51 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:01:51 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:01:51 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:01:51 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:01:51 | 200 |    4.410356ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:01:51 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:01:51 Query Parameters: map[data:[true]]
+2025/10/20 01:01:51 Include Booking Details: false
+2025/10/20 01:01:51 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:01:51 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:01:51 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:01:51 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:01:51 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:01:51 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:01:51 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:01:51 | 200 |    4.528781ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:01:53 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/6/reminders/filter
+[GIN] 2025/10/20 - 01:01:53 | 200 |    1.685253ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/6/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 01:02:14 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:02:14 | 200 |    1.551189ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:02:14 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:14 Query Parameters: map[data:[true]]
+2025/10/20 01:02:14 Include Booking Details: false
+2025/10/20 01:02:14 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:14 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:14 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:14 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:14 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:14 | 200 |    4.469922ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:02:14 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:14 Query Parameters: map[data:[true]]
+2025/10/20 01:02:14 Include Booking Details: false
+2025/10/20 01:02:14 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:14 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:14 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:14 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 01:02:14 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:14 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:14 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:14 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:14 | 200 |    7.166719ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+[GIN] 2025/10/20 - 01:02:14 | 200 |   10.658081ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:02:15 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:02:15 | 200 |    2.293742ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:15 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:02:15 | 200 |    1.829558ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:15 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:02:15 | 200 |      906.77µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:15 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:02:15 | 200 |     714.985µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:16 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:16 Query Parameters: map[data:[true]]
+2025/10/20 01:02:16 Include Booking Details: false
+2025/10/20 01:02:16 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:16 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:16 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:16 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:16 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:16 | 200 |     5.64093ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:02:16 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:16 Query Parameters: map[data:[true]]
+2025/10/20 01:02:16 Include Booking Details: false
+2025/10/20 01:02:16 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:16 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:16 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:16 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:16 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:16 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:16 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:16 | 200 |    4.342626ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:02:21 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/4/reminders/filter
+[GIN] 2025/10/20 - 01:02:21 | 200 |     897.582µs |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/4/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 01:02:27 [DEBUG] Setting database in context for request: POST /api/v1/reminders
+2025/10/20 01:02:27 [DEBUG] GetUserByID querying database for user ID: 1
+2025/10/20 01:02:27 [DEBUG] SQL Query: 
+		SELECT id, username, password, is_admin, has_accounting, is_locked, company_id, mobile_number, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	
+2025/10/20 01:02:27 [DEBUG] Retrieved user ID: 1, Username: sakshyam, IsAdmin: true, HasAccounting: false
+2025/10/20 01:02:27 Incoming reminder: &{ID:0 VehicleID:4 UserID:1 Type:billbook StartDate:2025-10-19 19:17:21 +0000 UTC Frequency:monthly CustomInterval:<nil> NextDueDate:2025-10-19 19:17:21 +0000 UTC CreatedAt:0001-01-01 00:00:00 +0000 UTC UpdatedAt:0001-01-01 00:00:00 +0000 UTC}
+2025/10/20 01:02:27 Resetting preset NextDueDate from 2025-10-19T19:17:21Z
+2025/10/20 01:02:27 Calculated NextDueDate: 2025-11-19T19:17:21Z
+[GIN] 2025/10/20 - 01:02:27 | 201 |    4.434163ms |       127.0.0.1 | POST     "/api/v1/reminders"
+2025/10/20 01:02:27 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/4/reminders/filter
+[GIN] 2025/10/20 - 01:02:27 | 200 |      779.95µs |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/4/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 01:02:34 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:34 Query Parameters: map[data:[true]]
+2025/10/20 01:02:34 Include Booking Details: false
+2025/10/20 01:02:34 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:34 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:34 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:34 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:34 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:34 | 200 |    4.572057ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:02:34 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:02:34 Query Parameters: map[data:[true]]
+2025/10/20 01:02:34 Include Booking Details: false
+2025/10/20 01:02:34 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:02:34 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:02:34 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:02:34 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:02:34 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:02:34 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:02:34 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:02:34 | 200 |    4.014748ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:02:37 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:02:37 | 200 |    1.375925ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:02:37 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:02:37 | 200 |    1.906766ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:37 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:02:37 | 200 |     868.474µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:02:38 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:02:38 | 404 |      37.648µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:02:38 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:02:38 | 200 |    1.177802ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:02:41 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:02:41 | 200 |     1.05799ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=billbook"
+2025/10/20 01:02:43 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:02:43 | 200 |    2.331306ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:02:53 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:02:53 | 404 |       39.73µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:02:53 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:02:53 | 200 |     740.958µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:02:54 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 01:02:54 | 200 |    2.974399ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 01:02:55 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:02:55 | 200 |     900.757µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:03:08 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:03:08 | 200 |      876.89µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:03:11 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:03:11 | 200 |     959.113µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:03:25 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:03:25 | 200 |    2.728324ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:03:27 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:03:27 | 200 |    1.070488ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:05:20 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:05:20 | 200 |     902.529µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:05:20 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:05:20 | 200 |      760.71µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:05:30 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 01:05:30 | 200 |    6.950221ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 01:05:31 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:05:31 | 404 |      48.262µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:05:31 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:05:31 | 200 |    2.219343ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:05:32 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:05:32 | 200 |    1.529434ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:05:33 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+2025/10/20 01:05:33 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:05:33 Query Parameters: map[data:[true]]
+2025/10/20 01:05:33 Include Booking Details: false
+2025/10/20 01:05:33 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+[GIN] 2025/10/20 - 01:05:33 | 200 |    2.127725ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:05:33 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:05:33 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:05:33 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:05:33 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:05:33 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:05:33 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:05:33 | 200 |    4.940398ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:05:33 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:05:33 | 200 |    1.279469ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:05:33 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:05:33 | 404 |      47.783µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:05:33 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:05:33 | 200 |    1.260906ms |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:05:35 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:05:35 | 200 |    1.821426ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:05:40 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:05:40 | 200 |    1.555685ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:05:42 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:05:42 | 200 |    1.103548ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:08:45 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:08:45 | 404 |      63.328µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:08:56 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:08:56 | 200 |     993.127µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:08:57 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:08:57 | 200 |     1.08051ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:08:57 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:08:57 | 404 |      36.039µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:09:00 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:00 Query Parameters: map[data:[true]]
+2025/10/20 01:09:00 Include Booking Details: false
+2025/10/20 01:09:00 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:00 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:00 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:00 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:00 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:00 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:00 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:00 | 200 |    4.623785ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:00 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:09:00 | 200 |     496.583µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:09:00 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:09:00 | 200 |    1.726328ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:00 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:09:00 | 200 |     858.758µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:01 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:01 Query Parameters: map[data:[true]]
+2025/10/20 01:09:01 Include Booking Details: false
+2025/10/20 01:09:01 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:01 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:01 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:01 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:01 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:01 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:01 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:01 | 200 |    5.325292ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:02 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:02 Query Parameters: map[data:[true]]
+2025/10/20 01:09:02 Include Booking Details: false
+2025/10/20 01:09:02 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:02 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:02 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:02 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:02 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:02 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:02 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:02 | 200 |    4.295576ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:10 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:09:10 | 200 |     876.988µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:09:11 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:09:11 | 200 |    1.681638ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:11 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:09:11 | 200 |     923.334µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:12 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:09:12 | 404 |      39.316µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:09:12 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:09:12 | 200 |     766.018µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:09:13 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:09:13 | 200 |    1.013987ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=insurance"
+2025/10/20 01:09:14 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:09:14 | 200 |     975.181µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:09:15 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:09:15 | 404 |      35.904µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:09:40 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 01:09:40 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:40 Query Parameters: map[data:[true]]
+2025/10/20 01:09:40 Include Booking Details: false
+2025/10/20 01:09:40 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+[GIN] 2025/10/20 - 01:09:40 | 200 |    2.753492ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:40 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:40 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:40 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:40 Query Parameters: map[data:[true]]
+2025/10/20 01:09:40 Include Booking Details: false
+2025/10/20 01:09:40 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:40 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:40 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:40 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:40 | 200 |   18.337179ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+[GIN] 2025/10/20 - 01:09:40 | 200 |   18.125936ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:40 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:40 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:40 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:40 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:40 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:40 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:40 | 200 |   23.951439ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:41 Query Parameters: map[data:[true]]
+2025/10/20 01:09:41 Include Booking Details: false
+2025/10/20 01:09:41 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:41 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:41 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:41 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:41 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:41 | 200 |    6.876684ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:09:41 Query Parameters: map[data:[true]]
+2025/10/20 01:09:41 Include Booking Details: false
+2025/10/20 01:09:41 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+2025/10/20 01:09:41 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:09:41 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:09:41 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:09:41 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:09:41 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:09:41 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:09:41 | 200 |    6.050057ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:09:41 | 200 |    4.894016ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+[GIN] 2025/10/20 - 01:09:41 | 200 |   13.462133ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:09:41 | 200 |     822.329µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:09:41 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:09:41 | 200 |     940.404µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:01 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:10:01 Query Parameters: map[data:[true]]
+2025/10/20 01:10:01 Include Booking Details: false
+2025/10/20 01:10:01 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:10:01 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 5
+[GIN] 2025/10/20 - 01:10:01 | 200 |    1.969176ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:10:01 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:10:01 | 200 |    3.625697ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:10:01 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:10:01 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:10:01 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:10:01 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:10:01 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:10:01 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:10:01 | 200 |   19.427306ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:10:02 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:10:02 | 200 |      5.2569ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:02 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:10:02 | 200 |    1.512434ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:02 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:10:02 | 200 |     3.38552ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:02 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:10:02 | 200 |    1.653214ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:03 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:10:03 Query Parameters: map[data:[true]]
+2025/10/20 01:10:03 Include Booking Details: false
+2025/10/20 01:10:03 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:10:03 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:10:03 Query Parameters: map[data:[true]]
+2025/10/20 01:10:03 Include Booking Details: false
+2025/10/20 01:10:03 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:10:03 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:10:03 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:10:03 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:10:03 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:10:03 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:10:03 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:10:03 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:10:03 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:10:03 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:10:03 | 200 |    21.03656ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:10:03 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:10:03 | 200 |   22.750431ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:10:04 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:10:04 Query Parameters: map[data:[true]]
+2025/10/20 01:10:04 Include Booking Details: false
+2025/10/20 01:10:04 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:10:04 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:10:04 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:10:04 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:10:04 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:10:04 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:10:04 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:10:04 | 200 |    4.703847ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:10:05 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:10:05 | 200 |     825.352µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:10:05 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:10:05 | 200 |    1.723841ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:06 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:10:06 | 200 |     659.701µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:06 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 01:10:06 | 200 |     2.57252ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 01:10:11 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:10:11 | 200 |     900.694µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:10:11 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:10:11 Query Parameters: map[data:[true]]
+2025/10/20 01:10:11 Include Booking Details: false
+2025/10/20 01:10:11 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:10:11 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:10:11 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:10:11 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:10:11 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:10:11 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:10:11 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:10:11 | 200 |    4.721799ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:10:11 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:10:11 | 200 |    1.584791ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:11 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:10:11 | 200 |     731.121µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:10:14 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:10:14 | 404 |      36.168µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:10:15 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:10:15 | 200 |     831.351µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:10:16 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:10:16 | 200 |     900.329µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:10:17 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:10:17 | 404 |      39.592µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:15:47 [DEBUG] Setting database in context for request: GET /
+[GIN] 2025/10/20 - 01:15:47 | 404 |      54.462µs |  204.76.203.212 | GET      "/"
+2025/10/20 01:19:34 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:19:34 | 404 |      54.526µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:19:34 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:19:34 | 404 |      35.568µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:19:34 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:19:34 | 404 |      30.153µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:19:40 [DEBUG] Setting database in context for request: GET /api/v1/statements
+[GIN] 2025/10/20 - 01:19:40 | 200 |    2.694783ms |       127.0.0.1 | GET      "/api/v1/statements?offset=0&limit=10&start_date=2025-10-20&end_date=2025-10-20"
+2025/10/20 01:19:41 [DEBUG] Setting database in context for request: HEAD /api/v1/expenses
+[GIN] 2025/10/20 - 01:19:41 | 404 |      36.566µs |       127.0.0.1 | HEAD     "/api/v1/expenses"
+2025/10/20 01:19:41 [DEBUG] Setting database in context for request: GET /api/v1/expenses
+[GIN] 2025/10/20 - 01:19:41 | 200 |     484.984µs |       127.0.0.1 | GET      "/api/v1/expenses"
+2025/10/20 01:19:43 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:19:43 | 200 |    1.111617ms |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:19:43 [DEBUG] Setting database in context for request: GET /api/v1/vehicles/7
+[GIN] 2025/10/20 - 01:19:43 | 404 |      56.748µs |       127.0.0.1 | GET      "/api/v1/vehicles/7"
+2025/10/20 01:19:55 [DEBUG] Setting database in context for request: POST /api/v1/reminders/25/acknowledge
+2025/10/20 01:19:55 [DEBUG] GetUserByID querying database for user ID: 1
+2025/10/20 01:19:55 [DEBUG] SQL Query: 
+		SELECT id, username, password, is_admin, has_accounting, is_locked, company_id, mobile_number, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	
+2025/10/20 01:19:55 [DEBUG] Retrieved user ID: 1, Username: sakshyam, IsAdmin: true, HasAccounting: false
+2025/10/20 01:19:55 Setting new start date to acknowledgement date: 2025-10-19T19:34:55Z
+2025/10/20 01:19:55 Calculated new next due date: 2025-11-19T19:34:55Z
+[GIN] 2025/10/20 - 01:19:55 | 200 |   19.803467ms |       127.0.0.1 | POST     "/api/v1/reminders/25/acknowledge"
+2025/10/20 01:19:56 [DEBUG] Setting database in context for request: GET /api/v1/reminders/due
+[GIN] 2025/10/20 - 01:19:56 | 200 |     902.109µs |       127.0.0.1 | GET      "/api/v1/reminders/due?type=emi"
+2025/10/20 01:20:00 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:00 Query Parameters: map[data:[true]]
+2025/10/20 01:20:00 Include Booking Details: false
+2025/10/20 01:20:00 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:00 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:00 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:00 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:00 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:00 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:00 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:00 | 200 |    4.474648ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:00 [DEBUG] Setting database in context for request: GET /api/v1/payment
+[GIN] 2025/10/20 - 01:20:00 | 200 |     649.367µs |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:20:00 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:20:00 | 200 |    1.854838ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:20:00 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:20:00 | 200 |     669.772µs |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
+2025/10/20 01:20:01 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:01 Query Parameters: map[data:[true]]
+2025/10/20 01:20:01 Include Booking Details: false
+2025/10/20 01:20:01 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:01 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:01 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:01 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:01 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:01 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:01 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:01 | 200 |    5.440065ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:02 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:02 Query Parameters: map[data:[true]]
+2025/10/20 01:20:02 Include Booking Details: false
+2025/10/20 01:20:02 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:02 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:02 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:02 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:02 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:02 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:02 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:02 | 200 |    5.120437ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:08 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:08 Query Parameters: map[data:[true]]
+2025/10/20 01:20:08 Include Booking Details: false
+2025/10/20 01:20:08 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:08 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:08 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:08 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:08 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:08 | 200 |    4.435342ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:08 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:08 Query Parameters: map[data:[true]]
+2025/10/20 01:20:08 Include Booking Details: false
+2025/10/20 01:20:08 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:08 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:08 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:08 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:08 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:08 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:08 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:08 | 200 |     3.72147ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:09 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/5/reminders/filter
+[GIN] 2025/10/20 - 01:20:09 | 200 |     1.28416ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/5/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 01:20:11 [DEBUG] Setting database in context for request: GET /api/v1/reminders/vehicles/7/reminders/filter
+[GIN] 2025/10/20 - 01:20:11 | 200 |    1.035263ms |       127.0.0.1 | GET      "/api/v1/reminders/vehicles/7/reminders/filter?type=emi,billbook,insurance"
+2025/10/20 01:20:17 [DEBUG] Setting database in context for request: GET /api/v1/payment
+2025/10/20 01:20:17 [DEBUG] Setting database in context for request: GET /api/v1/vehicles
+2025/10/20 01:20:17 Query Parameters: map[data:[true]]
+2025/10/20 01:20:17 Include Booking Details: false
+2025/10/20 01:20:17 Fetching vehicles with filters: {VehicleTypeID: VehicleName: VehicleModel: VehicleRegistrationNumber: IsAvailable: Status: Limit:0 Offset:0}, includeBookingDetails: true
+[GIN] 2025/10/20 - 01:20:17 | 200 |    1.600377ms |       127.0.0.1 | GET      "/api/v1/payment?limit=3&offset=0&payment_status=Pending&verified_by_admin=false"
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 5
+2025/10/20 01:20:17 Fetched 2 future bookings for vehicle ID: 5
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 7
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 7
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 6
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 6
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 1
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 1
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 2
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 2
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 12
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 12
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 4
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 4
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 10
+2025/10/20 01:20:17 Fetched 3 future bookings for vehicle ID: 10
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 8
+2025/10/20 01:20:17 Fetched 0 future bookings for vehicle ID: 8
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 11
+2025/10/20 01:20:17 Fetched 0 future bookings for vehicle ID: 11
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 9
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 9
+2025/10/20 01:20:17 Fetching future booking details for vehicle ID: 3
+2025/10/20 01:20:17 Fetched 1 future bookings for vehicle ID: 3
+[GIN] 2025/10/20 - 01:20:17 | 200 |    6.044252ms |       127.0.0.1 | GET      "/api/v1/vehicles?data=true"
+2025/10/20 01:20:17 [DEBUG] Setting database in context for request: GET /api/v1/aggregate
+[GIN] 2025/10/20 - 01:20:17 | 200 |    5.132755ms |       127.0.0.1 | GET      "/api/v1/aggregate?date=2025-10-20&verified_only=true&payment_status=Completed"
+2025/10/20 01:20:17 [DEBUG] Setting database in context for request: GET /api/v1/revenue/monthly
+[GIN] 2025/10/20 - 01:20:17 | 200 |    2.670439ms |       127.0.0.1 | GET      "/api/v1/revenue/monthly?start_date=2025-07-01&end_date=2026-01-01&verified_only=true&payment_status=Completed"
