@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"renting/internal/config"
 	"renting/internal/handlers"
@@ -123,6 +124,11 @@ func main() {
 		// Protected routes, JWT authentication required
 		protected := v1.Group("")
 		protected.Use(middleware.JWTAuth(cfg.JWTSecret))
+		protected.Use(func(c *gin.Context) {
+			fmt.Printf("=== PROTECTED ROUTE ACCESSED ===\n")
+			fmt.Printf("Method: %s, Path: %s\n", c.Request.Method, c.Request.URL.Path)
+			c.Next()
+		})
 		{
 			// Debug routes
 			protected.GET("/debug/permissions", authHandler.CheckUserPermissions)
@@ -140,13 +146,15 @@ func main() {
 			protected.POST("/sales", saleHandler.CreateSale)
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)
 			protected.GET("/sales", saleHandler.GetSales)
-			protected.PUT("/sales/:saleID", saleHandler.UpdateSaleByUserID)
 
-			// Sale charges routes
+			// Sale charges routes (must come before /sales/:saleID to avoid route conflicts)
 			protected.GET("/sales/charges/test", saleChargeHandler.TestEndpoint)
 			protected.POST("/sales/:saleId/charges", saleChargeHandler.AddSalesCharge)
 			protected.PUT("/sales/:saleId/charges/:chargeId", saleChargeHandler.UpdateSalesCharge)
 			protected.DELETE("/sales/:saleId/charges/:chargeId", saleChargeHandler.DeleteSalesCharge)
+
+			// Sale update route (must come after charges routes)
+			protected.PUT("/sales/:saleID", saleHandler.UpdateSaleByUserID)
 
 			// Video upload route
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)

@@ -42,7 +42,19 @@ func (h *SaleChargeHandler) AddSalesCharge(c *gin.Context) {
 }
 
 func (h *SaleChargeHandler) UpdateSalesCharge(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("PANIC in UpdateSalesCharge: %v\n", r)
+			c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Internal server error", "Handler panic"))
+		}
+	}()
+	
+	fmt.Printf("=== UpdateSalesCharge HANDLER CALLED ===\n")
+	fmt.Printf("Request URL: %s\n", c.Request.URL.String())
+	fmt.Printf("Request Method: %s\n", c.Request.Method)
+	
 	chargeIDStr := c.Param("chargeId")
+	fmt.Printf("Charge ID from param: %s\n", chargeIDStr)
 	chargeID, err := strconv.Atoi(chargeIDStr)
 	if err != nil {
 		fmt.Printf("Handler: Invalid charge ID: %s\n", chargeIDStr)
