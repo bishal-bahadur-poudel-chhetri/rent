@@ -798,11 +798,16 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 }
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
+	fmt.Printf("=== UPDATE SALE BY USER ID DEBUG ===\n")
+	fmt.Printf("saleID: %d, userID: %d, updates: %+v\n", saleID, userID, updates)
+	
 	// Check if the user is an admin
 	isAdmin, err := r.isAdmin(userID)
 	if err != nil {
+		fmt.Printf("Error checking admin status: %v\n", err)
 		return err
 	}
+	fmt.Printf("User %d is admin: %v\n", userID, isAdmin)
 
 	// Check if the sale exists and belongs to the user (for non-admin users)
 	if !isAdmin {
@@ -818,8 +823,10 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			return fmt.Errorf("failed to check sale ownership: %v", err)
 		}
 		if !exists {
+			fmt.Printf("User %d does not own sale %d\n", userID, saleID)
 			return fmt.Errorf("cannot update sale with ID %d: user %d does not own this sale", saleID, userID)
 		}
+		fmt.Printf("User %d owns sale %d, proceeding with update\n", userID, saleID)
 	}
 
 	// Build the dynamic UPDATE query
@@ -889,17 +896,23 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 	}
 
 	// Execute the update
+	fmt.Printf("Executing query: %s\n", query)
+	fmt.Printf("With args: %+v\n", args)
 	result, err := r.db.Exec(query, args...)
 	if err != nil {
+		fmt.Printf("Error executing update query: %v\n", err)
 		return fmt.Errorf("failed to update sale: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
+		fmt.Printf("Error checking rows affected: %v\n", err)
 		return fmt.Errorf("failed to check rows affected: %v", err)
 	}
+	fmt.Printf("Rows affected: %d\n", rowsAffected)
 
 	if rowsAffected == 0 {
+		fmt.Printf("No rows affected for sale_id %d\n", saleID)
 		return fmt.Errorf("no sale updated for sale_id %d: sale may not exist or values unchanged", saleID)
 	}
 
