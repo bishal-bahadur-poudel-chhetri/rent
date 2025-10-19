@@ -79,7 +79,11 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	var actualDeliveryDate *time.Time
 	var saleStatus string
 	
-	if bookingDate.Format("2006-01-02") == sale.DateOfDelivery.Format("2006-01-02") {
+	// Compare only the date part (YYYY-MM-DD) by normalizing both dates to midnight
+	bookingDateOnly := time.Date(bookingDate.Year(), bookingDate.Month(), bookingDate.Day(), 0, 0, 0, 0, bookingDate.Location())
+	deliveryDateOnly := time.Date(sale.DateOfDelivery.Year(), sale.DateOfDelivery.Month(), sale.DateOfDelivery.Day(), 0, 0, 0, 0, sale.DateOfDelivery.Location())
+	
+	if bookingDateOnly.Equal(deliveryDateOnly) {
 		actualDeliveryDate = &bookingDate
 		saleStatus = "active" // Same-day delivery should be active
 	} else {
