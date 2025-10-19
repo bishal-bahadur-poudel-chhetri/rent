@@ -884,5 +884,49 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		return fmt.Errorf("no sale updated for sale_id %d: sale may not exist or values unchanged", saleID)
 	}
 
+	// Handle vehicle status updates
+	for field, value := range updates {
+		if field == "actual_date_of_delivery" && value != nil {
+			var vehicleID int
+			var currentStatus string
+			err = r.db.QueryRow(`
+                SELECT vehicle_id, status 
+                FROM sales 
+                WHERE sale_id = $1
+            `, saleID).Scan(&vehicleID, &currentStatus)
+			if err != nil {
+				return fmt.Errorf("failed to fetch vehicle info: %v", err)
+			}
+			if currentStatus != "active" {
+				if err := r.UpdateSaleStatus(saleID, "active"); err != nil {
+					return err
+				}
+				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
+					return err
+				}
+			}
+		} else if field == "status" {
+			var vehicleID int
+			err = r.db.QueryRow(`
+                SELECT vehicle_id 
+                FROM sales 
+                WHERE sale_id = $1
+            `, saleID).Scan(&vehicleID)
+			if err != nil {
+				return fmt.Errorf("failed to fetch vehicle_id: %v", err)
+			}
+			switch value.(string) {
+			case "active":
+				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
+					return err
+				}
+			case "completed", "cancelled":
+				if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
