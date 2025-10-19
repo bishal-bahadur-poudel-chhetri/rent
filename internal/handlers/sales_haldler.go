@@ -250,8 +250,8 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err))
 		return
 	}
-	fmt.Printf("=== HANDLER UPDATE DEBUG ===\n")
-	fmt.Printf("Extracted userID: %d\n", userID)
+	fmt.Println("=== HANDLER UPDATE DEBUG ===")
+	fmt.Println("Extracted userID:", userID)
 
 	saleIDStr := c.Param("saleID")
 	saleID, err := strconv.Atoi(saleIDStr)
@@ -259,7 +259,7 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", err))
 		return
 	}
-	fmt.Printf("Extracted saleID: %d\n", saleID)
+	fmt.Println("Extracted saleID:", saleID)
 
 	var req models.UpdateSaleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -277,15 +277,15 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 	}
 
 	// Pass the req directly to the service
-	fmt.Printf("Calling service UpdateSaleByUserID\n")
+	fmt.Println("Calling service UpdateSaleByUserID")
 	if err := h.saleService.UpdateSaleByUserID(saleID, userID, req); err != nil {
-		fmt.Printf("Service returned error: %v\n", err)
+		fmt.Println("Service returned error:", err)
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
 		return
 	}
 
-	fmt.Printf("Service completed successfully\n")
-	fmt.Printf("=== END HANDLER UPDATE DEBUG ===\n")
+	fmt.Println("Service completed successfully")
+	fmt.Println("=== END HANDLER UPDATE DEBUG ===")
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale updated successfully", nil))
 }
 

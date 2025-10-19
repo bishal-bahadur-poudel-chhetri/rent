@@ -798,16 +798,16 @@ func (r *SaleRepository) isVerified(saleID int) (bool, error) {
 }
 
 func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[string]interface{}) error {
-	fmt.Printf("=== UPDATE SALE BY USER ID DEBUG ===\n")
-	fmt.Printf("saleID: %d, userID: %d, updates: %+v\n", saleID, userID, updates)
+	fmt.Println("=== UPDATE SALE BY USER ID DEBUG ===")
+	fmt.Println("saleID:", saleID, "userID:", userID, "updates:", updates)
 	
 	// Check if the user is an admin
 	isAdmin, err := r.isAdmin(userID)
 	if err != nil {
-		fmt.Printf("Error checking admin status: %v\n", err)
+		fmt.Println("Error checking admin status:", err)
 		return err
 	}
-	fmt.Printf("User %d is admin: %v\n", userID, isAdmin)
+	fmt.Println("User", userID, "is admin:", isAdmin)
 
 	// Check if the sale exists and belongs to the user (for non-admin users)
 	if !isAdmin {
@@ -823,10 +823,10 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			return fmt.Errorf("failed to check sale ownership: %v", err)
 		}
 		if !exists {
-			fmt.Printf("User %d does not own sale %d\n", userID, saleID)
+			fmt.Println("User", userID, "does not own sale", saleID)
 			return fmt.Errorf("cannot update sale with ID %d: user %d does not own this sale", saleID, userID)
 		}
-		fmt.Printf("User %d owns sale %d, proceeding with update\n", userID, saleID)
+		fmt.Println("User", userID, "owns sale", saleID, ", proceeding with update")
 	}
 
 	// Build the dynamic UPDATE query
@@ -896,31 +896,31 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 	}
 
 	// Execute the update
-	fmt.Printf("Executing query: %s\n", query)
-	fmt.Printf("With args: %+v\n", args)
+	fmt.Println("Executing query:", query)
+	fmt.Println("With args:", args)
 	result, err := r.db.Exec(query, args...)
 	if err != nil {
-		fmt.Printf("Error executing update query: %v\n", err)
+		fmt.Println("Error executing update query:", err)
 		return fmt.Errorf("failed to update sale: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		fmt.Printf("Error checking rows affected: %v\n", err)
+		fmt.Println("Error checking rows affected:", err)
 		return fmt.Errorf("failed to check rows affected: %v", err)
 	}
-	fmt.Printf("Rows affected: %d\n", rowsAffected)
+	fmt.Println("Rows affected:", rowsAffected)
 
 	if rowsAffected == 0 {
-		fmt.Printf("No rows affected for sale_id %d\n", saleID)
+		fmt.Println("No rows affected for sale_id", saleID)
 		return fmt.Errorf("no sale updated for sale_id %d: sale may not exist or values unchanged", saleID)
 	}
 
 	// Handle vehicle status updates
-	fmt.Printf("=== VEHICLE STATUS UPDATE DEBUG ===\n")
-	fmt.Printf("Processing updates: %+v\n", updates)
+	fmt.Println("=== VEHICLE STATUS UPDATE DEBUG ===")
+	fmt.Println("Processing updates:", updates)
 	for field, value := range updates {
-		fmt.Printf("Processing field: %s, value: %v\n", field, value)
+		fmt.Println("Processing field:", field, "value:", value)
 		if field == "actual_date_of_delivery" && value != nil {
 			var vehicleID int
 			var currentStatus string
@@ -941,7 +941,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 				}
 			}
 		} else if field == "status" {
-			fmt.Printf("Status field detected, value: %v\n", value)
+			fmt.Println("Status field detected, value:", value)
 			var vehicleID int
 			err = r.db.QueryRow(`
                 SELECT vehicle_id 
@@ -951,22 +951,22 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			if err != nil {
 				return fmt.Errorf("failed to fetch vehicle_id: %v", err)
 			}
-			fmt.Printf("Found vehicle_id: %d for sale_id: %d\n", vehicleID, saleID)
+			fmt.Println("Found vehicle_id:", vehicleID, "for sale_id:", saleID)
 			switch value.(string) {
 			case "active":
-				fmt.Printf("Setting vehicle %d status to 'rented'\n", vehicleID)
+				fmt.Println("Setting vehicle", vehicleID, "status to 'rented'")
 				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
 					return err
 				}
 			case "completed", "cancelled":
-				fmt.Printf("Setting vehicle %d status to 'available'\n", vehicleID)
+				fmt.Println("Setting vehicle", vehicleID, "status to 'available'")
 				if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
 					return err
 				}
 			}
 		}
 	}
-	fmt.Printf("=== END VEHICLE STATUS UPDATE DEBUG ===\n")
+	fmt.Println("=== END VEHICLE STATUS UPDATE DEBUG ===")
 
 	return nil
 }
