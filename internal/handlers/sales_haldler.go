@@ -67,6 +67,13 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
+	// Debug: Log the received request
+	fmt.Printf("=== BACKEND RECEIVED REQUEST ===\n")
+	fmt.Printf("Status from request: %s\n", saleRequest.Status)
+	fmt.Printf("Date of delivery: %s\n", saleRequest.DateOfDelivery)
+	fmt.Printf("Is future booking: %v\n", saleRequest.Status == "pending")
+	fmt.Printf("================================\n")
+
 	// Validate time of day values
 	if saleRequest.DeliveryTimeOfDay != "morning" && saleRequest.DeliveryTimeOfDay != "evening" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery time of day", "Must be either 'morning' or 'evening'"))

@@ -79,15 +79,38 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 	var actualDeliveryDate *time.Time
 	var saleStatus string
 	
-	// Compare only the date part (YYYY-MM-DD) by normalizing both dates to midnight
-	bookingDateOnly := time.Date(bookingDate.Year(), bookingDate.Month(), bookingDate.Day(), 0, 0, 0, 0, bookingDate.Location())
-	deliveryDateOnly := time.Date(sale.DateOfDelivery.Year(), sale.DateOfDelivery.Month(), sale.DateOfDelivery.Day(), 0, 0, 0, 0, sale.DateOfDelivery.Location())
+	// Use the status from the request if provided, otherwise determine based on date
+	fmt.Printf("=== REPOSITORY STATUS LOGIC ===\n")
+	fmt.Printf("Sale.Status from request: '%s'\n", sale.Status)
+	fmt.Printf("Date of delivery: %s\n", sale.DateOfDelivery)
+	fmt.Printf("Booking date: %s\n", bookingDate)
 	
-	if bookingDateOnly.Equal(deliveryDateOnly) {
-		actualDeliveryDate = &bookingDate
-		saleStatus = "active" // Same-day delivery should be active
+	if sale.Status != "" {
+		saleStatus = sale.Status // Use the status sent by the client
+		fmt.Printf("Using status from request: %s\n", saleStatus)
 	} else {
-		saleStatus = "pending" // Future delivery should be pending
+		// Fallback: Compare only the date part (YYYY-MM-DD) by normalizing both dates to midnight
+		bookingDateOnly := time.Date(bookingDate.Year(), bookingDate.Month(), bookingDate.Day(), 0, 0, 0, 0, bookingDate.Location())
+		deliveryDateOnly := time.Date(sale.DateOfDelivery.Year(), sale.DateOfDelivery.Month(), sale.DateOfDelivery.Day(), 0, 0, 0, 0, sale.DateOfDelivery.Location())
+		
+		if bookingDateOnly.Equal(deliveryDateOnly) {
+			actualDeliveryDate = &bookingDate
+			saleStatus = "active" // Same-day delivery should be active
+		} else {
+			saleStatus = "pending" // Future delivery should be pending
+		}
+	}
+	
+	fmt.Printf("Final status being used: %s\n", saleStatus)
+	fmt.Printf("=====================================\n")
+	
+	// Set actual delivery date for same-day deliveries regardless of status source
+	if saleStatus == "active" {
+		bookingDateOnly := time.Date(bookingDate.Year(), bookingDate.Month(), bookingDate.Day(), 0, 0, 0, 0, bookingDate.Location())
+		deliveryDateOnly := time.Date(sale.DateOfDelivery.Year(), sale.DateOfDelivery.Month(), sale.DateOfDelivery.Day(), 0, 0, 0, 0, sale.DateOfDelivery.Location())
+		if bookingDateOnly.Equal(deliveryDateOnly) {
+			actualDeliveryDate = &bookingDate
+		}
 	}
 
 	// Calculate payment status
