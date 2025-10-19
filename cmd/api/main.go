@@ -49,7 +49,7 @@ func main() {
 	expenseRepo := repositories.NewExpenseRepository(sqlDB)
 	revenueRepo := repositories.NewRevenueRepository(sqlDB)
 	reminderRepo := repositories.NewReminderRepository(db)
-	systemSettingsRepo := repositories.NewSystemSettingsRepository(sqlDB)
+	saleChargeRepo := repositories.NewSaleChargeRepository(sqlDB)
 
 	// Initialize services
 	returnService := services.NewReturnService(returnRepo)
@@ -67,6 +67,7 @@ func main() {
 	expenseService := services.NewExpenseService(expenseRepo)
 	revenueService := services.NewRevenueService(revenueRepo)
 	reminderService := services.NewReminderService(reminderRepo)
+	saleChargeService := services.NewSaleChargeService(saleChargeRepo)
 	systemSettingsService := services.NewSystemSettingsService(systemSettingsRepo)
 
 	// Initialize handlers
@@ -85,6 +86,7 @@ func main() {
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 	revenueHandler := handlers.NewRevenueHandler(revenueService)
 	reminderHandler := handlers.NewReminderHandler(reminderService, userRepo)
+	saleChargeHandler := handlers.NewSaleChargeHandler(saleChargeService, cfg.JWTSecret)
 	systemSettingsHandler := handlers.NewSystemSettingsHandler(systemSettingsService)
 
 	// Initialize Gin router
@@ -139,6 +141,11 @@ func main() {
 			protected.GET("/sales/:id", saleHandler.GetSaleByID)
 			protected.GET("/sales", saleHandler.GetSales)
 			protected.PUT("/sales/:saleID", saleHandler.UpdateSaleByUserID)
+
+			// Sale charges routes
+			protected.POST("/sales/:saleId/charges", saleChargeHandler.AddSalesCharge)
+			protected.PUT("/sales/:saleId/charges/:chargeId", saleChargeHandler.UpdateSalesCharge)
+			protected.DELETE("/sales/:saleId/charges/:chargeId", saleChargeHandler.DeleteSalesCharge)
 
 			// Video upload route
 			protected.POST("/sales/upload/video", videoHandler.UploadVideo)

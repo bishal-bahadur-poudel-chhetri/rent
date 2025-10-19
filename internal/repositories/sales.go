@@ -75,10 +75,15 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		return models.SaleSubmitResponse{}, errors.New("vehicle is not available for the selected dates")
 	}
 
-	// Set actual delivery date if same day
+	// Set actual delivery date if same day and determine status
 	var actualDeliveryDate *time.Time
+	var saleStatus string
+	
 	if bookingDate.Format("2006-01-02") == sale.DateOfDelivery.Format("2006-01-02") {
 		actualDeliveryDate = &bookingDate
+		saleStatus = "active" // Same-day delivery should be active
+	} else {
+		saleStatus = "pending" // Future delivery should be pending
 	}
 
 	// Calculate payment status
@@ -118,7 +123,7 @@ func (r *SaleRepository) CreateSale(sale models.Sale) (models.SaleSubmitResponse
 		RETURNING sale_id
 	`,
 		sale.VehicleID, sale.UserID, sale.CustomerName, sale.TotalAmount, sale.ChargePerDay, bookingDate,
-		sale.DateOfDelivery, sale.ReturnDate, sale.NumberOfDays, sale.Remark, sale.Status, sale.Destination,
+		sale.DateOfDelivery, sale.ReturnDate, sale.NumberOfDays, sale.Remark, saleStatus, sale.Destination,
 		sale.CustomerPhone, actualDeliveryDate, paymentStatus,
 	).Scan(&saleID)
 	if err != nil {

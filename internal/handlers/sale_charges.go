@@ -5,6 +5,7 @@ import (
 	"renting/internal/models"
 	"renting/internal/services"
 	"renting/internal/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,17 +22,40 @@ func NewSaleChargeHandler(saleService *services.SaleChargeService, jwtSecret str
 	}
 }
 
-func (h *SaleChargeHandler) AddSalesCharge(c *gin.Context) {
+func (h *SaleChargeHandler) UpdateSalesCharge(c *gin.Context) {
+	chargeIDStr := c.Param("chargeId")
+	chargeID, err := strconv.Atoi(chargeIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid charge ID", "Charge ID must be a number"))
+		return
+	}
+
 	var req models.SalesCharge
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
 		return
 	}
 
-	if err := h.saleService.AddSalesCharge(req.SaleID, req); err != nil {
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to add sales charge", err.Error()))
+	if err := h.saleService.UpdateSalesCharge(chargeID, req); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to update sales charge", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusCreated, "Sales charge added successfully", nil))
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sales charge updated successfully", nil))
+}
+
+func (h *SaleChargeHandler) DeleteSalesCharge(c *gin.Context) {
+	chargeIDStr := c.Param("chargeId")
+	chargeID, err := strconv.Atoi(chargeIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid charge ID", "Charge ID must be a number"))
+		return
+	}
+
+	if err := h.saleService.DeleteSalesCharge(chargeID); err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to delete sales charge", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sales charge deleted successfully", nil))
 }

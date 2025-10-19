@@ -16,11 +16,18 @@ func NewSaleChargeService(saleRepo *repositories.SaleChargeRepository) *SaleChar
 	}
 }
 
-func (s *SaleChargeService) AddSalesCharge(saleID int, charge models.SalesCharge) error {
-	// Wrap the single charge in a slice to match the repository's expected input
-	err := s.saleRepo.AddSalesCharges(saleID, []models.SalesCharge{charge})
+func (s *SaleChargeService) UpdateSalesCharge(chargeID int, charge models.SalesCharge) error {
+	err := s.saleRepo.UpdateSalesCharge(chargeID, charge)
 	if err != nil {
-		return fmt.Errorf("failed to add sales charge: %v", err)
+		return fmt.Errorf("failed to update sales charge: %v", err)
+	}
+	return nil
+}
+
+func (s *SaleChargeService) DeleteSalesCharge(chargeID int) error {
+	err := s.saleRepo.DeleteSalesCharge(chargeID)
+	if err != nil {
+		return fmt.Errorf("failed to delete sales charge: %v", err)
 	}
 	return nil
 }
