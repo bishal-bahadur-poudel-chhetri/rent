@@ -169,7 +169,7 @@ func (r *ReminderRepository) GetRemindersByVehicleIDWithVehicleDetails(ctx conte
 	var reminders []models.ReminderWithVehicle
 	err := r.db.WithContext(ctx).
 		Table("reminders").
-		Select("reminders.*, vehicles.vehicle_name, vehicles.vehicle_model, vehicles.vehicle_registration_number").
+		Select("reminders.*, vehicles.vehicle_name, vehicles.vehicle_model, vehicles.vehicle_registration_number, vehicles.image_name").
 		Joins("JOIN vehicles ON reminders.vehicle_id = vehicles.vehicle_id").
 		Where("reminders.vehicle_id = ?", vehicleID).
 		Find(&reminders).Error
@@ -183,7 +183,7 @@ func (r *ReminderRepository) GetDueRemindersWithVehicleDetails(ctx context.Conte
 
 	query := r.db.WithContext(ctx).
 		Table("reminders").
-		Select("reminders.*, vehicles.vehicle_name, vehicles.vehicle_model, vehicles.vehicle_registration_number").
+		Select("reminders.*, vehicles.vehicle_name, vehicles.vehicle_model, vehicles.vehicle_registration_number, vehicles.image_name").
 		Joins("JOIN vehicles ON reminders.vehicle_id = vehicles.vehicle_id").
 		Where("reminders.next_due_date <= ?", today)
 

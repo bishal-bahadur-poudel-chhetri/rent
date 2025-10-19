@@ -38,6 +38,7 @@ type ReminderWithVehicle struct {
 	VehicleName               string `json:"vehicle_name"`
 	VehicleModel              string `json:"vehicle_model"`
 	VehicleRegistrationNumber string `json:"vehicle_registration_number"`
+	ImageName                 string `json:"image_name"`
 }
 
 // ReminderAcknowledgement represents a record of when a reminder was acknowledged
