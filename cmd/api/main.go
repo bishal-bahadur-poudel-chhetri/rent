@@ -143,6 +143,7 @@ func main() {
 			protected.PUT("/sales/:saleID", saleHandler.UpdateSaleByUserID)
 
 			// Sale charges routes
+			protected.GET("/sales/charges/test", saleChargeHandler.TestEndpoint)
 			protected.POST("/sales/:saleId/charges", saleChargeHandler.AddSalesCharge)
 			protected.PUT("/sales/:saleId/charges/:chargeId", saleChargeHandler.UpdateSalesCharge)
 			protected.DELETE("/sales/:saleId/charges/:chargeId", saleChargeHandler.DeleteSalesCharge)

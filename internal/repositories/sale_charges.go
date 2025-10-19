@@ -17,7 +17,20 @@ func NewSaleChargeRepository(db *sql.DB) *SaleChargeRepository {
 func (r *SaleChargeRepository) UpdateSalesCharge(chargeID int, charge models.SalesCharge) error {
 	fmt.Printf("Repository: Updating charge ID %d with type '%s' and amount %f\n", chargeID, charge.ChargeType, charge.Amount)
 	
-	_, err := r.db.Exec(`
+	// First check if the charge exists
+	var exists bool
+	err := r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM sales_charges WHERE charge_id = $1)", chargeID).Scan(&exists)
+	if err != nil {
+		fmt.Printf("Repository: Error checking if charge exists: %v\n", err)
+		return fmt.Errorf("failed to check if charge exists: %v", err)
+	}
+	
+	if !exists {
+		fmt.Printf("Repository: Charge ID %d does not exist\n", chargeID)
+		return fmt.Errorf("charge with ID %d does not exist", chargeID)
+	}
+	
+	result, err := r.db.Exec(`
 		UPDATE sales_charges 
 		SET charge_type = $1, amount = $2
 		WHERE charge_id = $3
@@ -26,7 +39,9 @@ func (r *SaleChargeRepository) UpdateSalesCharge(chargeID int, charge models.Sal
 		fmt.Printf("Repository: Database error: %v\n", err)
 		return fmt.Errorf("failed to update sales charge: %v", err)
 	}
-	fmt.Printf("Repository: Update successful\n")
+	
+	rowsAffected, _ := result.RowsAffected()
+	fmt.Printf("Repository: Update successful, rows affected: %d\n", rowsAffected)
 	return nil
 }
 
