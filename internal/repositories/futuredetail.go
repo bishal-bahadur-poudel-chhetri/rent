@@ -226,6 +226,9 @@ func buildMetadataQuery(startDate string, filters map[string]string) (string, []
 }
 
 func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
+	fmt.Printf("=== FUTURE BOOKING CANCELLATION DEBUG ===\n")
+	fmt.Printf("Cancelling future booking with saleID: %d\n", saleID)
+	
 	// Start a transaction to ensure both updates succeed or fail together
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -243,6 +246,7 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to fetch vehicle_id for sale_id %d: %w", saleID, err)
 	}
+	fmt.Printf("Found vehicle_id: %d for sale_id: %d\n", vehicleID, saleID)
 
 	// Update sales status to cancelled
 	query := `
@@ -266,6 +270,7 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 	}
 
 	// Update vehicle status to available
+	fmt.Printf("Updating vehicle %d status to 'available'\n", vehicleID)
 	_, err = tx.Exec(`
 		UPDATE vehicles
 		SET status = 'available'
@@ -274,11 +279,14 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to update vehicle status to available for vehicle_id %d: %w", vehicleID, err)
 	}
+	fmt.Printf("Successfully updated vehicle %d status to 'available'\n", vehicleID)
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	fmt.Printf("Transaction committed successfully\n")
+	fmt.Printf("=== END FUTURE BOOKING CANCELLATION DEBUG ===\n")
 
 	return nil
 }

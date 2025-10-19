@@ -804,15 +804,31 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		return err
 	}
 
-	// If user is not an admin, they cannot update
+	// Check if the sale exists and belongs to the user (for non-admin users)
 	if !isAdmin {
-		return fmt.Errorf("cannot update sale with ID %d: user %d is not an admin", saleID, userID)
+		var exists bool
+		err := r.db.QueryRow(`
+			SELECT EXISTS (
+				SELECT 1 
+				FROM sales 
+				WHERE sale_id = $1 AND user_id = $2
+			)
+		`, saleID, userID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("failed to check sale ownership: %v", err)
+		}
+		if !exists {
+			return fmt.Errorf("cannot update sale with ID %d: user %d does not own this sale", saleID, userID)
+		}
 	}
 
 	// Build the dynamic UPDATE query
 	var setClauses []string
 	args := []interface{}{saleID}
-	argIndex := 2 // Start from 2 since saleID is $1
+	if !isAdmin {
+		args = append(args, userID)
+	}
+	argIndex := len(args) + 1
 
 	// Define all fields that can be updated
 	allowedFields := map[string]struct{}{
@@ -868,6 +884,9 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
         SET %s, updated_at = NOW()
         WHERE sale_id = $1
     `, strings.Join(setClauses, ", "))
+	if !isAdmin {
+		query += " AND user_id = $2"
+	}
 
 	// Execute the update
 	result, err := r.db.Exec(query, args...)
@@ -885,7 +904,10 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 	}
 
 	// Handle vehicle status updates
+	fmt.Printf("=== VEHICLE STATUS UPDATE DEBUG ===\n")
+	fmt.Printf("Processing updates: %+v\n", updates)
 	for field, value := range updates {
+		fmt.Printf("Processing field: %s, value: %v\n", field, value)
 		if field == "actual_date_of_delivery" && value != nil {
 			var vehicleID int
 			var currentStatus string
@@ -906,6 +928,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 				}
 			}
 		} else if field == "status" {
+			fmt.Printf("Status field detected, value: %v\n", value)
 			var vehicleID int
 			err = r.db.QueryRow(`
                 SELECT vehicle_id 
@@ -915,18 +938,22 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			if err != nil {
 				return fmt.Errorf("failed to fetch vehicle_id: %v", err)
 			}
+			fmt.Printf("Found vehicle_id: %d for sale_id: %d\n", vehicleID, saleID)
 			switch value.(string) {
 			case "active":
+				fmt.Printf("Setting vehicle %d status to 'rented'\n", vehicleID)
 				if err := r.UpdateVehicleStatus(vehicleID, "rented"); err != nil {
 					return err
 				}
 			case "completed", "cancelled":
+				fmt.Printf("Setting vehicle %d status to 'available'\n", vehicleID)
 				if err := r.UpdateVehicleStatus(vehicleID, "available"); err != nil {
 					return err
 				}
 			}
 		}
 	}
+	fmt.Printf("=== END VEHICLE STATUS UPDATE DEBUG ===\n")
 
 	return nil
 }
