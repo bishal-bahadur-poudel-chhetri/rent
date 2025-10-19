@@ -231,6 +231,29 @@ func buildMetadataQuery(startDate string, filters map[string]string) (string, []
 }
 
 func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
+	fmt.Printf("=== FUTURE BOOKING CANCELLATION DEBUG ===\n")
+	fmt.Printf("Cancelling future booking with saleID: %d\n", saleID)
+	
+	// Start a transaction to ensure both updates succeed or fail together
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// First, get the vehicle_id for this sale
+	var vehicleID int
+	err = tx.QueryRow(`
+		SELECT vehicle_id 
+		FROM sales 
+		WHERE sale_id = $1
+	`, saleID).Scan(&vehicleID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch vehicle_id for sale_id %d: %w", saleID, err)
+	}
+	fmt.Printf("Found vehicle_id: %d for sale_id: %d\n", vehicleID, saleID)
+
+	// Update sales status to cancelled
 	query := `
 		UPDATE sales
 		SET status = 'cancelled', updated_at = $1
@@ -238,7 +261,7 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 		AND status NOT IN ('cancelled', 'completed')
 	`
 
-	result, err := r.db.Exec(query, time.Now().UTC(), saleID)
+	result, err := tx.Exec(query, time.Now().UTC(), saleID)
 	if err != nil {
 		return fmt.Errorf("failed to cancel booking with sale_id %d: %w", saleID, err)
 	}
@@ -250,6 +273,25 @@ func (r *FuturBookingRepository) FutureBookingCancellation(saleID int) error {
 	if rowsAffected == 0 {
 		return fmt.Errorf("no booking found with sale_id %d or it was already cancelled/completed", saleID)
 	}
+
+	// Update vehicle status to available
+	fmt.Printf("Updating vehicle %d status to 'available'\n", vehicleID)
+	_, err = tx.Exec(`
+		UPDATE vehicles
+		SET status = 'available'
+		WHERE vehicle_id = $1
+	`, vehicleID)
+	if err != nil {
+		return fmt.Errorf("failed to update vehicle status to available for vehicle_id %d: %w", vehicleID, err)
+	}
+	fmt.Printf("Successfully updated vehicle %d status to 'available'\n", vehicleID)
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	fmt.Printf("Transaction committed successfully\n")
+	fmt.Printf("=== END FUTURE BOOKING CANCELLATION DEBUG ===\n")
 
 	return nil
 }

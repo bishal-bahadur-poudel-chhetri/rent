@@ -102,11 +102,15 @@ func (s *SaleService) GetSales(filters map[string]string, sort string, limit, of
 }
 
 func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSaleRequest) error {
+	fmt.Println("=== SALE SERVICE UPDATE DEBUG ===")
+	fmt.Println("SERVICE CALLED - saleID:", saleID, "userID:", userID, "req:", req)
+	
 	updates := make(map[string]interface{})
 
 	// Populate updates map only with provided (non-nil) fields
 	if req.Status != nil {
 		updates["status"] = *req.Status
+		fmt.Println("Added status to updates:", *req.Status)
 	}
 	if req.PaymentStatus != nil {
 		updates["payment_status"] = *req.PaymentStatus
@@ -211,10 +215,22 @@ func (s *SaleService) UpdateSaleByUserID(saleID, userID int, req models.UpdateSa
 
 	// Check if any fields were provided
 	if len(updates) == 0 {
+		fmt.Println("No fields provided to update")
 		return fmt.Errorf("no fields provided to update")
 	}
 
+	fmt.Println("Final updates map:", updates)
+	fmt.Println("Calling repository UpdateSaleByUserID")
+	
 	// Call the repository to perform the update
-	return s.saleRepo.UpdateSaleByUserID(saleID, userID, updates)
+	err := s.saleRepo.UpdateSaleByUserID(saleID, userID, updates)
+	if err != nil {
+		fmt.Println("Repository returned error:", err)
+		return err
+	}
+	
+	fmt.Println("Repository update completed successfully")
+	fmt.Println("=== END SALE SERVICE UPDATE DEBUG ===")
+	return nil
 }
 

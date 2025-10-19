@@ -70,6 +70,13 @@ func (h *SaleHandler) CreateSale(c *gin.Context) {
 		return
 	}
 
+	// Debug: Log the received request
+	fmt.Printf("=== BACKEND RECEIVED REQUEST ===\n")
+	fmt.Printf("Status from request: %s\n", saleRequest.Status)
+	fmt.Printf("Date of delivery: %s\n", saleRequest.DateOfDelivery)
+	fmt.Printf("Is future booking: %v\n", saleRequest.Status == "pending")
+	fmt.Printf("================================\n")
+
 	// Validate time of day values
 	if saleRequest.DeliveryTimeOfDay != "morning" && saleRequest.DeliveryTimeOfDay != "evening" {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid delivery time of day", "Must be either 'morning' or 'evening'"))
@@ -259,6 +266,8 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized", err))
 		return
 	}
+	fmt.Println("=== HANDLER UPDATE DEBUG ===")
+	fmt.Println("Extracted userID:", userID)
 
 	saleIDStr := c.Param("id")
 	saleID, err := strconv.Atoi(saleIDStr)
@@ -266,6 +275,7 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid sale ID", err))
 		return
 	}
+	fmt.Println("Extracted saleID:", saleID)
 
 	var req models.UpdateSaleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -276,6 +286,12 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 
 	// Debug: Check if VehicleID is bound correctly
 	fmt.Printf("req.VehicleID: %v\n", req.VehicleID)
+	
+	// Add debug output right after the existing debug
+	fmt.Println("=== HANDLER UPDATE DEBUG ===")
+	fmt.Println("Extracted userID:", userID)
+	fmt.Println("Extracted saleID:", saleID)
+	fmt.Println("Request Status:", req.Status)
 
 	if err := validateUpdateSaleRequest(req); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
@@ -283,11 +299,17 @@ func (h *SaleHandler) UpdateSaleByUserID(c *gin.Context) {
 	}
 
 	// Pass the req directly to the service
+	fmt.Println("Calling service UpdateSaleByUserID")
+	fmt.Println("About to call service with saleID:", saleID, "userID:", userID, "req:", req)
 	if err := h.saleService.UpdateSaleByUserID(saleID, userID, req); err != nil {
+		fmt.Println("Service returned error:", err)
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err.Error(), nil))
 		return
 	}
 
+	fmt.Println("Service completed successfully")
+	fmt.Println("=== END HANDLER UPDATE DEBUG ===")
+	fmt.Println("Returning success response")
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale updated successfully", nil))
 }
 

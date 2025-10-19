@@ -93,12 +93,10 @@ type SaleSubmitResponse struct {
 }
 
 type SalesCharge struct {
-	ChargeID   int       `json:"charge_id"`
-	SaleID     int       `json:"sale_id"`
-	ChargeType string    `json:"charge_type"`
-	Amount     float64   `json:"amount"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ChargeID   int     `json:"charge_id"`
+	SaleID     int     `json:"sale_id"`
+	ChargeType string  `json:"charge_type"`
+	Amount     float64 `json:"amount"`
 }
 
 type SalesImage struct {
