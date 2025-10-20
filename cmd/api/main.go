@@ -128,6 +128,10 @@ func main() {
 			// Debug routes
 			protected.GET("/debug/permissions", authHandler.CheckUserPermissions)
 
+            // Profile routes
+            protected.PUT("/user/profile", authHandler.UpdateMyProfile)
+            protected.PUT("/user/password", authHandler.ChangeMyPassword)
+
 			// User account management
 			protected.DELETE("/account", authHandler.DeleteAccount)
 

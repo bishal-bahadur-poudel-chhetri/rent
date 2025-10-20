@@ -44,6 +44,9 @@ func (h *StatementHandler) GetOutstandingStatements(c *gin.Context) {
 	if paymentStatus := c.Query("payment_status"); paymentStatus != "" {
 		filters["payment_status"] = paymentStatus
 	}
+	if vehicleID := c.Query("vehicle_id"); vehicleID != "" {
+		filters["vehicle_id"] = vehicleID
+	}
 	if vehicleName := c.Query("vehicle_name"); vehicleName != "" {
 		filters["vehicle_name"] = vehicleName
 	}

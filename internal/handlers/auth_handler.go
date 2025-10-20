@@ -162,6 +162,50 @@ func (h *AuthHandler) DeleteAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Account deleted successfully", nil))
 }
 
+// UpdateMyProfile allows the authenticated user to update username and mobile
+func (h *AuthHandler) UpdateMyProfile(c *gin.Context) {
+    userIDAny, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+        return
+    }
+    var req struct {
+        Username     string `json:"username"`
+        MobileNumber string `json:"mobile_number"`
+    }
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
+        return
+    }
+    if err := h.authService.UpdateProfile(c.Request.Context(), userIDAny.(int), req.Username, req.MobileNumber); err != nil {
+        c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
+        return
+    }
+    c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Profile updated", nil))
+}
+
+// ChangeMyPassword allows the authenticated user to change password
+func (h *AuthHandler) ChangeMyPassword(c *gin.Context) {
+    userIDAny, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "User not authenticated", nil))
+        return
+    }
+    var req struct {
+        CurrentPassword string `json:"current_password"`
+        NewPassword     string `json:"new_password"`
+    }
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body", err.Error()))
+        return
+    }
+    if err := h.authService.ChangePassword(c.Request.Context(), userIDAny.(int), req.CurrentPassword, req.NewPassword); err != nil {
+        c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err.Error(), nil))
+        return
+    }
+    c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Password changed", nil))
+}
+
 // CheckAccountingPermission middleware to verify if user has accounting permission
 func (h *AuthHandler) CheckAccountingPermission() gin.HandlerFunc {
 	return func(c *gin.Context) {

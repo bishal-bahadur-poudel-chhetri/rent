@@ -95,6 +95,11 @@ func (r *statementRepository) GetOutstandingStatements(ctx context.Context, filt
         args = append(args, paymentStatus)
         argIndex++
     }
+    if vehicleID, ok := filters["vehicle_id"]; ok && vehicleID != "" {
+        conditions = append(conditions, "vehicle_id = $"+strconv.Itoa(argIndex))
+        args = append(args, vehicleID)
+        argIndex++
+    }
     if vehicleName, ok := filters["vehicle_name"]; ok && vehicleName != "" {
         conditions = append(conditions, "vehicle_name ILIKE $"+strconv.Itoa(argIndex))
         args = append(args, "%"+vehicleName+"%")

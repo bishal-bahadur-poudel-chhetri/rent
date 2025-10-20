@@ -15,6 +15,8 @@ type UserRepository interface {
 	GetCompanyIDByCode(ctx context.Context, companyCode string) (int, error)
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 	LockoutUser(ctx context.Context, userID int) error
+    UpdateUserProfile(ctx context.Context, userID int, username, mobileNumber string) error
+    UpdateUserPassword(ctx context.Context, userID int, hashedPassword string) error
 }
 
 type userRepository struct {
@@ -155,4 +157,33 @@ func (r *userRepository) LockoutUser(ctx context.Context, userID int) error {
 		return fmt.Errorf("failed to lock out user: %v", err)
 	}
 	return nil
+}
+
+func (r *userRepository) UpdateUserProfile(ctx context.Context, userID int, username, mobileNumber string) error {
+    query := `
+        UPDATE users
+        SET username = $1,
+            mobile_number = $2,
+            updated_at = NOW()
+        WHERE id = $3
+    `
+    _, err := r.db.ExecContext(ctx, query, username, mobileNumber, userID)
+    if err != nil {
+        return fmt.Errorf("failed to update user profile: %v", err)
+    }
+    return nil
+}
+
+func (r *userRepository) UpdateUserPassword(ctx context.Context, userID int, hashedPassword string) error {
+    query := `
+        UPDATE users
+        SET password = $1,
+            updated_at = NOW()
+        WHERE id = $2
+    `
+    _, err := r.db.ExecContext(ctx, query, hashedPassword, userID)
+    if err != nil {
+        return fmt.Errorf("failed to update user password: %v", err)
+    }
+    return nil
 }

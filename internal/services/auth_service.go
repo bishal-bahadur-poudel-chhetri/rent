@@ -17,6 +17,8 @@ type AuthService interface {
 	Register(ctx context.Context, user *models.User, companyCode string) error
 	LockoutUser(ctx context.Context, userID int) error
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
+    UpdateProfile(ctx context.Context, userID int, username, mobileNumber string) error
+    ChangePassword(ctx context.Context, userID int, currentPassword, newPassword string) error
 }
 
 type authService struct {
@@ -118,4 +120,32 @@ func (s *authService) GetUserByID(ctx context.Context, userID int) (*models.User
 	}
 
 	return user, nil
+}
+
+func (s *authService) UpdateProfile(ctx context.Context, userID int, username, mobileNumber string) error {
+    if username == "" {
+        return errors.New("username cannot be empty")
+    }
+    if mobileNumber == "" {
+        return errors.New("mobile number cannot be empty")
+    }
+    return s.userRepo.UpdateUserProfile(ctx, userID, username, mobileNumber)
+}
+
+func (s *authService) ChangePassword(ctx context.Context, userID int, currentPassword, newPassword string) error {
+    if len(newPassword) < 6 {
+        return errors.New("password too short")
+    }
+    user, err := s.userRepo.GetUserByID(ctx, userID)
+    if err != nil || user == nil {
+        return errors.New("user not found")
+    }
+    if !utils.CheckPasswordHash(currentPassword, user.Password) {
+        return errors.New("current password is incorrect")
+    }
+    hashed, err := utils.HashPassword(newPassword)
+    if err != nil {
+        return errors.New("failed to hash password")
+    }
+    return s.userRepo.UpdateUserPassword(ctx, userID, hashed)
 }
