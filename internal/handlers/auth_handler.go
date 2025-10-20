@@ -1,14 +1,15 @@
 package handlers
 
 import (
-	"log"
-	"net/http"
-	"renting/internal/models"
-	"renting/internal/services"
-	"renting/internal/utils"
-	"strconv"
+    "database/sql"
+    "log"
+    "net/http"
+    "renting/internal/models"
+    "renting/internal/services"
+    "renting/internal/utils"
+    "strconv"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -227,8 +228,8 @@ func (h *AuthHandler) CheckUserPermissions(c *gin.Context) {
 		return
 	}
 
-	// Get user data
-	user, err := h.authService.GetUserByID(c.Request.Context(), userID.(int))
+    // Get user data
+    user, err := h.authService.GetUserByID(c.Request.Context(), userID.(int))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Error fetching user data", nil))
 		return
@@ -239,15 +240,31 @@ func (h *AuthHandler) CheckUserPermissions(c *gin.Context) {
 		return
 	}
 
-	// Return all user permissions for debugging
-	permissionData := map[string]interface{}{
-		"user_id":        user.ID,
-		"username":       user.Username,
-		"is_admin":       user.IsAdmin,
-		"has_accounting": user.HasAccounting,
-		"is_locked":      user.IsLocked,
-		"company_id":     user.CompanyID,
-	}
+    // Optionally enrich with company details
+    var companyName string
+    var companyCode string
+    if dbAny, ok := c.Get("sqlDB"); ok {
+        if db, ok := dbAny.(*sql.DB); ok {
+            row := db.QueryRowContext(c.Request.Context(),
+                "SELECT name, company_code FROM companies WHERE id = $1",
+                user.CompanyID,
+            )
+            _ = row.Scan(&companyName, &companyCode)
+        }
+    }
+
+    // Return all user permissions for debugging (enriched)
+    permissionData := map[string]interface{}{
+        "user_id":        user.ID,
+        "username":       user.Username,
+        "mobile_number":  user.MobileNumber,
+        "is_admin":       user.IsAdmin,
+        "has_accounting": user.HasAccounting,
+        "is_locked":      user.IsLocked,
+        "company_id":     user.CompanyID,
+        "company_name":   companyName,
+        "company_code":   companyCode,
+    }
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "User permissions retrieved", permissionData))
 }
