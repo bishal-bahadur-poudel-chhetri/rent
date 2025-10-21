@@ -755,11 +755,14 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 	allowedFields := map[string]bool{
 		"status":                    true,
 		"payment_status":            true,
+		"payment_method":            true,
 		"remark":                    true,
 		"customer_name":             true,
 		"customer_phone":            true,
 		"customer_destination":      true,
 		"total_amount":              true,
+		"discount":                  true,
+		"other_charges":             true,
 		"charge_per_day":            true,
 		"charge_half_day":           true,
 		"date_of_delivery":          true,
@@ -768,6 +771,12 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"actual_date_of_return":     true,
 		"number_of_days":            true,
 		"vehicle_id":                true,
+		"is_damaged":                true,
+		"is_washed":                 true,
+		"is_delayed":                true,
+		"is_short_term_rental":      true,
+		"full_days":                 true,
+		"half_days":                 true,
 		"actual_delivery_time_of_day": true,
 		"actual_return_time_of_day":   true,
 		"delivery_time_of_day":        true,
@@ -775,6 +784,7 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		"booking_date":                true,
 		"is_future_booking":           true,
 		"is_complete":                 true,
+		"modified_by":                 true,
 	}
 
 	// Build the dynamic UPDATE query
@@ -789,12 +799,12 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 		}
 
 		switch field {
-		case "status", "payment_status", "remark", "customer_name", "customer_phone", "customer_destination", 
-			"actual_delivery_time_of_day", "actual_return_time_of_day", "delivery_time_of_day", "return_time_of_day":
+		case "status", "payment_status", "payment_method", "remark", "customer_name", "customer_phone", "customer_destination", 
+			"actual_delivery_time_of_day", "actual_return_time_of_day", "delivery_time_of_day", "return_time_of_day", "modified_by":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value)
 			argIndex++
-		case "total_amount", "charge_per_day", "charge_half_day", "number_of_days":
+		case "total_amount", "charge_per_day", "charge_half_day", "number_of_days", "discount", "other_charges":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(float64))
 			argIndex++
@@ -802,11 +812,11 @@ func (r *SaleRepository) UpdateSaleByUserID(saleID, userID int, updates map[stri
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(time.Time))
 			argIndex++
-		case "vehicle_id":
+		case "vehicle_id", "full_days", "half_days":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(int))
 			argIndex++
-		case "is_future_booking", "is_complete":
+		case "is_future_booking", "is_complete", "is_short_term_rental", "is_damaged", "is_washed", "is_delayed":
 			setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argIndex))
 			args = append(args, value.(bool))
 			argIndex++
