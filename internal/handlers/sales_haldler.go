@@ -18,14 +18,16 @@ import (
 )
 
 type SaleHandler struct {
-	saleService *services.SaleService
-	jwtSecret   string
+	saleService    *services.SaleService
+	paymentService *services.PaymentService
+	jwtSecret      string
 }
 
-func NewSaleHandler(saleService *services.SaleService, jwtSecret string) *SaleHandler {
+func NewSaleHandler(saleService *services.SaleService, paymentService *services.PaymentService, jwtSecret string) *SaleHandler {
 	return &SaleHandler{
-		saleService: saleService,
-		jwtSecret:   jwtSecret,
+		saleService:    saleService,
+		paymentService: paymentService,
+		jwtSecret:      jwtSecret,
 	}
 }
 
@@ -340,15 +342,49 @@ func (h *SaleHandler) MarkSaleAsComplete(c *gin.Context) {
 		return
 	}
 
+	// First, get the sale details to calculate outstanding amount
+	sale, err := h.saleService.GetSaleByID(saleID, []string{"Payments"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to fetch sale details", err.Error()))
+		return
+	}
+
+	// Calculate outstanding amount
+	totalAmount := sale.TotalAmount
+	var paidAmount float64
+	for _, payment := range sale.Payments {
+		if payment.VerifiedByAdmin {
+			paidAmount += payment.AmountPaid
+		}
+	}
+	outstandingAmount := totalAmount - paidAmount
+
+	// Update sale status and payment status
 	updateReq := models.UpdateSaleRequest{
-		Status:      func(s string) *string { return &s }("completed"),
-		IsComplete:  func(b bool) *bool { return &b }(true),
+		Status:        func(s string) *string { return &s }("completed"),
+		IsComplete:    func(b bool) *bool { return &b }(true),
+		PaymentStatus: func(s string) *string { return &s }("paid"),
 	}
 
 	err = h.saleService.UpdateSaleByUserID(saleID, userID, updateReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Failed to mark sale as complete", err.Error()))
 		return
+	}
+
+	// If there's outstanding amount, create a bad debt payment
+	if outstandingAmount > 0 {
+		_, err = h.paymentService.InsertVerifiedPayment(
+			saleID,
+			"Bad Debt",
+			outstandingAmount,
+			fmt.Sprintf("Bad debt payment for outstanding amount when marking sale as complete"),
+			userID,
+		)
+		if err != nil {
+			// Log the error but don't fail the request since the sale is already marked as complete
+			fmt.Printf("Warning: Failed to create bad debt payment for sale %d: %v\n", saleID, err)
+		}
 	}
 
 	c.JSON(http.StatusOK, utils.SuccessResponse(http.StatusOK, "Sale marked as complete", nil))

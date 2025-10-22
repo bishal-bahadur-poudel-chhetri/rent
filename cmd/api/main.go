@@ -75,7 +75,7 @@ func main() {
 	returnHandler := handlers.NewReturnHandler(returnService, cfg.JWTSecret)
 	authHandler := handlers.NewAuthHandler(authService, systemSettingsService)
 	vehicleHandler := handlers.NewVehicleHandler(vehicleService, saleService)
-	saleHandler := handlers.NewSaleHandler(saleService, cfg.JWTSecret)
+	saleHandler := handlers.NewSaleHandler(saleService, paymentService, cfg.JWTSecret)
 	videoHandler := handlers.NewVideoHandler(videoService, "https://pub-8da91f66939f4cdc9e4206024a0e68e9.r2.dev")
 	futurBookingHandler := handlers.NewFuturBookingHandler(futurBookingService)
 	paymentVerificationHandler := handlers.NewPaymentVerification(paymentVerificationService, cfg.JWTSecret)

@@ -402,6 +402,49 @@ func (r *PaymentRepository) InsertPayment(saleID int, paymentType string, amount
 	return paymentID, nil
 }
 
+// InsertVerifiedPayment adds a new payment that is automatically verified
+func (r *PaymentRepository) InsertVerifiedPayment(saleID int, paymentType string, amountPaid float64, remark string, userID int) (int, error) {
+	paymentStatus := "Completed"
+	sale_type := "bad_debt"
+	query := `
+        INSERT INTO payments (
+            sale_id,
+            payment_type,
+            amount_paid,
+            payment_date,
+            payment_status,
+            verified_by_admin,
+            user_id,
+            created_at,
+            updated_at,
+			sale_type,
+            remark
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING payment_id
+    `
+
+	var paymentID int
+	err := r.db.QueryRow(query,
+		saleID,
+		paymentType,
+		amountPaid,
+		time.Now(),
+		paymentStatus,
+		true, // verified_by_admin = true
+		userID,
+		time.Now(),
+		time.Now(),
+		sale_type,
+		remark,
+	).Scan(&paymentID)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert verified payment: %w", err)
+	}
+
+	return paymentID, nil
+}
+
 // isAdmin checks if the user is an admin
 func (r *PaymentRepository) isAdmin(userID int) (bool, error) {
 	query := `
